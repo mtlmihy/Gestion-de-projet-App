@@ -1,0 +1,39 @@
+<!DOCTYPE html><html>
+<head><style>html,body{margin:0;padding:0;height:0;overflow:hidden;}</style></head>
+<body><script>
+var _last = undefined;
+function getJalons() {
+    try {
+        var d = JSON.parse(localStorage.getItem('cdc_data_v2') || '{}');
+        return (d.jalons || []).filter(function(j){return j && j[0] && String(j[0]).trim();});
+    } catch(e) { return []; }
+}
+function send() {
+    var jalons = getJalons();
+    var sig = JSON.stringify(jalons);
+    if (sig === _last) return;
+    _last = sig;
+    window.parent.postMessage(
+        {isStreamlitMessage:true, type:'streamlit:setComponentValue', value:{jalons:jalons}, dataType:'json'},
+        '*'
+    );
+}
+window.parent.postMessage(
+    {isStreamlitMessage:true, type:'streamlit:componentReady', apiVersion:1},
+    '*'
+);
+window.parent.postMessage(
+    {isStreamlitMessage:true, type:'streamlit:setFrameHeight', height:0},
+    '*'
+);
+window.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'streamlit:render') {
+        send();
+    }
+});
+window.addEventListener('storage', function(e) {
+    if (e.key === 'cdc_data_v2') send();
+});
+send();
+setInterval(send, 2000);
+</script></body></html>

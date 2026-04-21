@@ -1,0 +1,1137 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cahier des Charges</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Thème clair (défaut) ── */
+    :root {
+      --bg-page:       #f8fafc;
+      --bg-card:       #ffffff;
+      --bg-input:      #ffffff;
+      --bg-input-hover:#fafafa;
+      --bg-btn-save:   #f1f5f9;
+      --bg-btn-hover:  #e2e8f0;
+      --border-card:   #e9eef5;
+      --border-input:  #e2e8f0;
+      --border-hist:   #f1f5f9;
+      --border-row:    #f8fafc;
+      --text-primary:  #0f172a;
+      --text-body:     #374151;
+      --text-section:  #1e293b;
+      --text-muted:    #94a3b8;
+      --text-btn-save: #475569;
+      --text-hist:     #374151;
+      --accent:        #2563eb;
+      --accent-hover:  #1d4ed8;
+      --accent-light:  #eff6ff;
+      --accent-text:   #3b82f6;
+      --shadow-card:   rgba(0,0,0,.07);
+      --shadow-bar:    rgba(0,0,0,.08);
+      --toast-color:   #16a34a;
+    }
+
+    /* ── Thème sombre ── */
+    :root.dark {
+      --bg-page:       #0f172a;
+      --bg-card:       #1e293b;
+      --bg-input:      #263348;
+      --bg-input-hover:#2d3d55;
+      --bg-btn-save:   #263348;
+      --bg-btn-hover:  #2d3d55;
+      --border-card:   #334155;
+      --border-input:  #334155;
+      --border-hist:   #263348;
+      --border-row:    #1a2840;
+      --text-primary:  #f1f5f9;
+      --text-body:     #cbd5e1;
+      --text-section:  #e2e8f0;
+      --text-muted:    #64748b;
+      --text-btn-save: #94a3b8;
+      --text-hist:     #cbd5e1;
+      --accent:        #3b82f6;
+      --accent-hover:  #2563eb;
+      --accent-light:  #1e3a5f;
+      --accent-text:   #60a5fa;
+      --shadow-card:   rgba(0,0,0,.3);
+      --shadow-bar:    rgba(0,0,0,.4);
+      --toast-color:   #4ade80;
+    }
+
+    * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+    body { background: var(--bg-page); margin: 0; padding: 0; transition: background .25s; }
+
+    textarea, input[type="text"], input[type="date"] {
+      transition: border-color .15s, box-shadow .15s, background .25s, color .25s;
+    }
+    textarea:focus, input:focus {
+      outline: none;
+      border-color: var(--accent) !important;
+      box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-bottom: 16px;
+      transition: box-shadow .2s, background .25s, border-color .25s;
+    }
+    .card:hover { box-shadow: 0 4px 20px var(--shadow-card); }
+
+    .section-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 26px; height: 26px; border-radius: 8px;
+      background: var(--accent-light); color: var(--accent-text);
+      font-size: .75rem; font-weight: 700; flex-shrink: 0;
+      transition: background .25s, color .25s;
+    }
+
+    .field-label {
+      font-size: .7rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .06em; color: var(--text-muted); margin-bottom: 5px;
+      display: block; transition: color .25s;
+    }
+    .field-input {
+      width: 100%; border: 1px solid var(--border-input); border-radius: 10px;
+      padding: 8px 12px; font-size: .875rem; color: var(--text-body);
+      background: var(--bg-input); transition: background .25s, color .25s, border-color .25s;
+    }
+    .field-help {
+      font-size: .76rem; color: var(--text-muted); font-style: italic;
+      margin-bottom: 10px; margin-left: 34px; line-height: 1.55;
+      transition: color .25s;
+    }
+    .field-textarea {
+      width: 100%; border: 1px solid var(--border-input); border-radius: 12px;
+      padding: 12px 16px; font-size: .875rem; color: var(--text-body);
+      resize: vertical; line-height: 1.65; min-height: 130px;
+      background: var(--bg-input); transition: background .25s, color .25s, border-color .25s;
+    }
+
+    /* Table history */
+    .hist-th {
+      text-align: left; font-size: .68rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text-muted); padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-hist);
+      transition: color .25s, border-color .25s;
+    }
+    .hist-td { padding: 7px 10px 7px 0; border-bottom: 1px solid var(--border-row); transition: border-color .25s; }
+    .hist-input {
+      width: 100%; border: none; background: transparent;
+      font-size: .85rem; color: var(--text-hist); padding: 2px 4px;
+      border-radius: 6px; transition: color .25s, background .25s;
+    }
+    .hist-input:focus {
+      background: var(--bg-input-hover); border: 1px solid var(--border-input) !important;
+      box-shadow: none;
+    }
+    tr:hover .hist-input { background: var(--bg-input-hover); }
+
+    /* Action bar */
+    .action-bar {
+      position: sticky; bottom: 12px;
+      background: var(--bg-card); border: 1px solid var(--border-card);
+      border-radius: 16px; padding: 14px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 8px 24px var(--shadow-bar);
+      margin-bottom: 24px; z-index: 100;
+      transition: background .25s, border-color .25s;
+    }
+
+    .btn-save {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--bg-btn-save); color: var(--text-btn-save); border: none;
+      border-radius: 10px; padding: 8px 16px; font-size: .82rem;
+      font-weight: 600; cursor: pointer; transition: background .15s, color .25s;
+    }
+    .btn-save:hover { background: var(--bg-btn-hover); }
+
+    .btn-export {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--accent); color: #fff; border: none;
+      border-radius: 10px; padding: 8px 16px; font-size: .82rem;
+      font-weight: 600; cursor: pointer; transition: background .15s;
+    }
+    .btn-export:hover { background: var(--accent-hover); }
+
+    .btn-charter {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #1a2637; color: #fff; border: none;
+      border-radius: 10px; padding: 8px 16px; font-size: .82rem;
+      font-weight: 600; cursor: pointer; transition: background .15s;
+    }
+    .btn-charter:hover { background: #0f172a; }
+
+    .save-toast {
+      font-size: .78rem; font-weight: 500; color: var(--toast-color);
+      display: flex; align-items: center; gap: 5px;
+      opacity: 0; transition: opacity .3s, color .25s;
+    }
+    .save-toast.show { opacity: 1; }
+
+    /* Textes inline */
+    span[style*="color:#0f172a"], span[style*="color:#1e293b"] { color: var(--text-section) !important; }
+
+    /* ── Styles de la vue impression (print-view) ── */
+    .pv-page { font-family: 'Inter', sans-serif; font-size: 10px; color: #1e293b; line-height: 1.5; background: #fff; }
+
+    .pv-header {
+      background: #0f172a; padding: 26px 36px 22px;
+      display: flex; justify-content: space-between; align-items: center;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    .pv-info-strip {
+      background: #f8fafc; border-bottom: 3px solid #2563eb; padding: 0 36px;
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    .pv-info-cell { padding: 10px 12px; border-right: 1px solid #e2e8f0; }
+    .pv-info-cell:last-child { border-right: none; }
+    .pv-info-label {
+      font-size: 7.5px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; color: #94a3b8; margin-bottom: 3px;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    .pv-info-value { font-size: 10px; font-weight: 600; color: #1e293b; }
+    .pv-content { padding: 20px 36px; }
+    .pv-section { margin-bottom: 18px; page-break-inside: avoid; }
+    .pv-section-header {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1.5px solid #e2e8f0;
+    }
+    .pv-section-num {
+      width: 22px; height: 22px; background: #2563eb; color: #fff;
+      border-radius: 6px; display: flex; align-items: center; justify-content: center;
+      font-size: 9px; font-weight: 700; flex-shrink: 0;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    .pv-section-num.risk { background: #ef4444; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .pv-section-num.hist { background: #f1f5f9; color: #64748b; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .pv-section-title { font-size: 11px; font-weight: 700; color: #1e293b; }
+    .pv-text {
+      font-size: 10px; color: #374151; line-height: 1.65; padding: 10px 14px;
+      background: #f8fafc; border-left: 3px solid #2563eb;
+      border-radius: 0 6px 6px 0;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    .pv-text.empty { border-left-color: #e2e8f0; color: #94a3b8; }
+    .pv-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .pv-table { width: 100%; border-collapse: collapse; font-size: 9.5px; }
+    .pv-table th {
+      background: #f1f5f9; font-size: 7.5px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em; color: #64748b;
+      padding: 7px 10px; border: 1px solid #e2e8f0;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    .pv-table td { padding: 6px 10px; border: 1px solid #e9eef5; color: #374151; vertical-align: top; }
+    .pv-table tr:nth-child(even) td { background: #fafbfc; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .pv-footer {
+      margin-top: 24px; padding-top: 10px; border-top: 1px solid #e2e8f0;
+      display: flex; justify-content: space-between; font-size: 8px; color: #94a3b8;
+    }
+
+    /* ── Print / screen switch ── */
+    @media screen { #print-view { display: none !important; } }
+
+    @media print {
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      @page { size: A4; margin: 0; }
+      .no-print { display: none !important; }
+      .action-bar { display: none !important; }
+      body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
+      #cdc-main { display: none !important; }
+      #print-view { display: block !important; }
+    }
+  </style>
+</head>
+<body>
+<div id="cdc-main" style="max-width:860px; margin:0 auto; padding:28px 20px 0;">
+
+  <!-- ── En-tête ── -->
+  <div class="card">
+    <div style="display:flex; align-items:center; gap:14px; margin-bottom:22px;">
+      <div style="width:42px;height:42px;background:#2563eb;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+      </div>
+      <div>
+        <div style="font-size:1.35rem;font-weight:700;color:var(--text-primary);line-height:1.2;">Cahier des Charges</div>
+        <div style="font-size:.78rem;color:var(--text-muted);margin-top:2px;">Document de cadrage projet</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div>
+        <label class="field-label" for="nom_projet">Nom / Code projet</label>
+        <input class="field-input" id="nom_projet" type="text" placeholder="Ex : PROJ-2026-001" />
+      </div>
+      <div>
+        <label class="field-label" for="reference">Référence (Stratégie)</label>
+        <input class="field-input" id="reference" type="text" placeholder="Ex : STRAT-2026-A" />
+      </div>
+      <div>
+        <label class="field-label" for="chef_projet">Chef de projet</label>
+        <input class="field-input" id="chef_projet" type="text" placeholder="Prénom Nom" />
+      </div>
+      <div>
+        <label class="field-label" for="service">Service / Organisation</label>
+        <input class="field-input" id="service" type="text" placeholder="Ex : DSI, Direction Commerciale…" />
+      </div>
+      <div>
+        <label class="field-label" for="sponsor">Sponsor du projet</label>
+        <input class="field-input" id="sponsor" type="text" placeholder="Prénom Nom — Direction / Rôle" />
+      </div>
+      <div>
+        <label class="field-label" for="date_debut">Date de début du projet</label>
+        <input class="field-input" id="date_debut" type="date" />
+      </div>
+      <div>
+        <label class="field-label" for="logo_upload">Logo (charte PDF)</label>
+        <input type="file" id="logo_upload" accept="image/*" style="width:100%;font-size:.82rem;color:var(--text-body);" onchange="handleLogo(this)" />
+        <div id="logo_preview" style="margin-top:6px;display:none;">
+          <img id="logo_img" style="max-height:48px;border-radius:6px;border:1px solid var(--border-input);" />
+          <button onclick="clearLogo()" style="margin-left:8px;font-size:.72rem;color:#94a3b8;background:none;border:none;cursor:pointer;">Supprimer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Historique ── -->
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:26px;height:26px;border-radius:8px;background:var(--bg-btn-save);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:var(--text-muted);">H</div>
+        <span style="font-size:.95rem;font-weight:600;color:var(--text-section);">Historique des versions</span>
+      </div>
+      <button class="no-print" onclick="addHistoryRow()" style="display:inline-flex;align-items:center;gap:5px;background:var(--bg-btn-save);color:var(--text-btn-save);border:none;border-radius:8px;padding:6px 12px;font-size:.78rem;font-weight:600;cursor:pointer;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Ajouter
+      </button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th class="hist-th" style="width:90px;">Version</th>
+            <th class="hist-th" style="width:160px;">Auteur</th>
+            <th class="hist-th">Description</th>
+            <th class="hist-th" style="width:130px;">Date</th>
+            <th class="hist-th no-print" style="width:32px;"></th>
+          </tr>
+        </thead>
+        <tbody id="history-body">
+          <tr>
+            <td class="hist-td"><input class="hist-input" type="text" value="1.0" placeholder="1.0" /></td>
+            <td class="hist-td"><input class="hist-input" type="text" placeholder="Auteur" /></td>
+            <td class="hist-td"><input class="hist-input" type="text" placeholder="Version initiale" /></td>
+            <td class="hist-td"><input class="hist-input" type="date" /></td>
+            <td class="hist-td no-print" style="text-align:center;">
+              <button onclick="removeRow(this)" style="background:none;border:none;cursor:pointer;color:#cbd5e1;font-size:.9rem;" onmouseover="this.style.color='#f87171'" onmouseout="this.style.color='#cbd5e1'">✕</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Section 1 : Contexte ── -->
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+      <span class="section-num">1</span>
+      <span style="font-size:.95rem;font-weight:600;color:var(--text-section);">Contexte du projet</span>
+    </div>
+    <p class="field-help">Situez ici le projet dans son contexte. Décrivez comment ce projet est né, les besoins initiaux de l'entreprise, les avantages ou bénéfices espérés, le contexte technique, les aspects légaux si applicable.</p>
+    <textarea class="field-textarea" id="contexte" placeholder="Décrivez le contexte du projet…"></textarea>
+  </div>
+
+  <!-- ── Section 2 : Objectifs ── -->
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+      <span class="section-num">2</span>
+      <span style="font-size:.95rem;font-weight:600;color:var(--text-section);">Objectifs du projet</span>
+    </div>
+    <p class="field-help">Exprimez les bénéfices attendus justifiant votre investissement (augmentation des ventes, réduction de coûts, obligation légale, etc.). Soyez aussi complet que possible.</p>
+    <textarea class="field-textarea" id="objectifs" placeholder="Décrivez les objectifs du projet…"></textarea>
+  </div>
+
+  <!-- ── Section 3 : Périmètre ── -->
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+      <span class="section-num">3</span>
+      <span style="font-size:.95rem;font-weight:600;color:var(--text-section);">Périmètre du projet</span>
+    </div>
+    <p class="field-help">Quelles sont les limites de votre projet ? En quoi consiste-t-il ? Où commence-t-il et où s'arrête-t-il ? Qui est impliqué ? Y a-t-il une limite géographique ? Définir ce qui sort des limites est aussi important.</p>
+    <textarea class="field-textarea" id="perimetre" placeholder="Décrivez le périmètre du projet…"></textarea>
+  </div>
+
+  <!-- ── Section 4 : Aspects fonctionnels ── -->
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+      <span class="section-num">4</span>
+      <span style="font-size:.95rem;font-weight:600;color:var(--text-section);">Aspects fonctionnels</span>
+    </div>
+    <p class="field-help">Définissez chacun de vos objectifs et découpez-les en livrables ou fonctionnalités.</p>
+    <textarea class="field-textarea" id="fonctionnel" placeholder="Décrivez les aspects fonctionnels…"></textarea>
+  </div>
+
+  <!-- ── Section 5 : Aspects techniques ── -->
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+      <span class="section-num">5</span>
+      <span style="font-size:.95rem;font-weight:600;color:var(--text-section);">Aspects techniques</span>
+    </div>
+    <p class="field-help">Y a-t-il des contraintes techniques ? Nouveau progiciel ? Nouveaux équipements ? Réseau ? Compétences internes ?</p>
+    <textarea class="field-textarea" id="technique" placeholder="Décrivez les contraintes techniques…"></textarea>
+  </div>
+
+  <!-- ── Section 6 : Ressources ── -->
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+      <span class="section-num">6</span>
+      <span style="font-size:.95rem;font-weight:600;color:var(--text-section);">Ressources</span>
+    </div>
+    <p class="field-help">Définir le besoin en ressources (qui, quand, combien de temps, expertise) pour délivrer le projet dans les délais.</p>
+    <textarea class="field-textarea" id="ressources" placeholder="Décrivez les ressources nécessaires…"></textarea>
+  </div>
+
+  <!-- ── Section 6b : Risques identifiés ── -->
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+      <span class="section-num" style="background:#fef2f2;color:#ef4444;">R</span>
+      <span style="font-size:.95rem;font-weight:600;color:var(--text-section);">Risques identifiés</span>
+    </div>
+    <p class="field-help">Listez les risques connus (1 par ligne). Ex : Dépassement budgétaire, Manque de ressources, Résistance au changement…</p>
+    <textarea class="field-textarea" id="risques" placeholder="Un risque par ligne…" style="min-height:100px;"></textarea>
+  </div>
+
+  <!-- ── Section 7 : Jalons ── -->
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="section-num">7</span>
+        <span style="font-size:.95rem;font-weight:600;color:var(--text-section);">Jalons &amp; Planning</span>
+      </div>
+      <button onclick="addJalonRow()" style="display:inline-flex;align-items:center;gap:5px;background:var(--bg-btn-save);color:var(--text-btn-save);border:none;border-radius:8px;padding:6px 12px;font-size:.78rem;font-weight:600;cursor:pointer;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Ajouter un jalon
+      </button>
+    </div>
+    <p class="field-help" style="margin-left:0;margin-bottom:12px;">Renseignez chaque phase/jalon avec sa date cible et une description. Ces données alimentent la charte de projet.</p>
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th class="hist-th" style="width:34%;">Jalon / Phase</th>
+            <th class="hist-th" style="width:18%;">Date cible</th>
+            <th class="hist-th">Description / Livrable</th>
+            <th class="hist-th no-print" style="width:32px;"></th>
+          </tr>
+        </thead>
+        <tbody id="jalons-body">
+          <tr>
+            <td class="hist-td"><input class="hist-input" type="text" placeholder="Ex : Lancement" /></td>
+            <td class="hist-td"><input class="hist-input" type="date" /></td>
+            <td class="hist-td"><input class="hist-input" type="text" placeholder="Description du livrable" /></td>
+            <td class="hist-td no-print" style="text-align:center;"><button onclick="removeRow(this)" style="background:none;border:none;cursor:pointer;color:#cbd5e1;font-size:.9rem;" onmouseover="this.style.color='#f87171'" onmouseout="this.style.color='#cbd5e1'">✕</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Section 8 : Budget ── -->
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+      <span class="section-num">8</span>
+      <span style="font-size:.95rem;font-weight:600;color:var(--text-section);">Budget</span>
+    </div>
+    <p class="field-help">Montant des investissements, prestataires, hébergement, coût des ressources, maintenance, licences, éléments techniques, etc.</p>
+    <textarea class="field-textarea" id="budget" placeholder="Décrivez le budget du projet…"></textarea>
+  </div>
+
+  <!-- ── Barre d'actions ── -->
+  <div class="action-bar no-print">
+    <div id="save-toast" class="save-toast">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      Sauvegardé
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn-save" onclick="exportJsonFile()" title="Exporter les données CDC en JSON pour les réimporter">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export JSON
+      </button>
+      <button class="btn-save" onclick="saveData()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Sauvegarder
+      </button>
+      <button class="btn-export" onclick="window.print()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Exporter en PDF
+      </button>
+      <button class="btn-charter" onclick="openCharter()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        Générer la Charte Projet
+      </button>
+    </div>
+  </div>
+
+</div><!-- /max-width wrapper -->
+
+<div id="print-view"></div>
+
+<script>
+  const FIELDS = [
+    'nom_projet','reference','chef_projet','service','sponsor','date_debut',
+    'contexte','objectifs','perimetre','fonctionnel',
+    'technique','ressources','risques','budget'
+  ];
+  const STORAGE_KEY = 'cdc_data_v2';
+  let _logoDataUrl = null;
+
+  // Données injectées depuis le fichier serveur (remplacé par Python au chargement)
+  const _CDC_FILE_DATA = null;
+
+  function handleLogo(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      _logoDataUrl = e.target.result;
+      document.getElementById('logo_img').src = _logoDataUrl;
+      document.getElementById('logo_preview').style.display = 'flex';
+      document.getElementById('logo_preview').style.alignItems = 'center';
+      saveData();
+    };
+    reader.readAsDataURL(file);
+  }
+  function clearLogo() {
+    _logoDataUrl = null;
+    document.getElementById('logo_preview').style.display = 'none';
+    document.getElementById('logo_upload').value = '';
+    saveData();
+  }
+
+  function saveData() {
+    const data = {};
+    FIELDS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) data[id] = el.value;
+    });
+    // Historique
+    const rows = [];
+    document.querySelectorAll('#history-body tr').forEach(tr => {
+      const inputs = tr.querySelectorAll('input');
+      rows.push(Array.from(inputs).map(i => i.value));
+    });
+    data.history = rows;
+    // Jalons
+    const jalons = [];
+    document.querySelectorAll('#jalons-body tr').forEach(tr => {
+      const inputs = tr.querySelectorAll('input');
+      jalons.push(Array.from(inputs).map(i => i.value));
+    });
+    data.jalons = jalons;
+    if (_logoDataUrl) data.logo = _logoDataUrl;
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+    // Toast
+    const t = document.getElementById('save-toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  function loadData() {
+    let raw;
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch(e) {}
+
+    // Si localStorage vide, utiliser les données injectées depuis le fichier serveur
+    let data;
+    if (!raw && _CDC_FILE_DATA) {
+      data = _CDC_FILE_DATA;
+    } else {
+      if (!raw) return;
+      try { data = JSON.parse(raw); } catch(e) { return; }
+    }
+    FIELDS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && data[id] !== undefined) el.value = data[id];
+    });
+    if (Array.isArray(data.history) && data.history.length) {
+      const tbody = document.getElementById('history-body');
+      tbody.innerHTML = '';
+      data.history.forEach(row => addHistoryRow(row));
+    }
+    if (Array.isArray(data.jalons) && data.jalons.length) {
+      const jbody = document.getElementById('jalons-body');
+      jbody.innerHTML = '';
+      data.jalons.forEach(row => addJalonRow(row));
+    }
+    if (data.logo) {
+      _logoDataUrl = data.logo;
+      document.getElementById('logo_img').src = data.logo;
+      document.getElementById('logo_preview').style.display = 'flex';
+      document.getElementById('logo_preview').style.alignItems = 'center';
+    }
+  }
+
+  function sortJalons() {
+    const tbody = document.getElementById('jalons-body');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.sort((a, b) => {
+      const da = a.querySelectorAll('input')[1].value;
+      const db = b.querySelectorAll('input')[1].value;
+      if (!da && !db) return 0;
+      if (!da) return 1;
+      if (!db) return -1;
+      return da < db ? -1 : da > db ? 1 : 0;
+    });
+    rows.forEach(tr => tbody.appendChild(tr));
+  }
+
+  function addJalonRow(values) {
+    const v = Array.isArray(values) ? values : ['','',''];
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="hist-td"><input class="hist-input" type="text" value="${esc(v[0])}" placeholder="Ex : Lancement" /></td>
+      <td class="hist-td"><input class="hist-input" type="date" value="${esc(v[1])}" onchange="sortJalons();saveData();" /></td>
+      <td class="hist-td"><input class="hist-input" type="text" value="${esc(v[2])}" placeholder="Description du livrable" /></td>
+      <td class="hist-td no-print" style="text-align:center;"><button onclick="removeRow(this)" style="background:none;border:none;cursor:pointer;color:#cbd5e1;font-size:.9rem;" onmouseover="this.style.color='#f87171'" onmouseout="this.style.color='#cbd5e1'">✕</button></td>
+    `;
+    document.getElementById('jalons-body').appendChild(tr);
+    if (v[1]) sortJalons();
+  }
+
+  function addHistoryRow(values) {
+    const v = Array.isArray(values) ? values : ['','','',''];
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="hist-td"><input class="hist-input" type="text" value="${esc(v[0])}" placeholder="1.0" /></td>
+      <td class="hist-td"><input class="hist-input" type="text" value="${esc(v[1])}" placeholder="Auteur" /></td>
+      <td class="hist-td"><input class="hist-input" type="text" value="${esc(v[2])}" placeholder="Description" /></td>
+      <td class="hist-td"><input class="hist-input" type="date" value="${esc(v[3])}" /></td>
+      <td class="hist-td no-print" style="text-align:center;">
+        <button onclick="removeRow(this)" style="background:none;border:none;cursor:pointer;color:#cbd5e1;font-size:.9rem;" onmouseover="this.style.color='#f87171'" onmouseout="this.style.color='#cbd5e1'">✕</button>
+      </td>
+    `;
+    document.getElementById('history-body').appendChild(tr);
+  }
+
+  function removeRow(btn) { btn.closest('tr').remove(); saveData(); }
+
+  function esc(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // ── Génération de la Charte Projet ────────────────────────────────────────
+  function escH(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function bulletItems(text) {
+    if (!text || !text.trim()) return '<p style="color:#94a3b8;">—</p>';
+    return text.split('\n').filter(l=>l.trim())
+      .map(l=>`<div class="bitem"><span class="bitem-dot"></span><span class="bitem-text">${escH(l.trim())}</span></div>`).join('');
+  }
+
+  function numberedItems(text) {
+    if (!text || !text.trim()) return '<p style="color:#94a3b8;">—</p>';
+    return text.split('\n').filter(l=>l.trim())
+      .map((l,i)=>`<div class="nitem"><span class="nitem-num">${i+1}</span><span class="nitem-text">${escH(l.trim())}</span></div>`).join('');
+  }
+
+  function jalonRows() {
+    const rows = [];
+    document.querySelectorAll('#jalons-body tr').forEach(tr => {
+      const inputs = tr.querySelectorAll('input');
+      const v = Array.from(inputs).map(i => i.value.trim());
+      if (v[0] || v[1] || v[2]) {
+        let dateStr = v[1] ? new Date(v[1]).toLocaleDateString('fr-FR') : '';
+        rows.push(`<tr><td>${escH(v[0]||'—')}</td><td>${escH(dateStr||'—')}</td><td>${escH(v[2]||'')}</td></tr>`);
+      }
+    });
+    return rows.length ? rows.join('') : '<tr><td colspan="3" style="color:#94a3b8;text-align:center;">Aucun jalon renseigné</td></tr>';
+  }
+
+  function openCharter() {
+    const get = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+    const d = {
+      nom:         get('nom_projet'),
+      reference:   get('reference'),
+      chef:        get('chef_projet'),
+      service:     get('service'),
+      sponsor:     get('sponsor'),
+      contexte:    get('contexte'),
+      objectifs:   get('objectifs'),
+      perimetre:   get('perimetre'),
+      fonctionnel: get('fonctionnel'),
+      technique:   get('technique'),
+      ressources:  get('ressources'),
+      risques:     get('risques'),
+      budget:      get('budget'),
+    };
+    const today = new Date().toLocaleDateString('fr-FR');
+    const tv = s => escH(s || '—');
+    const logoHtml = _logoDataUrl
+      ? `<img src="${_logoDataUrl}" style="max-height:64px;max-width:140px;object-fit:contain;" />`
+      : `<div style="width:56px;height:56px;border:2px dashed #475569;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.55rem;color:#64748b;text-align:center;line-height:1.3;">Logo</div>`;
+
+    const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<title>Charte de Projet — ${escH(d.nom||'Sans titre')}</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{font-family:'Inter',sans-serif;box-sizing:border-box;margin:0;padding:0;}
+body{background:#fff;color:#1e293b;font-size:11px;line-height:1.5;}
+.page{max-width:900px;margin:0 auto;padding:0 28px 40px;}
+.print-bar{background:#f8fafc;border-bottom:1px solid #e2e8f0;padding:9px 20px;display:flex;justify-content:space-between;align-items:center;}
+.pbtn{display:inline-flex;align-items:center;gap:5px;border:none;border-radius:7px;padding:6px 14px;font-size:11px;font-weight:600;cursor:pointer;}
+.pbtn-print{background:#1e293b;color:#fff;}.pbtn-print:hover{background:#0f172a;}
+.pbtn-close{background:#f1f5f9;color:#475569;}.pbtn-close:hover{background:#e2e8f0;}
+/* Header */
+.hdr{display:flex;justify-content:space-between;align-items:flex-start;padding:28px 0 18px;border-bottom:3px solid #1e293b;margin-bottom:20px;}
+.hdr-left h1{font-size:22px;font-weight:800;color:#0f172a;letter-spacing:-.4px;}
+.hdr-left p{font-size:10px;color:#64748b;margin-top:4px;max-width:480px;line-height:1.6;}
+.hdr-meta{display:flex;gap:20px;margin-top:12px;flex-wrap:wrap;}
+.hm-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;}
+.hm-value{font-size:11px;font-weight:600;color:#1e293b;margin-top:2px;}
+/* Sections */
+.section{margin-bottom:18px;}
+.sec-title{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#475569;border-bottom:1.5px solid #e2e8f0;padding-bottom:5px;margin-bottom:10px;}
+.sec-title-accent{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#1e293b;border-left:3px solid #1e293b;padding-left:8px;margin-bottom:10px;}
+/* Grid */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px;}
+/* Content */
+.content-box{background:#f8fafc;border:1px solid #e9eef5;border-radius:8px;padding:12px 14px;}
+.content-text{font-size:10.5px;color:#374151;line-height:1.65;}
+/* Lists */
+.bitem{display:flex;gap:7px;margin-bottom:5px;align-items:flex-start;}
+.bitem-dot{width:5px;height:5px;background:#94a3b8;border-radius:50%;margin-top:5px;flex-shrink:0;}
+.bitem-text{font-size:10.5px;color:#374151;line-height:1.55;}
+.nitem{display:flex;gap:8px;margin-bottom:5px;align-items:flex-start;}
+.nitem-num{width:18px;height:18px;background:#1e293b;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;flex-shrink:0;margin-top:1px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+.nitem-text{font-size:10.5px;color:#374151;line-height:1.55;}
+/* Table */
+table{width:100%;border-collapse:collapse;font-size:10.5px;}
+thead th{background:#f1f5f9;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;padding:7px 10px;border:1px solid #e2e8f0;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+tbody td{padding:7px 10px;border:1px solid #e9eef5;color:#374151;vertical-align:top;}
+tbody tr:nth-child(even) td{background:#fafbfc;}
+.td-label{font-weight:600;color:#1e293b;background:#f8fafc!important;font-size:10px;}
+/* Signatures */
+.sig-box{border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;}
+.sig-role{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;margin-bottom:4px;}
+.sig-name{font-size:11px;font-weight:700;color:#1e293b;margin-bottom:28px;}
+.sig-line{border-top:1px dashed #cbd5e1;margin-bottom:5px;}
+.sig-footer{font-size:8.5px;color:#94a3b8;}
+/* Footer */
+.footer{border-top:1px solid #e2e8f0;padding-top:10px;margin-top:24px;display:flex;justify-content:space-between;}
+.footer-txt{font-size:8.5px;color:#94a3b8;}
+@media print{.print-bar{display:none!important;}*{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+</style>
+</head>
+<body>
+<div class="print-bar">
+  <span style="font-size:10px;color:#64748b;">Charte de Projet · ${escH(d.nom||'Sans titre')} · ${today}</span>
+  <div style="display:flex;gap:8px;">
+    <button class="pbtn pbtn-close" onclick="window.close()">✕ Fermer</button>
+    <button class="pbtn pbtn-print" onclick="window.print()">🖨 Imprimer / PDF</button>
+  </div>
+</div>
+<div class="page">
+<!-- EN-TÊTE -->
+<div class="hdr">
+  <div class="hdr-left">
+    <h1>Charte de Projet</h1>
+    <p>Ce document officialise les objectifs, le périmètre et les engagements du projet.<br>Il doit être approuvé et signé par toutes les parties prenantes avant le démarrage.</p>
+    <div class="hdr-meta">
+      <div><div class="hm-label">Projet</div><div class="hm-value">${tv(d.nom)}</div></div>
+      <div><div class="hm-label">Référence</div><div class="hm-value">${tv(d.reference)}</div></div>
+      <div><div class="hm-label">Date d'émission</div><div class="hm-value">${today}</div></div>
+    </div>
+  </div>
+  <div>${logoHtml}</div>
+</div>
+<!-- INFOS CLÉS -->
+<div class="grid3">
+  <div class="content-box"><div class="sec-title">Chef de Projet</div><div style="font-size:12px;font-weight:600;color:#1e293b;">${tv(d.chef)}</div><div style="font-size:10px;color:#64748b;margin-top:2px;">${tv(d.service)}</div></div>
+  <div class="content-box"><div class="sec-title">Sponsor</div><div style="font-size:12px;font-weight:600;color:#1e293b;">${tv(d.sponsor)}</div><div style="font-size:10px;color:#64748b;margin-top:2px;">Commanditaire du projet</div></div>
+  <div class="content-box"><div class="sec-title">Référence stratégique</div><div style="font-size:12px;font-weight:600;color:#1e293b;">${tv(d.reference)}</div><div style="font-size:10px;color:#64748b;margin-top:2px;">${tv(d.service)}</div></div>
+</div>
+<!-- CONTEXTE -->
+<div class="section"><div class="sec-title-accent">Contexte du projet</div><div class="content-box"><div class="content-text">${escH(d.contexte||'—').replace(/\n/g,'<br>')}</div></div></div>
+<!-- OBJECTIFS -->
+<div class="section"><div class="sec-title-accent">Objectifs</div><div class="content-box">${bulletItems(d.objectifs)}</div></div>
+<!-- PERIMETRE + LIVRABLES -->
+<div class="grid2">
+  <div class="section"><div class="sec-title-accent">Périmètre</div><div class="content-box">${bulletItems(d.perimetre)}</div></div>
+  <div class="section"><div class="sec-title-accent">Livrables attendus</div><div class="content-box">${numberedItems(d.fonctionnel)}</div></div>
+</div>
+<!-- RISQUES + CONTRAINTES -->
+<div class="grid2">
+  <div class="section"><div class="sec-title-accent">Risques identifiés</div><div class="content-box">${numberedItems(d.risques)}</div></div>
+  <div class="section"><div class="sec-title-accent">Contraintes techniques</div><div class="content-box">${numberedItems(d.technique)}</div></div>
+</div>
+<!-- RESSOURCES + BUDGET -->
+<div class="grid2">
+  <div class="section"><div class="sec-title-accent">Ressources</div><div class="content-box">${bulletItems(d.ressources)}</div></div>
+  <div class="section"><div class="sec-title-accent">Budget</div><div class="content-box">${bulletItems(d.budget)}</div></div>
+</div>
+<!-- JALONS -->
+<div class="section">
+  <div class="sec-title-accent">Jalons &amp; Planning</div>
+  <table><thead><tr><th style="width:35%">Jalon / Phase</th><th style="width:18%">Date cible</th><th>Description / Livrable</th></tr></thead>
+  <tbody>${jalonRows()}</tbody></table>
+</div>
+<!-- COMITE DE VALIDATION -->
+<div class="section">
+  <div class="sec-title-accent">Comité de validation</div>
+  <table><thead><tr><th style="width:30%">Rôle</th><th style="width:35%">Nom</th><th>Organisation</th></tr></thead>
+  <tbody>
+    <tr><td class="td-label">Chef de Projet</td><td>${tv(d.chef)}</td><td>${tv(d.service)}</td></tr>
+    <tr><td class="td-label">Sponsor</td><td>${tv(d.sponsor)}</td><td>${tv(d.service)}</td></tr>
+    <tr><td class="td-label">Représentant MOA</td><td>—</td><td>—</td></tr>
+    <tr><td class="td-label">Responsable Technique</td><td>—</td><td>—</td></tr>
+  </tbody></table>
+</div>
+<!-- SIGNATURES -->
+<div class="section">
+  <div class="sec-title-accent">Approbation &amp; Signatures</div>
+  <p style="font-size:10px;color:#64748b;margin-bottom:14px;">En signant ce document, les soussignés confirment avoir pris connaissance du projet et s'engagent à soutenir sa réalisation dans le cadre défini.</p>
+  <div class="grid3">
+    <div class="sig-box"><div class="sig-role">Chef de Projet</div><div class="sig-name">${tv(d.chef)}</div><div class="sig-line"></div><div class="sig-footer">Signature &nbsp;|&nbsp; Date : ___/___/______</div></div>
+    <div class="sig-box"><div class="sig-role">Sponsor</div><div class="sig-name">${tv(d.sponsor)}</div><div class="sig-line"></div><div class="sig-footer">Signature &nbsp;|&nbsp; Date : ___/___/______</div></div>
+    <div class="sig-box"><div class="sig-role">Représentant Direction / MOA</div><div class="sig-name">___________________________</div><div class="sig-line"></div><div class="sig-footer">Signature &nbsp;|&nbsp; Date : ___/___/______</div></div>
+    <div class="sig-box"><div class="sig-role">Partie Prenante</div><div class="sig-name">___________________________</div><div class="sig-line"></div><div class="sig-footer">Signature &nbsp;|&nbsp; Date : ___/___/______</div></div>
+    <div class="sig-box"><div class="sig-role">Partie Prenante</div><div class="sig-name">___________________________</div><div class="sig-line"></div><div class="sig-footer">Signature &nbsp;|&nbsp; Date : ___/___/______</div></div>
+    <div class="sig-box"><div class="sig-role">Partie Prenante</div><div class="sig-name">___________________________</div><div class="sig-line"></div><div class="sig-footer">Signature &nbsp;|&nbsp; Date : ___/___/______</div></div>
+  </div>
+</div>
+<!-- FOOTER -->
+<div class="footer">
+  <span class="footer-txt">Charte de Projet · ${escH(d.nom||'—')} · ${escH(d.service||'—')}</span>
+  <span class="footer-txt">Générée le ${today} · Document confidentiel</span>
+</div>
+</div>
+</body>
+</html>`;
+
+    const w = window.open('', '_blank');
+    if (!w) { alert('Autorisez les popups pour générer la charte.'); return; }
+    w.document.write(html);
+    w.document.close();
+  }
+
+  function exportJsonFile() {
+    let raw;
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch(e) {}
+    if (!raw) {
+      alert('Aucune donnée à exporter. Sauvegardez d\'abord le CDC.');
+      return;
+    }
+    const blob = new Blob([raw], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'cahier_des_charges.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // Auto-sauvegarde à chaque saisie
+  let autoSaveTimer;
+  document.addEventListener('input', () => {
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(saveData, 800);
+  });
+
+  // ── Synchronisation thème Streamlit ─────────────────────────────────────
+  function applyTheme(dark) {
+    document.documentElement.classList.toggle('dark', dark);
+  }
+
+  // Calcule la luminance perçue à partir d'une chaîne rgb(...) ou #hex
+  function luminanceFromColor(str) {
+    if (!str) return null;
+    // Format rgb(r, g, b) ou rgba(r, g, b, a)
+    const rgb = str.match(/(\d+)[,\s]+(\d+)[,\s]+(\d+)/);
+    if (rgb) {
+      return 0.299 * parseInt(rgb[1]) + 0.587 * parseInt(rgb[2]) + 0.114 * parseInt(rgb[3]);
+    }
+    // Format #rrggbb
+    const hex = str.trim().replace('#','');
+    if (hex.length >= 6) {
+      return 0.299 * parseInt(hex.substring(0,2),16)
+           + 0.587 * parseInt(hex.substring(2,4),16)
+           + 0.114 * parseInt(hex.substring(4,6),16);
+    }
+    return null;
+  }
+
+  function detectStreamlitTheme() {
+    try {
+      const parentDoc  = window.parent.document;
+      const parentHtml = parentDoc.documentElement;
+
+      // 1. Attribut data-theme sur <html> (Streamlit récent)
+      const attr = parentHtml.getAttribute('data-theme');
+      if (attr) { applyTheme(attr === 'dark'); return; }
+
+      // 2. Variable CSS --background-color (définie par Streamlit sur :root)
+      const cssVar = window.parent.getComputedStyle(parentHtml)
+                          .getPropertyValue('--background-color').trim();
+      if (cssVar) {
+        const lum = luminanceFromColor(cssVar);
+        if (lum !== null) { applyTheme(lum < 128); return; }
+      }
+
+      // 3. Couleur de fond calculée du conteneur principal Streamlit
+      const targets = [
+        parentDoc.querySelector('[data-testid="stApp"]'),
+        parentDoc.body,
+        parentHtml,
+      ];
+      for (const el of targets) {
+        if (!el) continue;
+        const bg = window.parent.getComputedStyle(el).backgroundColor;
+        if (!bg || bg === 'transparent' || bg.includes('0, 0, 0, 0')) continue;
+        const lum = luminanceFromColor(bg);
+        if (lum !== null) { applyTheme(lum < 128); return; }
+      }
+    } catch(e) {}
+    // 4. Fallback OS
+    applyTheme(window.matchMedia('(prefers-color-scheme: dark)').matches);
+  }
+
+  // ── Détection en temps réel des changements de thème ──────────────────────
+  // Streamlit change le thème en modifiant des <style> dans <head> (pas un
+  // attribut), donc on observe childList sur <head> + attributs sur <html>/<body>
+  // + un polling léger comme filet de sécurité.
+
+  let _lastDark = null; // évite les mises à jour inutiles
+
+  function onThemeChange() {
+    try {
+      const parentDoc  = window.parent.document;
+      const parentHtml = parentDoc.documentElement;
+
+      let isDark = null;
+
+      // 1. data-theme
+      const attr = parentHtml.getAttribute('data-theme');
+      if (attr) { isDark = (attr === 'dark'); }
+
+      // 2. CSS var --background-color
+      if (isDark === null) {
+        const cssVar = window.parent.getComputedStyle(parentHtml)
+                            .getPropertyValue('--background-color').trim();
+        if (cssVar) {
+          const lum = luminanceFromColor(cssVar);
+          if (lum !== null) isDark = lum < 128;
+        }
+      }
+
+      // 3. backgroundColor de stApp / body / html
+      if (isDark === null) {
+        for (const el of [parentDoc.querySelector('[data-testid="stApp"]'), parentDoc.body, parentHtml]) {
+          if (!el) continue;
+          const bg = window.parent.getComputedStyle(el).backgroundColor;
+          if (!bg || bg === 'transparent' || bg.includes('0, 0, 0, 0')) continue;
+          const lum = luminanceFromColor(bg);
+          if (lum !== null) { isDark = lum < 128; break; }
+        }
+      }
+
+      // 4. Fallback OS
+      if (isDark === null) isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+      // N'appliquer que si changement réel
+      if (isDark !== _lastDark) { _lastDark = isDark; applyTheme(isDark); }
+    } catch(e) {}
+  }
+
+  // Observer attributes sur <html> (data-theme, class) et childList sur <head>
+  // pour capter l'injection de <style> par Streamlit
+  try {
+    const parentDoc = window.parent.document;
+    const attrObserver = new MutationObserver(onThemeChange);
+    attrObserver.observe(parentDoc.documentElement, {
+      attributes: true, attributeFilter: ['data-theme', 'class', 'style']
+    });
+    attrObserver.observe(parentDoc.body, {
+      attributes: true, attributeFilter: ['class', 'style']
+    });
+    const headObserver = new MutationObserver(onThemeChange);
+    headObserver.observe(parentDoc.head, { childList: true, subtree: true });
+  } catch(e) {}
+
+  // Polling léger (500 ms) : filet de sécurité pour les cas non capturés
+  setInterval(onThemeChange, 500);
+
+  // Media query OS
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', onThemeChange);
+
+  // Appel initial
+  onThemeChange();
+
+  // ── Export PDF — construction de la vue impression ──────────────────────────
+  function buildPrintView() {
+    const get = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+    const h   = s  => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const v   = s  => s || '—';
+
+    const nom       = get('nom_projet');
+    const ref       = get('reference');
+    const chef      = get('chef_projet');
+    const service   = get('service');
+    const sponsor   = get('sponsor');
+    const contexte  = get('contexte');
+    const objectifs = get('objectifs');
+    const perimetre = get('perimetre');
+    const fonct     = get('fonctionnel');
+    const tech      = get('technique');
+    const ressources= get('ressources');
+    const risques   = get('risques');
+    const budget    = get('budget');
+    const today     = new Date().toLocaleDateString('fr-FR');
+
+    const logoHtml  = _logoDataUrl
+      ? '<img src="' + _logoDataUrl + '" style="max-height:52px;max-width:110px;object-fit:contain;" />'
+      : '';
+
+    const textBlock = text => {
+      if (!text || !text.trim())
+        return '<div class="pv-text empty">—</div>';
+      return '<div class="pv-text"><pre style="font-family:inherit;font-size:10px;white-space:pre-wrap;line-height:1.65;margin:0;">'
+        + h(text) + '</pre></div>';
+    };
+
+    // Historique
+    let histRows = '';
+    document.querySelectorAll('#history-body tr').forEach(tr => {
+      const inp = tr.querySelectorAll('input');
+      const vals = Array.from(inp).map(i => i.value.trim());
+      const d = vals[3] ? new Date(vals[3]).toLocaleDateString('fr-FR') : '—';
+      histRows += '<tr>'
+        + '<td style="font-weight:700;color:#2563eb;-webkit-print-color-adjust:exact;print-color-adjust:exact;">' + h(v(vals[0])) + '</td>'
+        + '<td>' + h(v(vals[1])) + '</td>'
+        + '<td>' + h(v(vals[2])) + '</td>'
+        + '<td>' + h(d) + '</td></tr>';
+    });
+    if (!histRows) histRows = '<tr><td colspan="4" style="color:#94a3b8;text-align:center;padding:12px;">Aucune version renseignée</td></tr>';
+
+    // Jalons
+    let jalons = '';
+    document.querySelectorAll('#jalons-body tr').forEach(tr => {
+      const inp = tr.querySelectorAll('input');
+      const vals = Array.from(inp).map(i => i.value.trim());
+      if (vals[0] || vals[1] || vals[2]) {
+        const d = vals[1] ? new Date(vals[1]).toLocaleDateString('fr-FR') : '—';
+        jalons += '<tr>'
+          + '<td style="font-weight:600;color:#1e293b;">' + h(v(vals[0])) + '</td>'
+          + '<td style="color:#2563eb;font-weight:500;-webkit-print-color-adjust:exact;print-color-adjust:exact;">' + h(d) + '</td>'
+          + '<td>' + h(v(vals[2])) + '</td></tr>';
+      }
+    });
+    if (!jalons) jalons = '<tr><td colspan="3" style="color:#94a3b8;text-align:center;padding:12px;">Aucun jalon renseigné</td></tr>';
+
+    const snum = (n, cls) => '<div class="pv-section-num' + (cls ? ' '+cls : '') + '">' + n + '</div>';
+    const shdr = (n, title, cls) =>
+      '<div class="pv-section-header">' + snum(n, cls) + '<div class="pv-section-title">' + title + '</div></div>';
+
+    document.getElementById('print-view').innerHTML =
+      '<div class="pv-page">'
+
+      // ── EN-TÊTE ──────────────────────────────────────────────────────────
+      + '<div class="pv-header">'
+      +   '<div>'
+      +     '<div style="color:#475569;font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.15em;margin-bottom:5px;">Document de cadrage &nbsp;·&nbsp; Confidentiel</div>'
+      +     '<div style="color:#fff;font-size:21px;font-weight:800;letter-spacing:-.4px;line-height:1.1;">Cahier des Charges</div>'
+      +     '<div style="color:#3b82f6;font-size:13px;font-weight:600;margin-top:5px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">' + h(v(nom)) + '</div>'
+      +     '<div style="color:#64748b;font-size:8.5px;margin-top:8px;">Réf. ' + h(v(ref)) + ' &nbsp;·&nbsp; ' + today + '</div>'
+      +   '</div>'
+      +   '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">' + logoHtml + '</div>'
+      + '</div>'
+
+      // ── BANDE D'INFOS ─────────────────────────────────────────────────────
+      + '<div class="pv-info-strip">'
+      +   '<div class="pv-info-cell"><div class="pv-info-label">Chef de Projet</div><div class="pv-info-value">' + h(v(chef)) + '</div></div>'
+      +   '<div class="pv-info-cell"><div class="pv-info-label">Sponsor</div><div class="pv-info-value">' + h(v(sponsor)) + '</div></div>'
+      +   '<div class="pv-info-cell"><div class="pv-info-label">Service</div><div class="pv-info-value">' + h(v(service)) + '</div></div>'
+      +   '<div class="pv-info-cell"><div class="pv-info-label">Référence</div><div class="pv-info-value">' + h(v(ref)) + '</div></div>'
+      +   '<div class="pv-info-cell"><div class="pv-info-label">Date d\'édition</div><div class="pv-info-value">' + today + '</div></div>'
+      + '</div>'
+
+      // ── CONTENU ───────────────────────────────────────────────────────────
+      + '<div class="pv-content">'
+
+      // Historique des versions
+      + '<div class="pv-section">'
+      +   shdr('H', 'Historique des versions', 'hist')
+      +   '<table class="pv-table"><thead><tr>'
+      +     '<th style="width:72px;">Version</th><th style="width:130px;">Auteur</th><th>Description</th><th style="width:100px;">Date</th>'
+      +   '</tr></thead><tbody>' + histRows + '</tbody></table>'
+      + '</div>'
+
+      // 1. Contexte
+      + '<div class="pv-section">' + shdr('1','Contexte du projet') + textBlock(contexte) + '</div>'
+
+      // 2. Objectifs
+      + '<div class="pv-section">' + shdr('2','Objectifs du projet') + textBlock(objectifs) + '</div>'
+
+      // 3 + 4 (deux colonnes)
+      + '<div class="pv-grid2">'
+      +   '<div class="pv-section">' + shdr('3','Périmètre') + textBlock(perimetre) + '</div>'
+      +   '<div class="pv-section">' + shdr('4','Aspects fonctionnels') + textBlock(fonct) + '</div>'
+      + '</div>'
+
+      // 5. Technique
+      + '<div class="pv-section">' + shdr('5','Aspects techniques') + textBlock(tech) + '</div>'
+
+      // 6 + R (deux colonnes)
+      + '<div class="pv-grid2">'
+      +   '<div class="pv-section">' + shdr('6','Ressources') + textBlock(ressources) + '</div>'
+      +   '<div class="pv-section">' + shdr('R','Risques identifiés','risk') + textBlock(risques) + '</div>'
+      + '</div>'
+
+      // 7. Jalons
+      + '<div class="pv-section">'
+      +   shdr('7','Jalons &amp; Planning')
+      +   '<table class="pv-table"><thead><tr>'
+      +     '<th style="width:35%;">Jalon / Phase</th><th style="width:18%;">Date cible</th><th>Description / Livrable</th>'
+      +   '</tr></thead><tbody>' + jalons + '</tbody></table>'
+      + '</div>'
+
+      // 8. Budget
+      + '<div class="pv-section">' + shdr('8','Budget') + textBlock(budget) + '</div>'
+
+      // Pied de page
+      + '<div class="pv-footer">'
+      +   '<span>Cahier des Charges &nbsp;·&nbsp; ' + h(v(nom)) + ' &nbsp;·&nbsp; ' + h(v(service)) + '</span>'
+      +   '<span>Généré le ' + today + ' &nbsp;·&nbsp; Document confidentiel</span>'
+      + '</div>'
+
+      + '</div>' // /pv-content
+      + '</div>'; // /pv-page
+  }
+
+  window.addEventListener('beforeprint', buildPrintView);
+  window.addEventListener('afterprint', () => {
+    const pv = document.getElementById('print-view');
+    if (pv) pv.innerHTML = '';
+  });
+
+  loadData();
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+﻿Identifiant,Description,Catégorie,Probabilité,Impact,Priorité,Responsable,Atténuation,Statut
+Ressources humaines,Risque de pénurie de personnel qualifié,Ressources humaines,Moyenne,Élevé,2,x,Plan de recrutement et formation continue,Fermé
+Législation,Risque de non-conformité aux réglementations en vigueur,Conformité,Faible,Élevé,3,x,Veille réglementaire et audits réguliers,Ouvert
+Scope Creep,Risque de dérive du périmètre du projet,Scope,Moyenne,Moyen,2,x,Contrôle strict des changements de périmètre,Ouvert
+Communication,Risque de mauvaise communication entre les parties prenantes,Communication,Moyenne,Moyen,2,x,Plan de communication clair et réunions régulières,Ouvert
+Qualité des livrables,Risque de livrables ne répondant pas aux standards de qualité,Qualité,Moyenne,Élevé,2,x,Processus de revue et tests rigoureux,Ouvert
+Technologie incompatible,Risque d'incompatibilité des technologies utilisées,Technologie,Faible,Moyen,3,x,Évaluation technologique et tests de compatibilité,Ouvert
+Resistance au changement,Risque de résistance des employés aux changements,Changement,Élevée,Moyen,1,x,Plan de gestion du changement (communication) et formation,Ouvert
