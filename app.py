@@ -11,6 +11,9 @@ import uuid
 import json
 import io
 import zipfile
+import hashlib
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 from datetime import date
 
@@ -22,6 +25,87 @@ CDC_JSON_PATH   = DATA_DIR / "cahier_des_charges.json"
 EQUIPE_CSV_PATH = DATA_DIR / "equipe_completions.csv"
 # Création automatique du dossier data/ si absent (premier lancement)
 DATA_DIR.mkdir(exist_ok=True)
+
+
+# ── Serveur HTTP local pour la sauvegarde du CDC ─────────────────────────────
+class _CDCSaveHandler(BaseHTTPRequestHandler):
+    def _cors(self):
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self._cors()
+        self.end_headers()
+
+    def do_GET(self):
+        if self.path == "/cdc_version":
+            try:
+                raw = CDC_JSON_PATH.read_bytes() if CDC_JSON_PATH.exists() else b""
+                body = hashlib.sha256(raw).hexdigest()[:16].encode()
+            except Exception:
+                body = b"error"
+            self.send_response(200)
+            self._cors()
+            self.send_header("Content-Type", "text/plain")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        elif self.path == "/cdc_data":
+            try:
+                body = CDC_JSON_PATH.read_bytes() if CDC_JSON_PATH.exists() else b"null"
+            except Exception:
+                body = b"null"
+            self.send_response(200)
+            self._cors()
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        else:
+            self.send_response(404)
+            self._cors()
+            self.end_headers()
+
+    def do_POST(self):
+        if self.path == "/save_cdc":
+            length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(length)
+            try:
+                data = json.loads(body)
+                CDC_JSON_PATH.write_text(
+                    json.dumps(data, ensure_ascii=False, indent=2),
+                    encoding="utf-8",
+                )
+                self.send_response(200)
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(b"OK")
+            except Exception as exc:
+                self.send_response(500)
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(str(exc).encode())
+        else:
+            self.send_response(404)
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+
+    def log_message(self, format, *args):  # noqa: A002
+        pass  # silence les logs console
+
+
+@st.cache_resource
+def _get_cdc_save_port() -> int:
+    """Démarre le serveur HTTP CDC une seule fois et retourne son port."""
+    try:
+        srv = HTTPServer(("127.0.0.1", 0), _CDCSaveHandler)
+        port = srv.server_address[1]
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        return port
+    except Exception:
+        return 0
 
 
 def sauvegarder():
@@ -163,32 +247,6 @@ IMPORTANCES = ["Faible", "Moyenne", "Élevée", "Critique"]
 TACHE_COLONNES = ["id", "Nom", "Description", "Importance", "Avancement", "Assigné", "Jalon"]
 EQUIPE_COLONNES = ["id", "Collaborateur", "Poste", "Manager", "Numéro", "Email"]
 
-# MOCK_TACHES = [
-MOCK_TACHES = [
-    {"id": str(uuid.uuid4()), "Nom": "Rédiger le cahier des charges",
-    "Description": "Formaliser les exigences fonctionnelles et techniques",
-    "Importance": "Élevée", "Avancement": 75, "Assigné": "x", "Jalon": ""},
-    {"id": str(uuid.uuid4()), "Nom": "Valider le budget prévisionnel",
-    "Description": "Revue et approbation du budget par la direction",
-    "Importance": "Critique", "Avancement": 30, "Assigné": "x", "Jalon": ""},
-    {"id": str(uuid.uuid4()), "Nom": "Planifier les sprints",
-    "Description": "Découpage du backlog en itérations de 2 semaines",
-    "Importance": "Moyenne", "Avancement": 50, "Assigné": "x", "Jalon": ""},
-    {"id": str(uuid.uuid4()), "Nom": "Configurer l'environnement CI/CD",
-    "Description": "Mise en place du pipeline d'intégration continue",
-    "Importance": "Élevée", "Avancement": 10, "Assigné": "x", "Jalon": ""},
-    {"id": str(uuid.uuid4()), "Nom": "Former l'équipe aux outils",
-    "Description": "Sessions de formation sur les nouveaux outils projet",
-    "Importance": "Faible", "Avancement": 100, "Assigné": "x", "Jalon": ""},
-]
-
-MOCK_EQUIPE = [
-    {"id": str(uuid.uuid4()), "Collaborateur": "Aline Martin", "Poste": "Cheffe de projet", "Manager": "", "Numéro": "06 11 22 33 44", "Email": "aline.martin@entreprise.fr"},
-    {"id": str(uuid.uuid4()), "Collaborateur": "Yanis Dupont", "Poste": "Lead technique", "Manager": "Aline Martin", "Numéro": "06 22 33 44 55", "Email": "yanis.dupont@entreprise.fr"},
-    {"id": str(uuid.uuid4()), "Collaborateur": "Sarah El Idrissi", "Poste": "Business analyst", "Manager": "Aline Martin", "Numéro": "06 33 44 55 66", "Email": "sarah.elidrissi@entreprise.fr"},
-    {"id": str(uuid.uuid4()), "Collaborateur": "Lucas Bernard", "Poste": "Développeur", "Manager": "Yanis Dupont", "Numéro": "06 44 55 66 77", "Email": "lucas.bernard@entreprise.fr"},
-]
-
 if "taches" not in st.session_state:
     if TACHES_CSV_PATH.exists():
         df_t = pd.read_csv(TACHES_CSV_PATH, encoding="utf-8-sig")
@@ -197,7 +255,7 @@ if "taches" not in st.session_state:
             df_t["Jalon"] = ""
         st.session_state.taches = df_t[[c for c in TACHE_COLONNES if c in df_t.columns or c == "id"]]
     else:
-        st.session_state.taches = pd.DataFrame(MOCK_TACHES, columns=TACHE_COLONNES)
+        st.session_state.taches = pd.DataFrame(columns=TACHE_COLONNES)
         sauvegarder_taches()
 
 if "equipe" not in st.session_state:
@@ -209,7 +267,7 @@ if "equipe" not in st.session_state:
             if _col not in st.session_state.equipe.columns:
                 st.session_state.equipe[_col] = ""
     else:
-        st.session_state.equipe = pd.DataFrame(MOCK_EQUIPE, columns=EQUIPE_COLONNES)
+        st.session_state.equipe = pd.DataFrame(columns=EQUIPE_COLONNES)
         sauvegarder_equipe()
 
 # ── Sélection depuis le tableau ──────────────────────────────────────────────
@@ -610,7 +668,8 @@ with st.sidebar:
 
                 if restored:
                     st.success(f"Restauré : {', '.join(restored)}")
-                    st.rerun()
+                    # CSV : session_state déjà mis à jour, les tableaux s'actualisent à la prochaine interaction.
+                    # CDC : le polling dans l'iframe détecte le changement en ≤2 s.
                 else:
                     st.warning("Aucun fichier reconnu dans ce ZIP.")
         except Exception as exc:
@@ -1412,43 +1471,46 @@ if page_active == "Cahier des Charges":
     _cdc_path = Path(__file__).parent / "assets" / "cahier_des_charges.html"
     if _cdc_path.exists():
 
-        # ── Synchronisation fichier JSON ─────────────────────────────────
-        with st.expander("Synchronisation sauvegarde CDC", expanded=False):
-            col_up, col_dl = st.columns(2)
-            with col_up:
-                uploaded_cdc = st.file_uploader(
-                    "Charger un fichier JSON",
-                    type="json",
-                    key="cdc_json_upload",
-                    help="Importez un fichier cahier_des_charges.json pour pré-remplir le CDC."
-                )
-                if uploaded_cdc is not None:
-                    try:
-                        content = uploaded_cdc.read().decode("utf-8")
-                        json.loads(content)  # validation
-                        CDC_JSON_PATH.write_text(content, encoding="utf-8")
-                        st.success("Sauvegarde chargée — rechargez la page pour l'appliquer.")
-                    except Exception as _e:
-                        st.error(f"Fichier JSON invalide : {_e}")
-            with col_dl:
-                if CDC_JSON_PATH.exists():
-                    st.download_button(
-                        label="Télécharger la sauvegarde actuelle",
-                        data=CDC_JSON_PATH.read_bytes(),
-                        file_name="cahier_des_charges.json",
-                        mime="application/json",
-                        use_container_width=True,
-                    )
-                else:
-                    st.info("Aucune sauvegarde fichier disponible.")
+        # # ── Synchronisation fichier JSON ─────────────────────────────────
+        # with st.expander("Synchronisation sauvegarde CDC", expanded=False):
+        #     col_up, col_dl = st.columns(2)
+        #     with col_up:
+        #         uploaded_cdc = st.file_uploader(
+        #             "Charger un fichier JSON",
+        #             type="json",
+        #             key="cdc_json_upload",
+        #             help="Importez un fichier cahier_des_charges.json pour pré-remplir le CDC."
+        #         )
+        #         if uploaded_cdc is not None:
+        #             try:
+        #                 content = uploaded_cdc.read().decode("utf-8")
+        #                 json.loads(content)  # validation
+        #                 CDC_JSON_PATH.write_text(content, encoding="utf-8")
+        #                 st.success("Sauvegarde chargée.")
+        #                 st.rerun()
+        #             except Exception as _e:
+        #                 st.error(f"Fichier JSON invalide : {_e}")
+        #     with col_dl:
+        #         if CDC_JSON_PATH.exists():
+        #             st.download_button(
+        #                 label="Télécharger la sauvegarde actuelle",
+        #                 data=CDC_JSON_PATH.read_bytes(),
+        #                 file_name="cahier_des_charges.json",
+        #                 mime="application/json",
+        #                 use_container_width=True,
+        #             )
+        #         else:
+        #             st.info("Aucune sauvegarde fichier disponible.")
 
         # ── Injection des données fichier dans le HTML ───────────────────
         _cdc_initial = "null"
+        _cdc_sync_token = "0"
         if CDC_JSON_PATH.exists():
             try:
                 _raw = CDC_JSON_PATH.read_text(encoding="utf-8")
                 json.loads(_raw)          # valide le JSON avant injection
                 _cdc_initial = _raw
+                _cdc_sync_token = hashlib.sha256(_raw.encode("utf-8")).hexdigest()[:16]
             except Exception:
                 pass
 
@@ -1456,6 +1518,16 @@ if page_active == "Cahier des Charges":
         _cdc_html = _cdc_html.replace(
             "const _CDC_FILE_DATA = null;",
             f"const _CDC_FILE_DATA = {_cdc_initial};",
+            1,
+        )
+        _cdc_html = _cdc_html.replace(
+            "const _CDC_SYNC_TOKEN = '0';",
+            f"const _CDC_SYNC_TOKEN = '{_cdc_sync_token}';",
+            1,
+        )
+        _cdc_html = _cdc_html.replace(
+            "const _CDC_SAVE_PORT = 0;",
+            f"const _CDC_SAVE_PORT = {_get_cdc_save_port()};",
             1,
         )
         components.html(_cdc_html, height=2400, scrolling=True)
@@ -1911,6 +1983,10 @@ if page_active == "Aide Pilotage":
             )
     else:
         st.error("Le fichier Cahier-des-charges.docx est introuvable.")
+
+    st.markdown("---")
+    st.markdown("### Ressources en ligne")
+    st.markdown("- [Registre des risques : guide complet (Asana)](https://asana.com/fr/resources/risk-register)")
 
 st.markdown('<div class="page-bottom-spacing"></div>', unsafe_allow_html=True)
 

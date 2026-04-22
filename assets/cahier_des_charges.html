@@ -470,7 +470,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Export JSON
       </button>
-      <button class="btn-save" onclick="saveData()">
+      <button class="btn-save" onclick="saveDataManual()">
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
         Sauvegarder
       </button>
@@ -496,10 +496,13 @@
     'technique','ressources','risques','budget'
   ];
   const STORAGE_KEY = 'cdc_data_v2';
+  const STORAGE_SYNC_KEY = 'cdc_data_v2_sync_token';
   let _logoDataUrl = null;
 
   // Données injectées depuis le fichier serveur (remplacé par Python au chargement)
   const _CDC_FILE_DATA = null;
+  const _CDC_SYNC_TOKEN = '0';
+  const _CDC_SAVE_PORT = 0;
 
   function handleLogo(input) {
     const file = input.files[0];
@@ -543,34 +546,45 @@
     data.jalons = jalons;
     if (_logoDataUrl) data.logo = _logoDataUrl;
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+    // Sauvegarde vers le fichier serveur
+    if (typeof _CDC_SAVE_PORT !== 'undefined' && _CDC_SAVE_PORT > 0) {
+      try {
+        fetch('http://127.0.0.1:' + _CDC_SAVE_PORT + '/save_cdc', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        }).then(function() {
+          // Mettre à jour la version connue : le polling ne recharge pas nos propres sauvegardes
+          return fetch('http://127.0.0.1:' + _CDC_SAVE_PORT + '/cdc_version');
+        }).then(function(r) { return r.text(); })
+          .then(function(v) { _knownVersion = v; })
+          .catch(function() {});
+      } catch(e) {}
+    }
     // Toast
     const t = document.getElementById('save-toast');
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2200);
   }
 
-  function loadData() {
-    let raw;
-    try { raw = localStorage.getItem(STORAGE_KEY); } catch(e) {}
+  // Sauvegarde manuelle: conserve la sauvegarde locale + déclenche une sync serveur.
+  function saveDataManual() {
+    saveData();
+    try { localStorage.setItem('cdc_manual_sync_token', String(Date.now())); } catch(e) {}
+  }
 
-    // Si localStorage vide, utiliser les données injectées depuis le fichier serveur
-    let data;
-    if (!raw && _CDC_FILE_DATA) {
-      data = _CDC_FILE_DATA;
-    } else {
-      if (!raw) return;
-      try { data = JSON.parse(raw); } catch(e) { return; }
-    }
+  function _applyData(data, version) {
+    if (!data) return;
     FIELDS.forEach(id => {
       const el = document.getElementById(id);
       if (el && data[id] !== undefined) el.value = data[id];
     });
-    if (Array.isArray(data.history) && data.history.length) {
+    if (Array.isArray(data.history)) {
       const tbody = document.getElementById('history-body');
       tbody.innerHTML = '';
       data.history.forEach(row => addHistoryRow(row));
     }
-    if (Array.isArray(data.jalons) && data.jalons.length) {
+    if (Array.isArray(data.jalons)) {
       const jbody = document.getElementById('jalons-body');
       jbody.innerHTML = '';
       data.jalons.forEach(row => addJalonRow(row));
@@ -580,6 +594,35 @@
       document.getElementById('logo_img').src = data.logo;
       document.getElementById('logo_preview').style.display = 'flex';
       document.getElementById('logo_preview').style.alignItems = 'center';
+    }
+    if (version !== undefined) _knownVersion = version;
+  }
+
+  function loadData() {
+    // Priorité : serveur HTTP (toujours à jour). Fallback : localStorage.
+    if (typeof _CDC_SAVE_PORT !== 'undefined' && _CDC_SAVE_PORT > 0) {
+      Promise.all([
+        fetch('http://127.0.0.1:' + _CDC_SAVE_PORT + '/cdc_data').then(function(r) { return r.json(); }),
+        fetch('http://127.0.0.1:' + _CDC_SAVE_PORT + '/cdc_version').then(function(r) { return r.text(); })
+      ]).then(function(results) {
+        _applyData(results[0], results[1]);
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(results[0])); } catch(e) {}
+      }).catch(function() {
+        // Fallback localStorage si le serveur ne répond pas
+        let raw;
+        try { raw = localStorage.getItem(STORAGE_KEY); } catch(e) {}
+        if (raw) { try { _applyData(JSON.parse(raw)); } catch(e) {} }
+      });
+    } else {
+      // Pas de serveur : localStorage ou données injectées
+      let data = _CDC_FILE_DATA;
+      if (!data) {
+        let raw;
+        try { raw = localStorage.getItem(STORAGE_KEY); } catch(e) {}
+        if (!raw) return;
+        try { data = JSON.parse(raw); } catch(e) { return; }
+      }
+      _applyData(data);
     }
   }
 
@@ -854,6 +897,22 @@ tbody tr:nth-child(even) td{background:#fafbfc;}
     clearTimeout(autoSaveTimer);
     autoSaveTimer = setTimeout(saveData, 800);
   });
+
+  // ── Polling serveur : met à jour les champs si le fichier change ─────────
+  let _knownVersion = null;
+  function _pollServerVersion() {
+    if (typeof _CDC_SAVE_PORT === 'undefined' || _CDC_SAVE_PORT <= 0) return;
+    fetch('http://127.0.0.1:' + _CDC_SAVE_PORT + '/cdc_version')
+      .then(function(r) { return r.text(); })
+      .then(function(v) {
+        if (v === _knownVersion) return;  // pas de changement
+        fetch('http://127.0.0.1:' + _CDC_SAVE_PORT + '/cdc_data')
+          .then(function(r) { return r.json(); })
+          .then(function(data) { _applyData(data, v); })
+          .catch(function() {});
+      }).catch(function() {});
+  }
+  setInterval(_pollServerVersion, 2000);
 
   // ── Synchronisation thème Streamlit ─────────────────────────────────────
   function applyTheme(dark) {

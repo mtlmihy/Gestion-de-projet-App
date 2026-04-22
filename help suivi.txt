@@ -29,11 +29,16 @@ Sauvegardes :
 
 A faire  : 
     - Centraliser les sauvegardes ✓
+    - Bon fonctionnement des import des anciens fichier csv ✓
     - Revoir toute l'architecture ✓
-    - Commenter proprement le code
+    - Faire une vrai documentation ✓
+    - Faire la gestion des thèmes sur l'organigramme ✓
+    - Rajout lien d'aide ✓
+    - Json vers la iframe avec rafraichissement automatique ✓
+    - Importation/Exportation ✓
+    - Commenter proprement le code 
     - Nettoyer le code
     - Revoir le format des 2 export PDF
     - Gérer les zooms sur les pages 
     - Armoniser le projet de façon plus globale 
-    - Faire une vrai documentation ✓
-    - Faire la gestion des thèmes sur l'organigramme ✓
+    - Régler l'import du CDC avec le zip
