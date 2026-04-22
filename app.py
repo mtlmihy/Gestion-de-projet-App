@@ -1640,7 +1640,7 @@ if page_active == "Équipe":
                         return str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 
                     elems = []
-                    elems.append(f'<rect x="{panel_x}" y="{panel_y}" width="{panel_w}" height="{panel_h}" rx="20" fill="#d6d6d8"/>')
+                    elems.append(f'<rect class="org-panel" x="{panel_x}" y="{panel_y}" width="{panel_w}" height="{panel_h}" rx="20" fill="#d6d6d8"/>')
 
                     for parent, child in edges:
                         if parent not in pos or child not in pos:
@@ -1650,7 +1650,7 @@ if page_active == "Équipe":
                         x2 = pos[child][0] + node_w / 2
                         y2 = pos[child][1]
                         mid = (y1 + y2) / 2
-                        elems.append(f'<path d="M{x1},{y1} V{mid} H{x2} V{y2}" fill="none" stroke="#7c7c7c" stroke-width="1.5"/>')
+                        elems.append(f'<path class="org-edge" d="M{x1},{y1} V{mid} H{x2} V{y2}" fill="none" stroke="#7c7c7c" stroke-width="1.5"/>')
 
                     by_name = {n["name"]: n for n in nodes}
                     for n in names:
@@ -1660,7 +1660,7 @@ if page_active == "Équipe":
                         role_txt = _eh(data["role"] or "Poste")[:42]
                         phone_txt = _eh(data["phone"] or "Numéro non renseigné")[:42]
                         mail_txt = _eh(data["email"] or "Email non renseigné")[:42]
-                        elems.append(f'<rect x="{x}" y="{y}" width="{node_w}" height="{node_h}" rx="12" fill="#e8e2db" stroke="#7c7c7c" stroke-width="1.2"/>')
+                        elems.append(f'<rect class="org-node" x="{x}" y="{y}" width="{node_w}" height="{node_h}" rx="12" fill="#e8e2db" stroke="#7c7c7c" stroke-width="1.2"/>')
                         elems.append(f'<text x="{x + node_w/2}" y="{y + 26}" text-anchor="middle" font-size="13" font-weight="700" fill="#111">{name_txt}</text>')
                         elems.append(f'<text x="{x + node_w/2}" y="{y + 46}" text-anchor="middle" font-size="12" fill="#111">{role_txt}</text>')
                         elems.append(f'<text x="{x + node_w/2}" y="{y + 68}" text-anchor="middle" font-size="11" fill="#111">{phone_txt}</text>')
@@ -1675,14 +1675,49 @@ if page_active == "Équipe":
                     components.html(
                         f"""
                         <style>
-                          #org-wrap {{ width:100%; height:760px; border:1px solid #e2e8f0; border-radius:10px; background:#efefef; overflow:hidden; position:relative; }}
-                          #org-title {{ position:absolute; left:20px; top:10px; font:600 22px/1.2 'Segoe UI',sans-serif; letter-spacing:0.08em; color:#1f2937; z-index:10; }}
-                          #org-toolbar {{ position:absolute; top:12px; right:12px; z-index:10; display:flex; gap:6px; background:rgba(255,255,255,.92); border:1px solid #d1d5db; border-radius:8px; padding:6px; }}
-                          #org-toolbar button {{ border:1px solid #cbd5e1; background:#fff; border-radius:6px; padding:4px 8px; font-size:12px; cursor:pointer; }}
-                          #org-toolbar .zoom-label {{ min-width:52px; text-align:center; font-size:12px; color:#334155; line-height:24px; }}
+                          :root {{
+                            --org-bg: #efefef;
+                            --org-border: #e2e8f0;
+                            --org-panel: #d6d6d8;
+                            --org-node-bg: #e8e2db;
+                            --org-node-stroke: #7c7c7c;
+                            --org-edge: #7c7c7c;
+                            --org-text: #111111;
+                            --org-title-color: #1f2937;
+                            --org-toolbar-bg: rgba(255,255,255,.92);
+                            --org-toolbar-border: #d1d5db;
+                            --org-btn-bg: #fff;
+                            --org-btn-border: #cbd5e1;
+                            --org-zoom-color: #334155;
+                          }}
+                          :root.dark {{
+                            --org-bg: #0f172a;
+                            --org-border: #334155;
+                            --org-panel: #1e293b;
+                            --org-node-bg: #263348;
+                            --org-node-stroke: #475569;
+                            --org-edge: #64748b;
+                            --org-text: #f1f5f9;
+                            --org-title-color: #f1f5f9;
+                            --org-toolbar-bg: rgba(30,41,59,.95);
+                            --org-toolbar-border: #334155;
+                            --org-btn-bg: #1e293b;
+                            --org-btn-border: #475569;
+                            --org-zoom-color: #94a3b8;
+                          }}
+                          * {{ transition: background .25s, color .25s; }}
+                          #org-wrap {{ width:100%; height:760px; border:1px solid var(--org-border); border-radius:10px; background:var(--org-bg); overflow:hidden; position:relative; }}
+                          #org-title {{ position:absolute; left:20px; top:10px; font:600 22px/1.2 'Segoe UI',sans-serif; letter-spacing:0.08em; color:var(--org-title-color); z-index:10; }}
+                          #org-toolbar {{ position:absolute; top:12px; right:12px; z-index:10; display:flex; gap:6px; background:var(--org-toolbar-bg); border:1px solid var(--org-toolbar-border); border-radius:8px; padding:6px; }}
+                          #org-toolbar button {{ border:1px solid var(--org-btn-border); background:var(--org-btn-bg); color:var(--org-zoom-color); border-radius:6px; padding:4px 8px; font-size:12px; cursor:pointer; }}
+                          #org-toolbar .zoom-label {{ min-width:52px; text-align:center; font-size:12px; color:var(--org-zoom-color); line-height:24px; }}
                           #org-viewport {{ width:100%; height:100%; overflow:hidden; cursor:grab; user-select:none; position:relative; }}
                           #org-viewport.dragging {{ cursor:grabbing; }}
                           #org-canvas {{ transform-origin: 0 0; position:absolute; top:0; left:0; width:max-content; height:max-content; }}
+                          .org-panel {{ fill: var(--org-panel) !important; }}
+                          .org-node {{ fill: var(--org-node-bg) !important; stroke: var(--org-node-stroke) !important; }}
+                          .org-edge {{ stroke: var(--org-edge) !important; }}
+                          #org-canvas text {{ fill: var(--org-text) !important; }}
                         </style>
                         <div id="org-wrap">
                           <div id="org-title">ORGANIGRAMME DU PROJET</div>
@@ -1696,6 +1731,53 @@ if page_active == "Équipe":
                           <div id="org-viewport"><div id="org-canvas">{svg_markup}</div></div>
                         </div>
                         <script>
+                          function luminanceFromColor(str) {{
+                            if (!str) return null;
+                            const rgb = str.match(/(\\d+)[,\\s]+(\\d+)[,\\s]+(\\d+)/);
+                            if (rgb) return 0.299*parseInt(rgb[1])+0.587*parseInt(rgb[2])+0.114*parseInt(rgb[3]);
+                            const hex = str.trim().replace('#','');
+                            if (hex.length >= 6) return 0.299*parseInt(hex.substring(0,2),16)+0.587*parseInt(hex.substring(2,4),16)+0.114*parseInt(hex.substring(4,6),16);
+                            return null;
+                          }}
+                          function applyTheme(dark) {{
+                            document.documentElement.classList.toggle('dark', dark);
+                          }}
+                          let _lastDark = null;
+                          function onThemeChange() {{
+                            try {{
+                              const parentDoc  = window.parent.document;
+                              const parentHtml = parentDoc.documentElement;
+                              let isDark = null;
+                              const attr = parentHtml.getAttribute('data-theme');
+                              if (attr) {{ isDark = (attr === 'dark'); }}
+                              if (isDark === null) {{
+                                const cssVar = window.parent.getComputedStyle(parentHtml).getPropertyValue('--background-color').trim();
+                                if (cssVar) {{ const lum = luminanceFromColor(cssVar); if (lum !== null) isDark = lum < 128; }}
+                              }}
+                              if (isDark === null) {{
+                                for (const el of [parentDoc.querySelector('[data-testid="stApp"]'), parentDoc.body, parentHtml]) {{
+                                  if (!el) continue;
+                                  const bg = window.parent.getComputedStyle(el).backgroundColor;
+                                  if (!bg || bg === 'transparent' || bg.includes('0, 0, 0, 0')) continue;
+                                  const lum = luminanceFromColor(bg);
+                                  if (lum !== null) {{ isDark = lum < 128; break; }}
+                                }}
+                              }}
+                              if (isDark === null) isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                              if (isDark !== _lastDark) {{ _lastDark = isDark; applyTheme(isDark); }}
+                            }} catch(e) {{}}
+                          }}
+                          try {{
+                            const parentDoc = window.parent.document;
+                            const obs = new MutationObserver(onThemeChange);
+                            obs.observe(parentDoc.documentElement, {{attributes:true,attributeFilter:['data-theme','class','style']}});
+                            obs.observe(parentDoc.body, {{attributes:true,attributeFilter:['class','style']}});
+                            new MutationObserver(onThemeChange).observe(parentDoc.head, {{childList:true,subtree:true}});
+                          }} catch(e) {{}}
+                          setInterval(onThemeChange, 500);
+                          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', onThemeChange);
+                          onThemeChange();
+
                           (function() {{
                             const viewport = document.getElementById('org-viewport');
                             const canvas = document.getElementById('org-canvas');

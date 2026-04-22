@@ -1,9 +1,9 @@
 ﻿Collaborateur,Poste,Manager,Numéro,Email
-Jean DUPONT,Directeur Général,,,
-Sophie MARTIN,Directrice des Opérations,Jean DUPONT,,
+Jean DUPONT,Directeur Général,,1234567890.0,mathys.leoni@qiminfo.ch
+Sophie MARTIN,Directrice des Opérations,Jean DUPONT,1234567890.0,mathys.leoni@qiminfo.ch
 Mathys LEONI,Chef de projet,Sophie MARTIN,1234567890.0,mathys.leoni@qiminfo.ch
-Alice BERNARD,Développeuse Front-end,Mathys LEONI,,
-Lucas PETIT,Développeur Back-end,Mathys LEONI,,
-Emma MOREAU,UX Designer,Mathys LEONI,,
-Thomas DUBOIS,Responsable RH,Jean DUPONT,,
-Chloé GARCIA,Chargée de Recrutement,Thomas DUBOIS,,
+Alice BERNARD,Développeuse Front-end,Mathys LEONI,1234567890.0,mathys.leoni@qiminfo.ch
+Lucas PETIT,Développeur Back-end,Mathys LEONI,1234567890.0,mathys.leoni@qiminfo.ch
+Emma MOREAU,UX Designer,Mathys LEONI,1234567890.0,mathys.leoni@qiminfo.ch
+Thomas DUBOIS,Responsable RH,Jean DUPONT,1234567890.0,mathys.leoni@qiminfo.ch
+Chloé GARCIA,Chargée de Recrutement,Thomas DUBOIS,1234567890.0,mathys.leoni@qiminfo.ch

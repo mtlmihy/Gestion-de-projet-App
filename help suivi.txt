@@ -28,12 +28,12 @@ Sauvegardes :
     - Pour le cahier des charges les données sont dans un fichier json 
 
 A faire  : 
-    - Centraliser les sauvegardes
-    - Revoir toute l'architecture 
+    - Centraliser les sauvegardes ✓
+    - Revoir toute l'architecture ✓
     - Commenter proprement le code
     - Nettoyer le code
     - Revoir le format des 2 export PDF
     - Gérer les zooms sur les pages 
     - Armoniser le projet de façon plus globale 
-    - Faire une vrai documentation 
-    - Faire la gestion des thèmes sur 
+    - Faire une vrai documentation ✓
+    - Faire la gestion des thèmes sur l'organigramme ✓
