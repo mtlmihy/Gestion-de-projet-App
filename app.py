@@ -9,13 +9,19 @@ import streamlit.components.v1 as components
 import pandas as pd
 import uuid
 import json
+import io
+import zipfile
 from pathlib import Path
 from datetime import date
 
-CSV_PATH        = Path(__file__).parent / "registre_risques.csv"
-TACHES_CSV_PATH = Path(__file__).parent / "suivi_taches.csv"
-CDC_JSON_PATH   = Path(__file__).parent / "cahier_des_charges.json"
-EQUIPE_CSV_PATH = Path(__file__).parent / "equipe_completions.csv"
+DATA_DIR        = Path(__file__).parent / "data"
+ASSETS_DIR      = Path(__file__).parent / "assets"
+CSV_PATH        = DATA_DIR / "registre_risques.csv"
+TACHES_CSV_PATH = DATA_DIR / "suivi_taches.csv"
+CDC_JSON_PATH   = DATA_DIR / "cahier_des_charges.json"
+EQUIPE_CSV_PATH = DATA_DIR / "equipe_completions.csv"
+# Création automatique du dossier data/ si absent (premier lancement)
+DATA_DIR.mkdir(exist_ok=True)
 
 
 def sauvegarder():
@@ -31,6 +37,29 @@ def sauvegarder_taches():
 def sauvegarder_equipe():
     """Sauvegarde automatique du tableau équipe dans le fichier CSV local."""
     st.session_state.equipe.drop(columns=["id"]).to_csv(EQUIPE_CSV_PATH, index=False, encoding="utf-8-sig")
+
+
+def creer_zip_sauvegarde() -> bytes:
+    """Génère un ZIP en mémoire contenant tous les fichiers de données du projet."""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
+        # CSVs depuis le session_state (données les plus à jour)
+        zf.writestr(
+            "data/registre_risques.csv",
+            st.session_state.risques.drop(columns=["id"]).to_csv(index=False, encoding="utf-8-sig"),
+        )
+        zf.writestr(
+            "data/suivi_taches.csv",
+            st.session_state.taches.drop(columns=["id"]).to_csv(index=False, encoding="utf-8-sig"),
+        )
+        zf.writestr(
+            "data/equipe_completions.csv",
+            st.session_state.equipe.drop(columns=["id"]).to_csv(index=False, encoding="utf-8-sig"),
+        )
+        # JSON cahier des charges (depuis le disque)
+        if CDC_JSON_PATH.exists():
+            zf.write(CDC_JSON_PATH, arcname="data/cahier_des_charges.json")
+    return buf.getvalue()
 
 # ── Configuration ────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -523,39 +552,69 @@ components.html("""
 # SIDEBAR (contenu conditionnel selon la page)
 # ═══════════════════════════════════════════════════════════════════════════════
 with st.sidebar:
-    if page_active == "Registre des Risques":
-        st.markdown(f'<h2 class="section-title">{ICO["shield"]} Registre des Risques</h2>', unsafe_allow_html=True)
+    pass
 
+    # ── Sauvegarde ZIP (toujours visible) ────────────────────────────────────
+    st.markdown("---")
+    ico_zip = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>'
+    ico_restore = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>'
+    st.markdown(f'<h4 class="section-title">{ico_zip} Sauvegarde ZIP</h4>', unsafe_allow_html=True)
+    zip_bytes = creer_zip_sauvegarde()
+    st.download_button(
+        label="Télécharger la sauvegarde",
+        data=zip_bytes,
+        file_name=f"sauvegarde_projet_{date.today().isoformat()}.zip",
+        mime="application/zip",
+        use_container_width=True,
+        key="dl_zip",
+    )
 
-        # ── Import ───────────────────────────────────────────────────────────
-        st.markdown(f'<h4 class="section-title">{ICO["upload"]} Importer</h4>', unsafe_allow_html=True)
-        fichier = st.file_uploader("CSV", type=["csv"], label_visibility="collapsed")
-        if fichier is not None:
-            try:
-                df_import = pd.read_csv(fichier)
-                cols_attendues = [c for c in COLONNES if c != "id"]
-                manquantes = [c for c in cols_attendues if c not in df_import.columns]
-                if manquantes:
-                    st.error(f"Colonnes manquantes : {', '.join(manquantes)}")
-                else:
-                    if "id" not in df_import.columns:
-                        df_import["id"] = [str(uuid.uuid4()) for _ in range(len(df_import))]
-                    st.session_state.risques = df_import[COLONNES]
+    # Restauration depuis un ZIP
+    st.markdown(f'<h4 class="section-title">{ico_restore} Restaurer depuis ZIP</h4>', unsafe_allow_html=True)
+    zip_upload = st.file_uploader("Importer un ZIP de sauvegarde", type=["zip"], label_visibility="collapsed", key="zip_upload")
+    if zip_upload is not None:
+        try:
+            with zipfile.ZipFile(io.BytesIO(zip_upload.read())) as zf:
+                noms = zf.namelist()
+                restored = []
+
+                if "data/registre_risques.csv" in noms:
+                    df_r = pd.read_csv(io.BytesIO(zf.read("data/registre_risques.csv")))
+                    df_r["id"] = [str(uuid.uuid4()) for _ in range(len(df_r))]
+                    st.session_state.risques = df_r[[c for c in COLONNES if c in df_r.columns or c == "id"]]
                     sauvegarder()
-                    st.success("Importé !")
-            except Exception as exc:
-                st.error(f"Erreur : {exc}")
+                    restored.append("registre_risques.csv")
 
-        # ── Export ───────────────────────────────────────────────────────────
-        st.markdown(f'<h4 class="section-title">{ICO["download"]} Exporter</h4>', unsafe_allow_html=True)
-        csv_bytes = st.session_state.risques.drop(columns=["id"]).to_csv(index=False).encode("utf-8-sig")
-        st.download_button(
-            "Télécharger .csv", data=csv_bytes,
-            file_name=f"registre_risques_{date.today().isoformat()}.csv",
-            mime="text/csv", use_container_width=True,
-        )
-    else:
-        st.empty()
+                if "data/suivi_taches.csv" in noms:
+                    df_t = pd.read_csv(io.BytesIO(zf.read("data/suivi_taches.csv")))
+                    df_t["id"] = [str(uuid.uuid4()) for _ in range(len(df_t))]
+                    if "Jalon" not in df_t.columns:
+                        df_t["Jalon"] = ""
+                    st.session_state.taches = df_t[[c for c in TACHE_COLONNES if c in df_t.columns or c == "id"]]
+                    sauvegarder_taches()
+                    restored.append("suivi_taches.csv")
+
+                if "data/equipe_completions.csv" in noms:
+                    df_e = pd.read_csv(io.BytesIO(zf.read("data/equipe_completions.csv")))
+                    df_e["id"] = [str(uuid.uuid4()) for _ in range(len(df_e))]
+                    for _col in ["Collaborateur", "Poste", "Manager", "Numéro", "Email"]:
+                        if _col not in df_e.columns:
+                            df_e[_col] = ""
+                    st.session_state.equipe = df_e[[c for c in EQUIPE_COLONNES if c in df_e.columns or c == "id"]]
+                    sauvegarder_equipe()
+                    restored.append("equipe_completions.csv")
+
+                if "data/cahier_des_charges.json" in noms:
+                    CDC_JSON_PATH.write_bytes(zf.read("data/cahier_des_charges.json"))
+                    restored.append("cahier_des_charges.json")
+
+                if restored:
+                    st.success(f"Restauré : {', '.join(restored)}")
+                    st.rerun()
+                else:
+                    st.warning("Aucun fichier reconnu dans ce ZIP.")
+        except Exception as exc:
+            st.error(f"Erreur lors de la restauration : {exc}")
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # PAGE 1 — REGISTRE DES RISQUES
@@ -1350,7 +1409,7 @@ buildApp();
 # PAGE 4 — CAHIER DES CHARGES
 # ═══════════════════════════════════════════════════════════════════════════════
 if page_active == "Cahier des Charges":
-    _cdc_path = Path(__file__).parent / "cahier_des_charges.html"
+    _cdc_path = Path(__file__).parent / "assets" / "cahier_des_charges.html"
     if _cdc_path.exists():
 
         # ── Synchronisation fichier JSON ─────────────────────────────────
@@ -1745,7 +1804,7 @@ if page_active == "Équipe":
 # ═══════════════════════════════════════════════════════════════════════════════
 if page_active == "Aide Pilotage":
     st.header("Aide Pilotage de Projet")
-    pdf_path = Path(__file__).parent / "Guide-CDP.pdf"
+    pdf_path = Path(__file__).parent / "assets" / "Guide-CDP.pdf"
     if pdf_path.exists():
         with open(pdf_path, "rb") as f:
             st.download_button(
@@ -1758,7 +1817,7 @@ if page_active == "Aide Pilotage":
     else:
         st.error("Le fichier Guide-CDP.pdf est introuvable.")
 
-    docx_path = Path(__file__).parent / "Cahier-des-charges.docx"
+    docx_path = Path(__file__).parent / "assets" / "Cahier-des-charges.docx"
     if docx_path.exists():
         with open(docx_path, "rb") as f:
             st.download_button(
