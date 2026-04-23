@@ -4,6 +4,7 @@
 # Documents internes — accessibles uniquement via l'application
 assets/
 
+help suivi.txt
 # Environnements Python
 __pycache__/
 *.py[cod]
