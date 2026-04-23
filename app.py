@@ -17,7 +17,7 @@ CSV_PATH        = DATA_DIR / "registre_risques.csv"
 TACHES_CSV_PATH = DATA_DIR / "suivi_taches.csv"
 CDC_JSON_PATH   = DATA_DIR / "cahier_des_charges.json"
 EQUIPE_CSV_PATH = DATA_DIR / "equipe_completions.csv"
-# Création automatique du dossier data/ si absent (premier lancement)
+# Création automatique du dossier data/ si absent pour éviter les erreurs d'écriture des fichiers CSV/JSON
 DATA_DIR.mkdir(exist_ok=True)
 
 
@@ -656,7 +656,7 @@ components.html("""
 """, height=0)
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# SIDEBAR (contenu conditionnel selon la page)
+# SIDEBAR
 # ═══════════════════════════════════════════════════════════════════════════════
 with st.sidebar:
     # ── Sauvegarde ZIP ──────────────────────────────────────────
@@ -853,7 +853,7 @@ if page_active == "Registre des Risques":
 
     st.session_state.open_add_risque = False
 
-    # ── Édition / Suppression (dépliable) ─────────────────────────────────
+    # ── Édition / Suppression ─────────────────────────────────
     _open_risque_edit = st.session_state.get("selected_risque_id") is not None
     if _open_risque_edit:
         st.session_state["_pending_risque_id"] = st.session_state.selected_risque_id
@@ -970,7 +970,7 @@ if page_active == "Suivi des Tâches":
         & (df_t["Assigné"].isin(t_f_assigne) if t_f_assigne else pd.Series(True, index=df_t.index))
     ]
 
-    # ── Tableau des tâches (interactif) ──────────────────────────────────────
+    # ── Tableau des tâches ──────────────────────────────────────
     if df_t_filtre.empty:
         st.info("Aucune tâche ne correspond aux filtres.")
     else:
@@ -994,7 +994,7 @@ if page_active == "Suivi des Tâches":
                     st.rerun()
             st.markdown('<div class="row-sep"><hr></div>', unsafe_allow_html=True)
 
-    # ── Liste des jalons depuis le CDC (pour les formulaires) ────────────────
+    # ── Liste des jalons depuis le CDC ────────────────
     _t_jalon_opts = ["(Sans jalon)"]
     if CDC_JSON_PATH.exists():
         try:
@@ -1005,7 +1005,7 @@ if page_active == "Suivi des Tâches":
 
     st.divider()
 
-    # ── Ajout de tâche (dépliable) ────────────────────────────────────────
+    # ── Ajout de tâche ────────────────────────────────────────
     st.markdown('<div id="add-tache-anchor"></div>', unsafe_allow_html=True)
     if st.session_state.open_add_tache:
         components.html(
@@ -1056,7 +1056,7 @@ if page_active == "Suivi des Tâches":
 
     st.session_state.open_add_tache = False
 
-    # ── Édition / Suppression de tâche (dépliable) ──────────────────────────
+    # ── Édition / Suppression de tâche ──────────────────────────
     _open_tache_edit = st.session_state.get("selected_tache_id") is not None
     if _open_tache_edit:
         st.session_state["_pending_tache_id"] = st.session_state.selected_tache_id
@@ -1516,7 +1516,6 @@ if page_active == "Cahier des Charges":
     _cdc_path = Path(__file__).parent / "assets" / "cahier_des_charges.html"
     if _cdc_path.exists():
 
-        #                 st.error(f"Fichier JSON propre : {_e}")
         # ── Injection des données fichier dans le HTML ───────────────────
         _cdc_initial = "null"
         _cdc_sync_token = "0"
@@ -1674,7 +1673,6 @@ if page_active == "Équipe":
                         if trail is None:
                             trail = set()
                         if name in trail:
-                            # Cycle détecté : on attribue une position de repli pour ne pas bloquer
                             if name not in x_index:
                                 x_index[name] = _cursor[0]
                                 _cursor[0] += 1
@@ -1765,7 +1763,7 @@ if page_active == "Équipe":
                     components.html(
                         f"""
                         <style>
-                          :root {{
+                        :root {{
                             --org-bg: #efefef;
                             --org-border: #e2e8f0;
                             --org-panel: #d6d6d8;
@@ -1779,8 +1777,8 @@ if page_active == "Équipe":
                             --org-btn-bg: #fff;
                             --org-btn-border: #cbd5e1;
                             --org-zoom-color: #334155;
-                          }}
-                          :root.dark {{
+                        }}
+                        :root.dark {{
                             --org-bg: #0f172a;
                             --org-border: #334155;
                             --org-panel: #1e293b;
@@ -1794,53 +1792,53 @@ if page_active == "Équipe":
                             --org-btn-bg: #1e293b;
                             --org-btn-border: #475569;
                             --org-zoom-color: #94a3b8;
-                          }}
+                        }}
                           * {{ transition: background .25s, color .25s; }}
-                          #org-wrap {{ width:100%; height:760px; border:1px solid var(--org-border); border-radius:10px; background:var(--org-bg); overflow:hidden; position:relative; }}
-                          #org-title {{ position:absolute; left:20px; top:10px; font:600 22px/1.2 'Segoe UI',sans-serif; letter-spacing:0.08em; color:var(--org-title-color); z-index:10; }}
-                          #org-toolbar {{ position:absolute; top:12px; right:12px; z-index:10; display:flex; gap:6px; background:var(--org-toolbar-bg); border:1px solid var(--org-toolbar-border); border-radius:8px; padding:6px; }}
-                          #org-toolbar button {{ border:1px solid var(--org-btn-border); background:var(--org-btn-bg); color:var(--org-zoom-color); border-radius:6px; padding:4px 8px; font-size:12px; cursor:pointer; }}
-                          #org-toolbar .zoom-label {{ min-width:52px; text-align:center; font-size:12px; color:var(--org-zoom-color); line-height:24px; }}
-                          #org-viewport {{ width:100%; height:100%; overflow:hidden; cursor:grab; user-select:none; position:relative; }}
-                          #org-viewport.dragging {{ cursor:grabbing; }}
-                          #org-canvas {{ transform-origin: 0 0; position:absolute; top:0; left:0; width:max-content; height:max-content; }}
-                          .org-panel {{ fill: var(--org-panel) !important; }}
-                          .org-node {{ fill: var(--org-node-bg) !important; stroke: var(--org-node-stroke) !important; }}
-                          .org-edge {{ stroke: var(--org-edge) !important; }}
-                          #org-canvas text {{ fill: var(--org-text) !important; }}
+                        #org-wrap {{ width:100%; height:760px; border:1px solid var(--org-border); border-radius:10px; background:var(--org-bg); overflow:hidden; position:relative; }}
+                        #org-title {{ position:absolute; left:20px; top:10px; font:600 22px/1.2 'Segoe UI',sans-serif; letter-spacing:0.08em; color:var(--org-title-color); z-index:10; }}
+                        #org-toolbar {{ position:absolute; top:12px; right:12px; z-index:10; display:flex; gap:6px; background:var(--org-toolbar-bg); border:1px solid var(--org-toolbar-border); border-radius:8px; padding:6px; }}
+                        #org-toolbar button {{ border:1px solid var(--org-btn-border); background:var(--org-btn-bg); color:var(--org-zoom-color); border-radius:6px; padding:4px 8px; font-size:12px; cursor:pointer; }}
+                        #org-toolbar .zoom-label {{ min-width:52px; text-align:center; font-size:12px; color:var(--org-zoom-color); line-height:24px; }}
+                        #org-viewport {{ width:100%; height:100%; overflow:hidden; cursor:grab; user-select:none; position:relative; }}
+                        #org-viewport.dragging {{ cursor:grabbing; }}
+                        #org-canvas {{ transform-origin: 0 0; position:absolute; top:0; left:0; width:max-content; height:max-content; }}
+                        .org-panel {{ fill: var(--org-panel) !important; }}
+                        .org-node {{ fill: var(--org-node-bg) !important; stroke: var(--org-node-stroke) !important; }}
+                        .org-edge {{ stroke: var(--org-edge) !important; }}
+                        #org-canvas text {{ fill: var(--org-text) !important; }}
                         </style>
                         <div id="org-wrap">
-                          <div id="org-title">ORGANIGRAMME DU PROJET</div>
-                          <div id="org-toolbar">
+                        <div id="org-title">ORGANIGRAMME DU PROJET</div>
+                        <div id="org-toolbar">
                             <button id="zoom-out" type="button">−</button>
                             <div id="zoom-label" class="zoom-label">100%</div>
                             <button id="zoom-in" type="button">+</button>
                             <button id="zoom-fit" type="button">Ajuster</button>
                             <button id="zoom-reset" type="button">100%</button>
-                          </div>
-                          <div id="org-viewport"><div id="org-canvas">{svg_markup}</div></div>
+                        </div>
+                        <div id="org-viewport"><div id="org-canvas">{svg_markup}</div></div>
                         </div>
                         <script>
-                          function luminanceFromColor(str) {{
+                        function luminanceFromColor(str) {{
                             if (!str) return null;
                             const rgb = str.match(/(\\d+)[,\\s]+(\\d+)[,\\s]+(\\d+)/);
                             if (rgb) return 0.299*parseInt(rgb[1])+0.587*parseInt(rgb[2])+0.114*parseInt(rgb[3]);
                             const hex = str.trim().replace('#','');
                             if (hex.length >= 6) return 0.299*parseInt(hex.substring(0,2),16)+0.587*parseInt(hex.substring(2,4),16)+0.114*parseInt(hex.substring(4,6),16);
                             return null;
-                          }}
-                          function applyTheme(dark) {{
+                        }}
+                        function applyTheme(dark) {{
                             document.documentElement.classList.toggle('dark', dark);
-                          }}
-                          let _lastDark = null;
-                          function onThemeChange() {{
+                        }}
+                        let _lastDark = null;
+                        function onThemeChange() {{
                             try {{
-                              const parentDoc  = window.parent.document;
-                              const parentHtml = parentDoc.documentElement;
-                              let isDark = null;
-                              const attr = parentHtml.getAttribute('data-theme');
-                              if (attr) {{ isDark = (attr === 'dark'); }}
-                              if (isDark === null) {{
+                                const parentDoc  = window.parent.document;
+                                const parentHtml = parentDoc.documentElement;
+                                let isDark = null;
+                                const attr = parentHtml.getAttribute('data-theme');
+                                if (attr) {{ isDark = (attr === 'dark'); }}
+                                if (isDark === null) {{
                                 const cssVar = window.parent.getComputedStyle(parentHtml).getPropertyValue('--background-color').trim();
                                 if (cssVar) {{ const lum = luminanceFromColor(cssVar); if (lum !== null) isDark = lum < 128; }}
                               }}
