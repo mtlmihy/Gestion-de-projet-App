@@ -3,7 +3,8 @@
 
 
 # Documents internes — accessibles uniquement via l'application
-assets/
+assets/*
+!assets/cahier_des_charges.html
 data/*
 !data/cahier_des_charges.json
 
