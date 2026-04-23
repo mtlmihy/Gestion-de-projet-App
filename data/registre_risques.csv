@@ -1,4 +1,4 @@
-﻿Identifiant,Description,Catégorie,Probabilité,Impact,Priorité,Responsable,Atténuation,Statut
+Identifiant,Description,Catégorie,Probabilité,Impact,Priorité,Responsable,Atténuation,Statut
 Ressources humaines,Risque de pénurie de personnel qualifié,Ressources humaines,Moyenne,Élevé,2,x,Plan de recrutement et formation continue,Fermé
 Législation,Risque de non-conformité aux réglementations en vigueur,Conformité,Faible,Élevé,3,x,Veille réglementaire et audits réguliers,Ouvert
 Scope Creep,Risque de dérive du périmètre du projet,Scope,Moyenne,Moyen,2,x,Contrôle strict des changements de périmètre,Ouvert

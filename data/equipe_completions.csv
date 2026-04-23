@@ -1,37 +1,9 @@
-﻿Collaborateur,Poste,Manager,Numéro,Email
-Jacques DAUDEL,CTO,Vincent FLATIN,+41 22 552 63 95,jacques.daudel@qiminfo.ch
-Alexandre NEY,Head of Innovation & Digital Solutions,Jacques DAUDEL,,alexandre.ney@qiminfo.ch
-Clément RAUSSIN,Head of Cloud and DevOps Solution,Jacques DAUDEL,+41  +41 21 341 15 08,clement.raussin@qiminfo.ch
-Joachim HENRY,DSI,Jacques DAUDEL,,joachim.henry@qiminfo.ch
-Xavier FABRE,Head of Modern Workplace and Workstation,Jacques DAUDEL,+41225526389,xavier.fabre@qiminfo.ch
-Alexandre REY,Alternant,Joachim HENRY,,
-Florian NOURRISSE,Technical leader,Joachim HENRY,,
-Jean-Baptiste ZENNER,DPO,Joachim HENRY,,
-Jean-François REITHLER,Systeme Administrator,Joachim HENRY,,
-Louis-Marie BEAUDET,PO,Joachim HENRY,,
-Thalïa SAHED,,Joachim HENRY,,
-Mathys LEONI,Stagiaire,Joachim HENRY,,
-Erduan HOXHA,Team Lead - Infrastructure & Security Modern Workplace & Workstation,Xavier FABRE,+41 22 552 63 77,erduan.hoxha@qiminfo.ch
-Benjamin BASSET,Head of IT Operations and Support Services,Erduan HOXHA,+41 22 304 15 09,benjamin.basset@qiminfo.ch
-Guillaume CARTIER,System engineer Microsoft / Azure Infrastructure Specialist,Erduan HOXHA,+41 22 552 63 99,guillaume.cartier@qiminfo.ch
-Jean-Christophe TURCAT,System & network engineer Microsoft / security expert,Erduan HOXHA,,j-c.turcat@qiminfo.com
-Jérôme DAVID,Senior Administrator SHP & M365 - Modern Workplace & Workstation,Erduan HOXHA,+41 22 552 63 98,jerome.david@qiminfo.ch
-Lucas PEREZ,System & Network Administrator,Erduan HOXHA,,lucas.perez@qiminfo.ch
-Lionel DELANOE,Team Lead - Development & Integration - Modern Workplace & Workstation,Xavier FABRE,+41 22 552 63 94,lionel.delanoe@qiminfo.ch
-Antoine THOLLET,,Lionel DELANOE,,
-Benjamin SIMONET,,Lionel DELANOE,,
-David GHESQUIERE,Developer Power Platform & M365 - Modern Workplace & Workstation,Lionel DELANOE,+41 22 552 63 80,david.ghesquiere@qiminfo.ch
-David VUCIC,Senior Consultant - Modern Workplace & Workstation,Lionel DELANOE,+41 22 512 01 77,david.vucic@qiminfo.ch
-Florian POINSOT,Developer Power Platform & M365,Lionel DELANOE,,florian.poinsot@qiminfo.ch
-Ngoc Thanh NGUYEN,Senior developer - Modern Workplace & Workstation,Lionel DELANOE,+41 22 552 63 85,thanh.nguyen@qiminfo.ch
-Nicolas GRIM,Developer SHP & M365 - Modern Workplace & Workstation,Lionel DELANOE,+41 22 552 76 67,nicolas.grim@qiminfo.ch
-Olivier RICHARD,Consultant,Lionel DELANOE,,olivier.richard@qiminfo.ch
-Adèle MOURIER,DevSecOps Engineer,Clément RAUSSIN,,adele.mourier@qiminfo.ch
-Alexandre VIDAL,,Clément RAUSSIN,,alexandre.vidal@qiminfo.ch
-Julien OCCHIALI,Business Analyst / PO / Supervision - Modern Workplace & Workstation,Clément RAUSSIN,,julien.occhiali@qiminfo.ch
-Anthony MARTIÉ,,Julien OCCHIALI,,anthony.martie@qiminfo.ch
-Cyril VILA,Team Lead - Functional & Change Management - Modern Workplace & Workstation,Julien OCCHIALI,+41 22 552 63 92,cyril.vila@qiminfo.ch
-Justine MARKEY,Business Analyst / PO / Supervision - Modern Workplace & Workstation,Julien OCCHIALI,+41 22 552 76 66,justine.markey@qiminfo.ch
-Sarah KABBOUR,UX / UI Designer,Julien OCCHIALI,,sarah.kabbour@qiminfo.ch
-Quentin RODIC,Développeur / Intégrateur Cloud,Clément RAUSSIN,,quentin.rodic@qiminfo.ch
-Zakari KARAHAÇANE,,Clément RAUSSIN,,zakari.karahacane@qiminfo.ch
+Collaborateur,Poste,Manager,Numéro,Email
+Jean DUPONT,Directeur Général,,,
+Sophie MARTIN,Directrice des Opérations,Jean DUPONT,,
+Mathys LEONI,Chef de projet,Sophie MARTIN,1234567890.0,mathys.leoni@qiminfo.ch
+Alice BERNARD,Développeuse Front-end,Mathys LEONI,,
+Lucas PETIT,Développeur Back-end,Mathys LEONI,,
+Emma MOREAU,UX Designer,Mathys LEONI,,
+Thomas DUBOIS,Responsable RH,Jean DUPONT,,
+Chloé GARCIA,Chargée de Recrutement,Thomas DUBOIS,,
