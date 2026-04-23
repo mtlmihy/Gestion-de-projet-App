@@ -1,10 +1,11 @@
 # Données sensibles — ne jamais versionner
 
+
+
 # Documents internes — accessibles uniquement via l'application
 assets/
 data/
-
-data/
+!data/cahier_des_charges.json
 
 help suivi.txt
 # Environnements Python
