@@ -684,47 +684,55 @@ with st.sidebar:
     st.markdown(f'<h4 class="section-title">{ico_restore} Restaurer depuis ZIP</h4>', unsafe_allow_html=True)
     zip_upload = st.file_uploader("Importer un ZIP de sauvegarde", type=["zip"], label_visibility="collapsed", key="zip_upload")
     if zip_upload is not None:
-        try:
-            with zipfile.ZipFile(io.BytesIO(zip_upload.read())) as zf:
-                noms = zf.namelist()
-                restored = []
+        # Signature unique du fichier pour éviter de retraiter le même ZIP à chaque rerun
+        _zip_sig = f"{zip_upload.name}|{zip_upload.size}"
+        if st.session_state.get("_processed_zip") != _zip_sig:
+            try:
+                with zipfile.ZipFile(io.BytesIO(zip_upload.read())) as zf:
+                    noms = zf.namelist()
+                    restored = []
 
-                if "data/registre_risques.csv" in noms:
-                    df_r = pd.read_csv(io.BytesIO(zf.read("data/registre_risques.csv")))
-                    df_r["id"] = [str(uuid.uuid4()) for _ in range(len(df_r))]
-                    st.session_state.risques = df_r[[c for c in COLONNES if c in df_r.columns or c == "id"]]
-                    sauvegarder()
-                    restored.append("registre_risques.csv")
+                    if "data/registre_risques.csv" in noms:
+                        df_r = pd.read_csv(io.BytesIO(zf.read("data/registre_risques.csv")))
+                        df_r["id"] = [str(uuid.uuid4()) for _ in range(len(df_r))]
+                        st.session_state.risques = df_r[[c for c in COLONNES if c in df_r.columns or c == "id"]]
+                        sauvegarder()
+                        restored.append("registre_risques.csv")
 
-                if "data/suivi_taches.csv" in noms:
-                    df_t = pd.read_csv(io.BytesIO(zf.read("data/suivi_taches.csv")))
-                    df_t["id"] = [str(uuid.uuid4()) for _ in range(len(df_t))]
-                    if "Jalon" not in df_t.columns:
-                        df_t["Jalon"] = ""
-                    st.session_state.taches = df_t[[c for c in TACHE_COLONNES if c in df_t.columns or c == "id"]]
-                    sauvegarder_taches()
-                    restored.append("suivi_taches.csv")
+                    if "data/suivi_taches.csv" in noms:
+                        df_t = pd.read_csv(io.BytesIO(zf.read("data/suivi_taches.csv")))
+                        df_t["id"] = [str(uuid.uuid4()) for _ in range(len(df_t))]
+                        if "Jalon" not in df_t.columns:
+                            df_t["Jalon"] = ""
+                        st.session_state.taches = df_t[[c for c in TACHE_COLONNES if c in df_t.columns or c == "id"]]
+                        sauvegarder_taches()
+                        restored.append("suivi_taches.csv")
 
-                if "data/equipe_completions.csv" in noms:
-                    df_e = pd.read_csv(io.BytesIO(zf.read("data/equipe_completions.csv")))
-                    df_e["id"] = [str(uuid.uuid4()) for _ in range(len(df_e))]
-                    for _col in ["Collaborateur", "Poste", "Manager", "Numéro", "Email"]:
-                        if _col not in df_e.columns:
-                            df_e[_col] = ""
-                    st.session_state.equipe = df_e[[c for c in EQUIPE_COLONNES if c in df_e.columns or c == "id"]]
-                    sauvegarder_equipe()
-                    restored.append("equipe_completions.csv")
+                    if "data/equipe_completions.csv" in noms:
+                        df_e = pd.read_csv(io.BytesIO(zf.read("data/equipe_completions.csv")))
+                        df_e["id"] = [str(uuid.uuid4()) for _ in range(len(df_e))]
+                        for _col in ["Collaborateur", "Poste", "Manager", "Numéro", "Email"]:
+                            if _col not in df_e.columns:
+                                df_e[_col] = ""
+                        st.session_state.equipe = df_e[[c for c in EQUIPE_COLONNES if c in df_e.columns or c == "id"]]
+                        sauvegarder_equipe()
+                        restored.append("equipe_completions.csv")
 
-                if "data/cahier_des_charges.json" in noms:
-                    CDC_JSON_PATH.write_bytes(zf.read("data/cahier_des_charges.json"))
-                    restored.append("cahier_des_charges.json")
+                    if "data/cahier_des_charges.json" in noms:
+                        CDC_JSON_PATH.write_bytes(zf.read("data/cahier_des_charges.json"))
+                        restored.append("cahier_des_charges.json")
 
-                if restored:
-                    st.success(f"Restauré : {', '.join(restored)}")
-                else:
-                    st.warning("Aucun fichier reconnu dans ce ZIP.")
-        except Exception as exc:
-            st.error(f"Erreur lors de la restauration : {exc}")
+                    if restored:
+                        st.session_state._processed_zip = _zip_sig
+                        _cdc_restored = "cahier_des_charges.json" in restored
+                        st.toast(f"✅ Restauré : {', '.join(restored)}")
+                        if _cdc_restored:
+                            # Force le rechargement de l'iframe CDC avec les nouvelles données
+                            st.rerun()
+                    else:
+                        st.warning("Aucun fichier reconnu dans ce ZIP.")
+            except Exception as exc:
+                st.error(f"Erreur lors de la restauration : {exc}")
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # PAGE 1 — REGISTRE DES RISQUES

@@ -608,10 +608,16 @@
         _applyData(results[0], results[1]);
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(results[0])); } catch(e) {}
       }).catch(function() {
-        // Fallback localStorage si le serveur ne répond pas
-        let raw;
-        try { raw = localStorage.getItem(STORAGE_KEY); } catch(e) {}
-        if (raw) { try { _applyData(JSON.parse(raw)); } catch(e) {} }
+        // Fallback : données injectées (_CDC_FILE_DATA) puis localStorage
+        // _CDC_FILE_DATA est toujours frais (injecté côté Python au rendu)
+        if (typeof _CDC_FILE_DATA !== 'undefined' && _CDC_FILE_DATA) {
+          _applyData(_CDC_FILE_DATA);
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(_CDC_FILE_DATA)); } catch(e) {}
+        } else {
+          let raw;
+          try { raw = localStorage.getItem(STORAGE_KEY); } catch(e) {}
+          if (raw) { try { _applyData(JSON.parse(raw)); } catch(e) {} }
+        }
       });
     } else {
       // Pas de serveur : localStorage ou données injectées
