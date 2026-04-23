@@ -1,0 +1,17 @@
+# Données sensibles — ne jamais versionner
+.streamlit/secrets.toml
+
+# Environnements Python
+__pycache__/
+*.py[cod]
+.env
+venv/
+.venv/
+
+# PyInstaller
+dist/
+build/
+*.spec
+
+# Stocker uniquement le hash SHA-256 du mot de passe (jamais le mot de passe en clair).
+# Pour générer un nouveau hash : python -c "import hashlib; print(hashlib.sha256('VOTRE_MDP'.encode()).hexdigest())"

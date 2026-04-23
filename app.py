@@ -238,6 +238,44 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+
+# ── Authentification ──────────────────────────────────────────────────────────
+def check_password():
+    """Affiche un écran de connexion et bloque l'accès à l'app si le mot de passe est incorrect.
+
+    Le mot de passe est stocké dans .streamlit/secrets.toml sous la clé PASSWORD.
+    L'état d'authentification est conservé dans st.session_state pour ne pas
+    ré-afficher le formulaire à chaque rerun Streamlit.
+    """
+    if st.session_state.get("authenticated"):
+        return
+
+    st.markdown(
+        """
+        <style>
+        [data-testid="stSidebar"] { display: none; }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    col1, col2, col3 = st.columns([1, 1.2, 1])
+    with col2:
+        st.markdown("## 🔒 Accès protégé")
+        pwd = st.text_input("Mot de passe", type="password", key="_pwd_input")
+        if st.button("Se connecter", use_container_width=True):
+            pwd_hash = hashlib.sha256(pwd.encode()).hexdigest()
+            if pwd_hash == st.secrets["PASSWORD_HASH"]:
+                st.session_state.authenticated = True
+                st.rerun()
+            else:
+                st.error("Mot de passe incorrect.")
+    st.stop()
+
+
+check_password()
+
+
 CATEGORIES = ["Opérations", "Budget", "Planning", "Technologie", "Sécurité", "Financier", "Ressources humaines", "Conformité", "Scope", "Communication", "Qualité", "Changement"]
 PROBABILITES = ["Faible", "Moyenne", "Élevée"]
 IMPACTS = ["Faible", "Moyen", "Élevé"]

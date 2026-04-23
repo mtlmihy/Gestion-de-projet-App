@@ -41,4 +41,6 @@ A faire  :
     - Nettoyer le code 
     - Revoir le format des 2 export PDF
     - Gérer les zooms sur les pages  
+    - Faire une .exe ?
+    - Sécurisation et mise en place d'un mdp
     
