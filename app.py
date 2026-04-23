@@ -29,17 +29,49 @@ DATA_DIR.mkdir(exist_ok=True)
 
 # ── Serveur HTTP local pour la sauvegarde du CDC ─────────────────────────────
 class _CDCSaveHandler(BaseHTTPRequestHandler):
+    """Gestionnaire HTTP local pour la persistance du Cahier des Charges.
+
+    Ce serveur est lancé en arrière-plan sur un port éphémère alloué par l'OS.
+    Son rôle est d'exposer des endpoints REST accessibles depuis l'iframe du CDC.
+    En effet, l'iframe (rendue via st.components.html) est isolée dans un contexte
+    d'origine différente (srcdoc:), ce qui rend toute communication JavaScript
+    directe avec Streamlit impossible (politique same-origin). Ce serveur HTTP
+    local sert de passerelle pour contourner cette restriction de manière sécurisée.
+    """
+
     def _cors(self):
+        """Injecte les en-têtes CORS dans la réponse HTTP courante.
+
+        Ces en-têtes sont indispensables car l'iframe du CDC a une origine
+        différente (srcdoc: / blob:) de celle du serveur local. Sans eux,
+        le navigateur bloquerait toutes les requêtes fetch() côté JavaScript
+        (politique same-origin du navigateur).
+        """
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
 
     def do_OPTIONS(self):
+        """Répond aux requêtes preflight CORS envoyées par le navigateur.
+
+        Les navigateurs modernes envoient automatiquement une requête OPTIONS
+        avant toute requête POST cross-origin (preflight). Cette méthode retourne
+        HTTP 200 avec les en-têtes CORS pour autoriser la requête effective suivante.
+        """
         self.send_response(200)
         self._cors()
         self.end_headers()
 
     def do_GET(self):
+        """Expose deux endpoints GET pour la lecture et la synchronisation du CDC.
+
+        Routes:
+            /cdc_version: Retourne un hash SHA-256 tronqué à 16 caractères du
+                fichier JSON. L'iframe effectue un polling sur cet endpoint pour
+                détecter les modifications (ex: restauration depuis ZIP) sans
+                retélécharger l'intégralité des données à chaque cycle.
+            /cdc_data: Retourne le contenu JSON complet du fichier CDC.
+        """
         if self.path == "/cdc_version":
             try:
                 raw = CDC_JSON_PATH.read_bytes() if CDC_JSON_PATH.exists() else b""
@@ -69,6 +101,17 @@ class _CDCSaveHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
     def do_POST(self):
+        """Reçoit et persiste les données du Cahier des Charges via POST.
+
+        Route:
+            /save_cdc: Accepte un body JSON, le valide via json.loads() avant
+                toute écriture sur le disque pour éviter de corrompre le fichier.
+                Le JSON est réécrit formaté (indent=2) pour rester lisible.
+
+        Raises:
+            Répond HTTP 500 avec le message d'exception si le JSON est invalide
+            ou si l'écriture fichier échoue (permissions, disque plein, etc.).
+        """
         if self.path == "/save_cdc":
             length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(length)
@@ -93,12 +136,30 @@ class _CDCSaveHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
     def log_message(self, format, *args):  # noqa: A002
-        pass  # silence les logs console
+        """Surcharge la journalisation HTTP pour la désactiver complètement.
+
+        Par défaut, BaseHTTPRequestHandler affiche chaque requête dans stderr,
+        ce qui polluerait la sortie de Streamlit avec des logs HTTP inutiles.
+        La surcharge par un `pass` supprime silencieusement ces messages.
+        """
+        pass
 
 
 @st.cache_resource
 def _get_cdc_save_port() -> int:
-    """Démarre le serveur HTTP CDC une seule fois et retourne son port."""
+    """Démarre le serveur HTTP CDC sur un port éphémère et retourne ce port.
+
+    Le décorateur @st.cache_resource garantit qu'un seul serveur est créé
+    pour toute la durée de vie du processus Streamlit, quel que soit le nombre
+    de rechargements de page (reruns). Passer port=0 à HTTPServer demande à
+    l'OS d'allouer automatiquement un port TCP libre, évitant tout conflit.
+    Le serveur tourne dans un thread dæmon afin de ne pas bloquer l'arrêt
+    propre du processus Streamlit.
+
+    Returns:
+        int: Numéro de port sur lequel le serveur écoute, ou 0 si le
+            démarrage a échoué (ex: ressources système insuffisantes).
+    """
     try:
         srv = HTTPServer(("127.0.0.1", 0), _CDCSaveHandler)
         port = srv.server_address[1]
@@ -109,22 +170,46 @@ def _get_cdc_save_port() -> int:
 
 
 def sauvegarder():
-    """Sauvegarde automatique du registre dans le fichier CSV local."""
+    """Persiste le registre des risques depuis le session_state vers le CSV local.
+
+    La colonne 'id' (UUID généré à l'exécution) est exclue avant l'écriture
+    car elle est recréée à chaque chargement et n'a pas de valeur persistante.
+    L'encodage utf-8-sig ajoute un BOM (Byte Order Mark), ce qui permet une
+    ouverture sans caractères corrompus dans Excel sur Windows.
+    """
     st.session_state.risques.drop(columns=["id"]).to_csv(CSV_PATH, index=False, encoding="utf-8-sig")
 
 
 def sauvegarder_taches():
-    """Sauvegarde automatique des tâches dans le fichier CSV local."""
+    """Persiste le suivi des tâches depuis le session_state vers le CSV local.
+
+    La colonne 'id' est exclue avant l'écriture (UUID runtime sans valeur
+    persistante). Voir `sauvegarder()` pour la justification de utf-8-sig.
+    """
     st.session_state.taches.drop(columns=["id"]).to_csv(TACHES_CSV_PATH, index=False, encoding="utf-8-sig")
 
 
 def sauvegarder_equipe():
-    """Sauvegarde automatique du tableau équipe dans le fichier CSV local."""
+    """Persiste le tableau équipe depuis le session_state vers le CSV local.
+
+    La colonne 'id' est exclue avant l'écriture (UUID runtime sans valeur
+    persistante). Voir `sauvegarder()` pour la justification de utf-8-sig.
+    """
     st.session_state.equipe.drop(columns=["id"]).to_csv(EQUIPE_CSV_PATH, index=False, encoding="utf-8-sig")
 
 
 def creer_zip_sauvegarde() -> bytes:
-    """Génère un ZIP en mémoire contenant tous les fichiers de données du projet."""
+    """Génère une archive ZIP en mémoire contenant toutes les données du projet.
+
+    Les DataFrames CSV sont sérialisés depuis le session_state (et non lus
+    depuis le disque) afin de capturer les éventuelles modifications non encore
+    persistées. Le JSON du CDC est en revanche lu depuis le disque car il est
+    géré indépendamment par le serveur HTTP local.
+
+    Returns:
+        bytes: Contenu binaire de l'archive ZIP, prêt à être transmis en
+            tant que téléchargement via st.download_button.
+    """
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
         # CSVs depuis le session_state (données les plus à jour)
@@ -167,6 +252,28 @@ _IMPACT_SCORE = {"Faible": 1, "Moyen": 2, "Élevé": 3}
 
 
 def calculer_priorite(probabilite: str, impact: str) -> int:
+    """Calcule automatiquement la priorité d'un risque via une matrice probabilité × impact.
+
+    La multiplication des scores numériques évite une saisie manuelle sujette aux
+    incohérences. La matrice produit les niveaux suivants :
+
+    +-----------+---------+---------+---------+
+    | Proba\Imp | Faible  | Moyen   | Élevé   |
+    +-----------+---------+---------+---------+
+    | Faible    | P1(1)   | P1(2)   | P2(3)   |
+    | Moyenne   | P1(2)   | P2(4)   | P3(6)   |
+    | Élevée    | P2(3)   | P3(6)   | P3(9)   |
+    +-----------+---------+---------+---------+
+
+    L'utilisateur peut toujours surcharger la valeur calculée dans le formulaire.
+
+    Args:
+        probabilite: Niveau de probabilité parmi {"Faible", "Moyenne", "Élevée"}.
+        impact: Niveau d'impact parmi {"Faible", "Moyen", "Élevé"}.
+
+    Returns:
+        int: Priorité calculée entre 1 (faible) et 3 (critique).
+    """
     score = _PROBA_SCORE.get(probabilite, 1) * _IMPACT_SCORE.get(impact, 1)
     if score >= 6:
         return 3
@@ -236,6 +343,9 @@ MOCK_DATA = [
 if "risques" not in st.session_state:
     if CSV_PATH.exists():
         df_load = pd.read_csv(CSV_PATH, encoding="utf-8-sig")
+        # Les UUIDs ne sont jamais persistés dans le CSV (clés purement runtime).
+        # On les régénère à chaque chargement pour servir d'identifiants stables
+        # pendant la session (clés de boutons, sélection dans les formulaires).
         df_load["id"] = [str(uuid.uuid4()) for _ in range(len(df_load))]
         st.session_state.risques = df_load[[c for c in COLONNES if c in df_load.columns or c == "id"]]
     else:
@@ -250,7 +360,11 @@ EQUIPE_COLONNES = ["id", "Collaborateur", "Poste", "Manager", "Numéro", "Email"
 if "taches" not in st.session_state:
     if TACHES_CSV_PATH.exists():
         df_t = pd.read_csv(TACHES_CSV_PATH, encoding="utf-8-sig")
+        # Voir le commentaire ci-dessus : UUIDs régénérés à chaque chargement.
         df_t["id"] = [str(uuid.uuid4()) for _ in range(len(df_t))]
+        # La colonne "Jalon" a été ajoutée après la version initiale ; on l'insère
+        # avec une valeur vide si elle est absente pour assurer la compatibilité
+        # ascendante avec les CSV créés sous une version antérieure.
         if "Jalon" not in df_t.columns:
             df_t["Jalon"] = ""
         st.session_state.taches = df_t[[c for c in TACHE_COLONNES if c in df_t.columns or c == "id"]]
@@ -277,6 +391,8 @@ if "selected_tache_id" not in st.session_state:
     st.session_state.selected_tache_id = None
 if "page_active" not in st.session_state:
     st.session_state.page_active = PAGES[0]
+# Ces deux flags pilotent l'ouverture automatique des formulaires d'ajout
+# lors d'un clic sur le bouton flottant "+" en bas de page.
 if "open_add_risque" not in st.session_state:
     st.session_state.open_add_risque = False
 if "open_add_tache" not in st.session_state:
@@ -429,29 +545,114 @@ st.markdown("""
 
 # ── Helpers badges ───────────────────────────────────────────────────────────
 def _badge(val, mapping):
+    """Génère le HTML d'un badge coloré pour l'affichage dans les tableaux.
+
+    Args:
+        val: La valeur textuelle à afficher dans le badge (ex: "Ouvert").
+        mapping: Dictionnaire {valeur: classe_css} définissant la couleur du
+            badge. Si la valeur est absente du mapping, la classe "badge-gray"
+            est utilisée comme fallback pour éviter un badge sans style.
+
+    Returns:
+        str: Fragment HTML ``<span class="badge <classe>">val</span>``.
+    """
     cls = mapping.get(val, "badge-gray")
     return f'<span class="badge {cls}">{val}</span>'
 
 def badge_proba(v):
+    """Retourne le HTML d'un badge coloré pour un niveau de probabilité.
+
+    Args:
+        v: Valeur parmi {"Faible", "Moyenne", "Élevée"}.
+
+    Returns:
+        str: Fragment HTML du badge (vert / orange / rouge).
+    """
     return _badge(v, {"Faible": "badge-green", "Moyenne": "badge-orange", "Élevée": "badge-red"})
 
 def badge_impact(v):
+    """Retourne le HTML d'un badge coloré pour un niveau d'impact.
+
+    Args:
+        v: Valeur parmi {"Faible", "Moyen", "Élevé"}.
+
+    Returns:
+        str: Fragment HTML du badge (vert / orange / rouge).
+    """
     return _badge(v, {"Faible": "badge-green", "Moyen": "badge-orange", "Élevé": "badge-red"})
 
 def badge_statut(v):
+    """Retourne le HTML d'un badge coloré pour le statut d'un risque.
+
+    La convention couleur est inversée par rapport aux badges priorité :
+    "Ouvert" est rouge (alerte), "Fermé" est vert (résolu).
+
+    Args:
+        v: Valeur parmi {"Ouvert", "En cours", "Fermé"}.
+
+    Returns:
+        str: Fragment HTML du badge (rouge / orange / vert).
+    """
     return _badge(v, {"Ouvert": "badge-red", "En cours": "badge-orange", "Fermé": "badge-green"})
 
 def badge_categorie(v):
+    """Retourne le HTML d'un badge coloré pour une catégorie de risque.
+
+    Seules quelques catégories ont une couleur dédiée ; les autres héritent
+    du fallback "badge-gray" via `_badge()`.
+
+    Args:
+        v: Nom de la catégorie (ex: "Opérations", "Budget").
+
+    Returns:
+        str: Fragment HTML du badge.
+    """
     return _badge(v, {"Opérations": "badge-blue", "Budget": "badge-orange", "Planning": "badge-purple", "Technologie": "badge-gray", "Sécurité": "badge-red"})
 
 def badge_priorite(val):
+    """Retourne le HTML d'un cercle de priorité coloré (1=vert, 2=orange, 3=rouge).
+
+    Utilise les classes CSS .prio-N, distinctes des badges textuels, pour
+    mettre en évidence visuellement le niveau de criticité d'un risque.
+    La conversion int() avec fallback à 1 protège contre les valeurs NaN
+    ou mal typées issues du CSV.
+
+    Args:
+        val: Entier ou valeur convertible en int représentant la priorité
+            (1, 2 ou 3).
+
+    Returns:
+        str: Fragment HTML ``<span class="prio prio-N">N</span>``.
+    """
     v = int(val) if int(val) in (1, 2, 3) else 1
     return f'<span class="prio prio-{v}">{v}</span>'
 
 def badge_importance(v):
+    """Retourne le HTML d'un badge coloré pour le niveau d'importance d'une tâche.
+
+    Args:
+        v: Valeur parmi {"Faible", "Moyenne", "Élevée", "Critique"}.
+
+    Returns:
+        str: Fragment HTML du badge (vert / orange / rouge / violet).
+    """
     return _badge(v, {"Faible": "badge-green", "Moyenne": "badge-orange", "Élevée": "badge-red", "Critique": "badge-purple"})
 
 def progress_bar(pct):
+    """Génère le HTML d'une barre de progression colorée avec affichage du pourcentage.
+
+    La couleur varie selon le niveau d'avancement pour donner une indication
+    visuelle rapide sans légende supplémentaire :
+    - < 30 % : rouge  (tâche peu avancée, vigilance requise)
+    - 30–69 % : orange (en cours)
+    - ≥ 70 % : vert   (quasi terminé)
+
+    Args:
+        pct: Pourcentage d'avancement (sera clampé entre 0 et 100).
+
+    Returns:
+        str: Fragment HTML composé d'une ``<div>`` barre + ``<div>`` texte.
+    """
     pct = max(0, min(100, int(pct)))
     cls = "high" if pct >= 70 else ("mid" if pct >= 30 else "low")
     return (f'<div class="progress-bar"><div class="fill {cls}" style="width:{pct}%"></div></div>'
@@ -1503,6 +1704,9 @@ if page_active == "Cahier des Charges":
         #             st.info("Aucune sauvegarde fichier disponible.")
 
         # ── Injection des données fichier dans le HTML ───────────────────
+        # La stratégie de substitution de chaînes de placeholder est préférée
+        # à un template Jinja2 ou f-string pour éviter les conflits avec les
+        # accolades JavaScript abondantes dans le fichier HTML du CDC.
         _cdc_initial = "null"
         _cdc_sync_token = "0"
         if CDC_JSON_PATH.exists():
@@ -1656,9 +1860,27 @@ if page_active == "Équipe":
                     _cursor = [0]
 
                     def _place(name, trail=None):
+                        """Calcule récursivement la position X d'un nœud dans l'organigramme.
+
+                        Approche inspirée de Reingold-Tilford : les nœuds feuilles reçoivent
+                        une position incrémentale (via `_cursor`), et les nœuds parents
+                        sont centrés sur la moyenne des positions de leurs enfants.
+                        Le paramètre `trail` est un ensemble de nœuds ancêtres utilisé pour
+                        détecter et casser les cycles éventuels dans le graphe hiérarchique
+                        (cas d'un manager se référençant lui-même ou en boucle).
+
+                        Args:
+                            name: Nom du collaborateur à positionner.
+                            trail: Ensemble des nœuds ancêtres déjà visités sur ce chemin
+                                (évite les boucles infinies en cas de cycle dans les données).
+
+                        Returns:
+                            float: Position X du nœud (en unités de cellules, pas encore en pixels).
+                        """
                         if trail is None:
                             trail = set()
                         if name in trail:
+                            # Cycle détecté : on attribue une position de repli pour ne pas bloquer
                             if name not in x_index:
                                 x_index[name] = _cursor[0]
                                 _cursor[0] += 1
@@ -1667,12 +1889,14 @@ if page_active == "Équipe":
                             return x_index[name]
                         kids = [k for k in children.get(name, []) if k != name]
                         if not kids:
+                            # Nœud feuille : position séquentielle suivante
                             x_index[name] = _cursor[0]
                             _cursor[0] += 1
                             return x_index[name]
                         vals = []
                         for k in kids:
                             vals.append(_place(k, trail | {name}))
+                        # Nœud parent : centrage sur ses enfants
                         x_index[name] = sum(vals) / len(vals)
                         return x_index[name]
 

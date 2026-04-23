@@ -1,9 +1,13 @@
 ﻿Collaborateur,Poste,Manager,Numéro,Email
-Jean DUPONT,Directeur Général,,,
-Sophie MARTIN,Directrice des Opérations,Jean DUPONT,,
-Mathys LEONI,Chef de projet,Sophie MARTIN,1234567890.0,mathys.leoni@qiminfo.ch
-Alice BERNARD,Développeuse Front-end,Mathys LEONI,,
-Lucas PETIT,Développeur Back-end,Mathys LEONI,,
-Emma MOREAU,UX Designer,Mathys LEONI,,
-Thomas DUBOIS,Responsable RH,Jean DUPONT,,
-Chloé GARCIA,Chargée de Recrutement,Thomas DUBOIS,,
+Jacques DAUDEL,CTO,Vincent FLATIN,+41 22 552 63 95,jacques.daudel@qiminfo.ch
+Alexandre NEY,Head of Innovation & Digital Solutions,Jacques DAUDEL,,alexandre.ney@qiminfo.ch
+Clément RAUSSIN,Head of Cloud and DevOps Solution,Jacques DAUDEL,+41  +41 21 341 15 08,clement.raussin@qiminfo.ch
+Joachim HENRY,DSI,Jacques DAUDEL,,joachim.henry@qiminfo.ch
+Xavier FABRE,Head of Modern Workplace and Workstation,Jacques DAUDEL,+41225526389,xavier.fabre@qiminfo.ch
+Alexandre REY,Alternant,Joachim HENRY,,
+Florian NOURRISSE,Technical leader,Joachim HENRY,,
+Jean-Baptiste ZENNER,DPO,Joachim HENRY,,
+Jean-François REITHLER,Systeme Administrator,Joachim HENRY,,
+Louis-Marie BEAUDET,PO,Joachim HENRY,,
+Thalïa SAHED,,Joachim HENRY,,
+Mathys LEONI,Stagiaire,Joachim HENRY,,

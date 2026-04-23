@@ -36,9 +36,9 @@ A faire  :
     - Rajout lien d'aide ✓
     - Json vers la iframe avec rafraichissement automatique ✓
     - Importation/Exportation ✓
-    - Commenter proprement le code 
-    - Nettoyer le code
+    - Commenter proprement le code ✓
+    - Régler l'import du CDC avec le zip ✓
+    - Nettoyer le code 
     - Revoir le format des 2 export PDF
-    - Gérer les zooms sur les pages 
-    - Armoniser le projet de façon plus globale 
-    - Régler l'import du CDC avec le zip
+    - Gérer les zooms sur les pages  
+    
