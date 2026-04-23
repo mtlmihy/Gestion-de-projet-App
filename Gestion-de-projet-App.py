@@ -148,9 +148,15 @@ def check_password():
     if st.session_state.get("authenticated"):
         return
 
+    # Si aucun mot de passe n'est configuré, l'authentification est désactivée
+    expected_hash = st.secrets.get("PASSWORD_HASH", "")
+    if not expected_hash:
+        st.session_state.authenticated = True
+        return
+
     # Validation via le token passé dans l'URL (persisté à travers les navigations JS)
     auth_param = st.query_params.get("auth", "")
-    if auth_param and auth_param == st.secrets.get("PASSWORD_HASH", ""):
+    if auth_param and auth_param == expected_hash:
         st.session_state.authenticated = True
         return
 
@@ -169,7 +175,7 @@ def check_password():
         pwd = st.text_input("Mot de passe", type="password", key="_pwd_input")
         if st.button("Se connecter", use_container_width=True):
             pwd_hash = hashlib.sha256(pwd.encode()).hexdigest()
-            if pwd_hash == st.secrets["PASSWORD_HASH"]:
+            if pwd_hash == expected_hash:
                 st.session_state.authenticated = True
                 # Stocker le hash dans l'URL pour persister à travers les rechargements
                 st.query_params["auth"] = pwd_hash
