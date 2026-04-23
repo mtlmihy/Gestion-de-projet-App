@@ -1,6 +1,9 @@
 # Données sensibles — ne jamais versionner
 .streamlit/secrets.toml
 
+# Documents internes — accessibles uniquement via l'application
+assets/
+
 # Environnements Python
 __pycache__/
 *.py[cod]
