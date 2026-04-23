@@ -10,17 +10,18 @@
 1. [Vue d'ensemble](#1-vue-densemble)
 2. [Installation et lancement](#2-installation-et-lancement)
 3. [Architecture des fichiers](#3-architecture-des-fichiers)
-4. [Navigation](#4-navigation)
-5. [Pages de l'application](#5-pages-de-lapplication)
-    - [Registre des Risques](#51-registre-des-risques)
-    - [Suivi des Tâches](#52-suivi-des-tâches)
-    - [Planning](#53-planning)
-    - [Cahier des Charges](#54-cahier-des-charges)
-    - [Équipe](#55-équipe)
-    - [Aide Pilotage](#56-aide-pilotage)
-6. [Sauvegarde des données](#6-sauvegarde-des-données)
-7. [Thèmes clair / sombre](#7-thèmes-clair--sombre)
-8. [Raccourcis clavier](#8-raccourcis-clavier)
+4. [Authentification](#4-authentification)
+5. [Navigation](#5-navigation)
+6. [Pages de l'application](#6-pages-de-lapplication)
+    - [Registre des Risques](#61-registre-des-risques)
+    - [Suivi des Tâches](#62-suivi-des-tâches)
+    - [Planning](#63-planning)
+    - [Cahier des Charges](#64-cahier-des-charges)
+    - [Équipe](#65-équipe)
+    - [Aide Pilotage](#66-aide-pilotage)
+7. [Sauvegarde et restauration des données](#7-sauvegarde-et-restauration-des-données)
+8. [Thèmes clair / sombre](#8-thèmes-clair--sombre)
+9. [Raccourcis clavier](#9-raccourcis-clavier)
 
 ---
 
@@ -35,7 +36,7 @@ L'application centralise les principaux outils de pilotage d'un projet :
 | Planning              | Visualisation générée depuis le Cahier des Charges et les Tâches |
 | Cahier des Charges    | Saisie et export du CDC projet (HTML interactif + JSON)          |
 | Équipe                | Annuaire de l'équipe et organigramme interactif                  |
-| Aide Pilotage         | Documents de référence téléchargeables (Guide CDP, CDC)          |
+| Aide Pilotage         | Documents de référence téléchargeables + ressources en ligne     |
 
 ---
 
@@ -80,7 +81,8 @@ TestApp/
 │   ├── registre_risques.csv        # Sauvegarde du registre des risques
 │   ├── suivi_taches.csv            # Sauvegarde des tâches
 │   ├── equipe_completions.csv      # Sauvegarde de l'équipe
-│   └── cahier_des_charges.json     # Sauvegarde du Cahier des Charges
+│   ├── cahier_des_charges.json     # Sauvegarde du Cahier des Charges
+│   └── cdc_sync_token.txt          # Jeton de synchronisation du CDC (usage interne)
 └── assets/                         # Fichiers statiques (templates, documents)
     ├── cahier_des_charges.html     # Interface HTML du Cahier des Charges
     ├── Guide-CDP.pdf               # Document Guide CDP (téléchargement)
@@ -91,36 +93,78 @@ TestApp/
 
 ---
 
-## 4. Navigation
+## 4. Authentification
 
-La navigation se fait via la **barre latérale gauche**. Chaque page est accessible en un clic.
+L'application est **protégée par un mot de passe** configuré via les secrets Streamlit.
 
-Les pages disponibles sont :
+### Configuration
 
-1. Registre des Risques
-2. Suivi des Tâches
-3. Planning
-4. Cahier des Charges
-5. Équipe
-6. Aide Pilotage
+Dans le fichier `.streamlit/secrets.toml` (à créer à la racine du projet) :
+
+```toml
+PASSWORD_HASH = "<sha256_du_mot_de_passe>"
+```
+
+Le hash SHA-256 se génère avec Python :
+
+```python
+import hashlib
+hashlib.sha256("mon_mot_de_passe".encode()).hexdigest()
+```
+
+### Comportement
+
+- À l'ouverture, si l'utilisateur n'est pas authentifié, la barre latérale est masquée et un formulaire de connexion s'affiche.
+- Après connexion réussie, le hash est stocké dans le paramètre URL `?auth=...` pour **persister la session** à travers les navigations sans rechargement complet.
+- Un mot de passe incorrect affiche un message d'erreur.
 
 ---
 
-## 5. Pages de l'application
+## 5. Navigation
 
-### 5.1 Registre des Risques
+La navigation se fait via une **barre d'onglets dans le header** de l'application (en haut à gauche). Chaque page est accessible en un clic.
+
+Les onglets disponibles sont (dans l'ordre affiché) :
+
+1. Cahier des Charges
+2. Risques
+3. Tâches
+4. Planning
+5. Équipe
+6. Aide Pilotage
+
+La page active est mise en évidence visuellement (couleur bleue). La navigation fonctionne par **paramètres URL** (`?page=...`), ce qui permet de partager ou mémoriser un lien direct vers une page.
+
+> **Astuce :** Utiliser les [raccourcis clavier](#9-raccourcis-clavier) pour naviguer sans la souris.
+
+---
+
+## 6. Pages de l'application
+
+### 6.1 Registre des Risques
 
 **Objectif :** Identifier, évaluer et suivre les risques du projet.
 
+#### Indicateurs clés (KPIs)
+
+En haut de page, 5 métriques sont affichées en temps réel :
+
+| Métrique        | Description                        |
+|-----------------|------------------------------------|
+| Total           | Nombre total de risques            |
+| Ouverts         | Risques au statut "Ouvert"         |
+| En cours        | Risques au statut "En cours"       |
+| Fermés          | Risques au statut "Fermé"          |
+| Critiques (P3)  | Risques de priorité 3              |
+
 #### Fonctionnalités
 
-- **Tableau des risques** — liste tous les risques avec : Identifiant, Description, Catégorie, Probabilité, Impact, Priorité, Responsable, Atténuation, Statut.
-- **Ajout d'un risque** — formulaire accessible via le bouton `+ Nouveau risque`. Champs obligatoires : Identifiant, Description, Catégorie, Probabilité, Impact, Responsable.
-- **Modification d'un risque** — cliquer sur une ligne du tableau pour ouvrir le formulaire pré-rempli.
-- **Suppression d'un risque** — bouton `Supprimer` dans le formulaire d'édition (avec confirmation).
-- **Filtres** — filtrage par Catégorie et/ou Statut depuis la barre latérale.
-- **Export CSV** — téléchargement du registre complet au format CSV.
-- **Import CSV** — chargement d'un CSV existant pour remplacer le registre en cours.
+- **Tableau des risques** — liste tous les risques avec : Identifiant, Catégorie, Probabilité, Impact, Priorité, Responsable, Atténuation, Statut.
+- **Ajout d'un risque** — via le bouton flottant `+` en bas à droite ou le panneau `Nouveau risque`. Champs obligatoires : Identifiant, Responsable.
+- **Modification d'un risque** — cliquer sur l'icône ✏️ en bout de ligne pour ouvrir le formulaire d'édition.
+- **Suppression d'un risque** — bouton `Supprimer` dans le formulaire d'édition (sans confirmation supplémentaire).
+- **Filtres** — panneau dépliable avec filtrage par Probabilité, Impact, Statut, Priorité et recherche textuelle sur l'Identifiant.
+- **Responsable existant** — dans les formulaires d'ajout et d'édition, un menu déroulant propose les responsables déjà présents dans le registre pour éviter les doublons de saisie.
 
 #### Calcul automatique de la priorité
 
@@ -140,17 +184,26 @@ La priorité est calculée automatiquement selon la matrice :
 
 ---
 
-### 5.2 Suivi des Tâches
+### 6.2 Suivi des Tâches
 
 **Objectif :** Gérer les tâches du projet, les associer à des jalons et suivre leur avancement.
 
+#### Indicateurs clés (KPIs)
+
+| Métrique          | Description                              |
+|-------------------|------------------------------------------|
+| Total tâches      | Nombre total de tâches                   |
+| Avancement moyen  | Moyenne des avancements (%)              |
+| Terminées         | Nombre de tâches à 100 %                 |
+
 #### Fonctionnalités
 
-- **Tableau des tâches** — liste toutes les tâches avec : Nom, Description, Importance, Avancement (%), Assigné, Jalon.
-- **Ajout d'une tâche** — bouton `+ Nouvelle tâche`. Champs : Nom, Description, Importance, Avancement, Assigné, Jalon (sélection parmi les jalons du CDC).
-- **Modification d'une tâche** — cliquer sur une ligne pour ouvrir le formulaire d'édition.
-- **Suppression d'une tâche** — bouton `Supprimer` dans le formulaire (avec confirmation).
+- **Tableau des tâches** — liste toutes les tâches avec : Nom, Description, Importance, Jalon, Avancement, Assigné.
+- **Ajout d'une tâche** — bouton flottant `+` ou panneau `Nouvelle tâche`. Champs obligatoires : Nom, Assigné à.
+- **Modification d'une tâche** — cliquer sur l'icône ✏️ en bout de ligne pour ouvrir le formulaire d'édition.
+- **Suppression d'une tâche** — bouton `Supprimer` dans le formulaire d'édition.
 - **Barre de progression** — affichage visuel de l'avancement (0–100 %).
+- **Filtres** — panneau dépliable : recherche par nom, filtre par Importance, filtre par Assigné.
 - **Lien avec le Planning** — le champ `Jalon` rattache une tâche à un jalon défini dans le Cahier des Charges. Cela alimente les données affichées dans la page Planning.
 
 #### Niveaux d'importance
@@ -164,7 +217,7 @@ La priorité est calculée automatiquement selon la matrice :
 
 ---
 
-### 5.3 Planning
+### 6.3 Planning
 
 **Objectif :** Visualiser l'avancement du projet sous forme de diagramme de Gantt, basé sur les jalons et les tâches.
 
@@ -177,15 +230,30 @@ La priorité est calculée automatiquement selon la matrice :
 
 #### Ce qui est affiché
 
-- En-tête : nom du projet, chef de projet, date de début.
-- Diagramme de Gantt : un bloc par jalon, avec indication de la date et l'état.
-- Liste des tâches associées à chaque jalon avec leur barre de progression.
+1. **En-tête** : nom du projet, chef de projet, nombre de jalons, durée totale.
+2. **Barre de progression globale** : avancement temporel du projet (de la date de début à la fin du dernier jalon), avec marqueur "Aujourd'hui".
+3. **Timeline SVG** : frise chronologique avec un losange par jalon, les jalons pairs au-dessus de la barre et impairs en-dessous, repères mensuels et ligne "Auj.".
+4. **Cartes jalons** : une carte par jalon indiquant :
+   - Statut coloré (Non démarré, Démarré, En cours, Terminé / Passé, Prochain, À venir)
+   - Date et délai restant
+   - Barre de progression des tâches associées
+   - Liste des tâches avec leur avancement individuel
+
+#### Couleurs de statut
+
+| Couleur | Signification (basée sur tâches)   | Signification (basée sur date) |
+|---------|------------------------------------|-------------------------------|
+| 🟢 Vert  | Terminé (100 %)                    | —                             |
+| 🔵 Bleu  | En cours (≥ 50 %)                  | À venir (> 30 j.)             |
+| 🟠 Orange| Démarré (> 0 %)                    | Prochain (≤ 30 j.)            |
+| 🔴 Rouge | Non démarré (0 %)                  | —                             |
+| ⚫ Gris  | —                                   | Passé (date dépassée)         |
 
 > **Prérequis :** Renseigner les jalons dans le Cahier des Charges pour que le planning s'affiche.
 
 ---
 
-### 5.4 Cahier des Charges
+### 6.4 Cahier des Charges
 
 **Objectif :** Rédiger, sauvegarder et exporter le Cahier des Charges du projet.
 
@@ -201,7 +269,7 @@ Le CDC est une **interface HTML interactive** chargée dans l'application. Elle 
 
 #### Sauvegarde et synchronisation
 
-- Les données sont **sauvegardées dans `cahier_des_charges.json`** (fichier local).
+- Les données sont **sauvegardées dans `cahier_des_charges.json`** via un serveur HTTP local démarré automatiquement par l'application.
 - Le panneau `Synchronisation sauvegarde CDC` permet de :
   - **Importer** un fichier JSON pour restaurer un CDC précédent.
   - **Exporter** le JSON actuel pour le sauvegarder ou le partager.
@@ -210,7 +278,7 @@ Le CDC est une **interface HTML interactive** chargée dans l'application. Elle 
 
 ---
 
-### 5.5 Équipe
+### 6.5 Équipe
 
 **Objectif :** Gérer l'annuaire de l'équipe projet et visualiser la hiérarchie sous forme d'organigramme.
 
@@ -237,24 +305,28 @@ Le CDC est une **interface HTML interactive** chargée dans l'application. Elle 
 
 ---
 
-### 5.6 Aide Pilotage
+### 6.6 Aide Pilotage
 
 **Objectif :** Mettre à disposition des ressources documentaires pour soutenir la gestion de projet.
 
-#### Documents disponibles
+#### Documents téléchargeables
 
 | Document           | Format | Description                       |
 |--------------------|--------|-----------------------------------|
 | Guide CDP          | PDF    | Guide complet du chef de projet   |
 | Cahier des Charges | DOCX   | Modèle Word du Cahier des Charges |
 
-> Les fichiers doivent être présents dans le répertoire de l'application (`Guide-CDP.pdf`, `Cahier-des-charges.docx`). Un message d'erreur s'affiche si un fichier est absent.
+> Les fichiers doivent être présents dans le répertoire `assets/` (`Guide-CDP.pdf`, `Cahier-des-charges.docx`). Un message d'erreur s'affiche si un fichier est absent.
+
+#### Ressources en ligne
+
+- [Registre des risques : guide complet (Asana)](https://asana.com/fr/resources/risk-register)
 
 ---
 
-## 6. Sauvegarde des données
+## 7. Sauvegarde et restauration des données
 
-Toutes les données sont sauvegardées **localement** dans des fichiers dans le répertoire de l'application.
+Toutes les données sont sauvegardées **localement** dans des fichiers dans le répertoire `data/`.
 
 | Module             | Fichier                   | Format          | Sauvegarde                        |
 |--------------------|---------------------------|-----------------|-----------------------------------|
@@ -265,9 +337,16 @@ Toutes les données sont sauvegardées **localement** dans des fichiers dans le 
 
 > **Migration automatique :** Si un CSV existant ne contient pas toutes les colonnes attendues, l'application ajoute les colonnes manquantes avec des valeurs vides au chargement. Les données existantes ne sont pas perdues.
 
+### Sauvegarde ZIP globale
+
+La **barre latérale** propose deux actions de sauvegarde complète :
+
+- **Télécharger la sauvegarde** — génère un fichier `sauvegarde_projet_AAAA-MM-JJ.zip` contenant les 4 fichiers de données (CSV + JSON). Le nom inclut la date du jour.
+- **Restaurer depuis ZIP** — permet d'importer un fichier `.zip` précédemment téléchargé pour restaurer tout ou partie des données. Les fichiers reconnus dans le ZIP sont appliqués immédiatement et les données en session sont mises à jour.
+
 ---
 
-## 7. Thèmes clair / sombre
+## 8. Thèmes clair / sombre
 
 L'application respecte le thème configuré dans Streamlit (clair ou sombre).  
 Pour changer de thème : menu `⋮` en haut à droite → `Settings` → `Theme`.
@@ -276,14 +355,14 @@ Le CSS de l'application utilise des variables relatives au thème actif pour ass
 
 ---
 
-## 8. Raccourcis clavier
+## 9. Raccourcis clavier
 
 | Touche | Action                        |
 |--------|-------------------------------|
-| `C`    | Aller au Cahier des Charges   |
-| `R`    | Aller au Registre des Risques |
-| `T`    | Aller au Suivi des Tâches     |
-| `P`    | Aller au Planning             |
-| `E`    | Aller à la page Équipe        |
+| `c`    | Aller au Cahier des Charges   |
+| `r`    | Aller au Registre des Risques |
+| `t`    | Aller au Suivi des Tâches     |
+| `p`    | Aller au Planning             |
+| `e`    | Aller à la page Équipe        |
 
-> Ces raccourcis fonctionnent lorsque le focus n'est pas dans un champ de saisie.
+> Ces raccourcis fonctionnent lorsque le focus n'est pas dans un champ de saisie (et sans modificateur Ctrl / Alt / Cmd).
