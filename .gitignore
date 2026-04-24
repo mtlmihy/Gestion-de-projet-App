@@ -1,5 +1,7 @@
 # Données sensibles — ne jamais versionner
 
+# Secrets Streamlit (credentials DB, mot de passe…) — NE JAMAIS COMMITER
+.streamlit/secrets.toml
 
 
 # Documents internes — accessibles uniquement via l'application
@@ -13,8 +15,13 @@ help suivi.txt
 __pycache__/
 *.py[cod]
 .env
+frontend/.env
 venv/
 .venv/
+
+# Frontend Vue/Vite
+frontend/node_modules/
+frontend/dist/
 
 # PyInstaller
 dist/

@@ -1,3 +1,4 @@
 streamlit>=1.30.0
 pandas>=2.0.0
-# python -m streamlit run app.py
+psycopg2-binary>=2.9.0
+# python -m streamlit run Gestion-de-projet-App.py

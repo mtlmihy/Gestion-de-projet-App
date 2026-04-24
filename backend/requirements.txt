@@ -1,0 +1,17 @@
+# ── Framework ─────────────────────────────────────────────────────────────────
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0      # serveur ASGI avec rechargement automatique
+
+# ── Base de données ───────────────────────────────────────────────────────────
+asyncpg>=0.29.0                # driver PostgreSQL asynchrone (remplace psycopg2)
+
+# ── Validation / Configuration ────────────────────────────────────────────────
+pydantic>=2.7.0
+pydantic-settings>=2.2.0       # lecture du .env via BaseSettings
+
+# ── Authentification JWT ──────────────────────────────────────────────────────
+python-jose[cryptography]>=3.3.0   # création et validation des JWT
+passlib[bcrypt]>=1.7.4             # hashing (compatible avec SHA-256 existant)
+
+# ── Utilitaires ───────────────────────────────────────────────────────────────
+python-multipart>=0.0.9        # nécessaire pour Form() dans FastAPI
