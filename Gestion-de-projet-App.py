@@ -11,26 +11,14 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 from datetime import date
 
-import db as _db
-
 DATA_DIR        = Path(__file__).parent / "data"
 ASSETS_DIR      = Path(__file__).parent / "assets"
-# Chemins CSV/JSON conservés comme fallback si PostgreSQL n'est pas configuré
 CSV_PATH        = DATA_DIR / "registre_risques.csv"
 TACHES_CSV_PATH = DATA_DIR / "suivi_taches.csv"
 CDC_JSON_PATH   = DATA_DIR / "cahier_des_charges.json"
 EQUIPE_CSV_PATH = DATA_DIR / "equipe_completions.csv"
+# Création automatique du dossier data/ si absent pour éviter les erreurs d'écriture des fichiers CSV/JSON
 DATA_DIR.mkdir(exist_ok=True)
-
-# Initialisation de la DB (une seule fois par session serveur)
-@st.cache_resource
-def _init_db_once():
-    if _db.use_db():
-        try:
-            _db.init_db()
-        except Exception as exc:
-            st.warning(f"Impossible d'initialiser la DB : {exc}")
-_init_db_once()
 
 
 # ── Serveur HTTP local pour la sauvegarde du CDC ─────────────────────────────
@@ -48,11 +36,8 @@ class _CDCSaveHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/cdc_version":
             try:
-                if _db.use_db():
-                    body = _db.cdc_version_hash().encode()
-                else:
-                    raw = CDC_JSON_PATH.read_bytes() if CDC_JSON_PATH.exists() else b""
-                    body = hashlib.sha256(raw).hexdigest()[:16].encode()
+                raw = CDC_JSON_PATH.read_bytes() if CDC_JSON_PATH.exists() else b""
+                body = hashlib.sha256(raw).hexdigest()[:16].encode()
             except Exception:
                 body = b"error"
             self.send_response(200)
@@ -63,11 +48,7 @@ class _CDCSaveHandler(BaseHTTPRequestHandler):
             self.wfile.write(body)
         elif self.path == "/cdc_data":
             try:
-                if _db.use_db():
-                    raw = _db.load_cdc_raw()
-                    body = raw if raw is not None else b"null"
-                else:
-                    body = CDC_JSON_PATH.read_bytes() if CDC_JSON_PATH.exists() else b"null"
+                body = CDC_JSON_PATH.read_bytes() if CDC_JSON_PATH.exists() else b"null"
             except Exception:
                 body = b"null"
             self.send_response(200)
@@ -87,13 +68,10 @@ class _CDCSaveHandler(BaseHTTPRequestHandler):
             body = self.rfile.read(length)
             try:
                 data = json.loads(body)
-                if _db.use_db():
-                    _db.save_cdc(data)
-                else:
-                    CDC_JSON_PATH.write_text(
-                        json.dumps(data, ensure_ascii=False, indent=2),
-                        encoding="utf-8",
-                    )
+                CDC_JSON_PATH.write_text(
+                    json.dumps(data, ensure_ascii=False, indent=2),
+                    encoding="utf-8",
+                )
                 self.send_response(200)
                 self.send_header("Access-Control-Allow-Origin", "*")
                 self.end_headers()
@@ -124,24 +102,15 @@ def _get_cdc_save_port() -> int:
 
 
 def sauvegarder():
-    if _db.use_db():
-        _db.save_risques(st.session_state.risques)
-    else:
-        st.session_state.risques.drop(columns=["id"]).to_csv(CSV_PATH, index=False, encoding="utf-8-sig")
+    st.session_state.risques.drop(columns=["id"]).to_csv(CSV_PATH, index=False, encoding="utf-8-sig")
 
 
 def sauvegarder_taches():
-    if _db.use_db():
-        _db.save_taches(st.session_state.taches)
-    else:
-        st.session_state.taches.drop(columns=["id"]).to_csv(TACHES_CSV_PATH, index=False, encoding="utf-8-sig")
+    st.session_state.taches.drop(columns=["id"]).to_csv(TACHES_CSV_PATH, index=False, encoding="utf-8-sig")
 
 
 def sauvegarder_equipe():
-    if _db.use_db():
-        _db.save_equipe(st.session_state.equipe)
-    else:
-        st.session_state.equipe.drop(columns=["id"]).to_csv(EQUIPE_CSV_PATH, index=False, encoding="utf-8-sig")
+    st.session_state.equipe.drop(columns=["id"]).to_csv(EQUIPE_CSV_PATH, index=False, encoding="utf-8-sig")
 
 
 def creer_zip_sauvegarde() -> bytes:
@@ -160,12 +129,8 @@ def creer_zip_sauvegarde() -> bytes:
             "data/equipe_completions.csv",
             st.session_state.equipe.drop(columns=["id"]).to_csv(index=False, encoding="utf-8-sig"),
         )
-        # JSON cahier des charges
-        if _db.use_db():
-            _cdc_raw = _db.load_cdc_raw()
-            if _cdc_raw:
-                zf.writestr("data/cahier_des_charges.json", _cdc_raw)
-        elif CDC_JSON_PATH.exists():
+        # JSON cahier des charges (depuis le disque)
+        if CDC_JSON_PATH.exists():
             zf.write(CDC_JSON_PATH, arcname="data/cahier_des_charges.json")
     return buf.getvalue()
 
@@ -304,16 +269,9 @@ MOCK_DATA = [
     "Atténuation": "Plan de gestion du changement (communication) et formation", "Statut": "Ouvert"}
 ]
 
-# ── State : charger depuis DB (ou CSV en fallback) ───────────────────────────
+# ── State : charger le CSV existant ou créer avec les données fictives ───────────
 if "risques" not in st.session_state:
-    if _db.use_db():
-        df_load = _db.load_risques()
-        if df_load.empty:
-            st.session_state.risques = pd.DataFrame(MOCK_DATA, columns=COLONNES)
-            sauvegarder()
-        else:
-            st.session_state.risques = df_load
-    elif CSV_PATH.exists():
+    if CSV_PATH.exists():
         df_load = pd.read_csv(CSV_PATH, encoding="utf-8-sig")
         df_load["id"] = [str(uuid.uuid4()) for _ in range(len(df_load))]
         st.session_state.risques = df_load[[c for c in COLONNES if c in df_load.columns or c == "id"]]
@@ -327,12 +285,10 @@ TACHE_COLONNES = ["id", "Nom", "Description", "Importance", "Avancement", "Assig
 EQUIPE_COLONNES = ["id", "Collaborateur", "Poste", "Manager", "Numéro", "Email"]
 
 if "taches" not in st.session_state:
-    if _db.use_db():
-        df_t = _db.load_taches()
-        st.session_state.taches = df_t if not df_t.empty else pd.DataFrame(columns=TACHE_COLONNES)
-    elif TACHES_CSV_PATH.exists():
+    if TACHES_CSV_PATH.exists():
         df_t = pd.read_csv(TACHES_CSV_PATH, encoding="utf-8-sig")
         df_t["id"] = [str(uuid.uuid4()) for _ in range(len(df_t))]
+        # Compatibilité ascendante : colonne "Jalon" absente dans les anciens CSV
         if "Jalon" not in df_t.columns:
             df_t["Jalon"] = ""
         st.session_state.taches = df_t[[c for c in TACHE_COLONNES if c in df_t.columns or c == "id"]]
@@ -341,10 +297,7 @@ if "taches" not in st.session_state:
         sauvegarder_taches()
 
 if "equipe" not in st.session_state:
-    if _db.use_db():
-        df_equipe = _db.load_equipe()
-        st.session_state.equipe = df_equipe if not df_equipe.empty else pd.DataFrame(columns=EQUIPE_COLONNES)
-    elif EQUIPE_CSV_PATH.exists():
+    if EQUIPE_CSV_PATH.exists():
         df_equipe = pd.read_csv(EQUIPE_CSV_PATH, encoding="utf-8-sig")
         df_equipe["id"] = [str(uuid.uuid4()) for _ in range(len(df_equipe))]
         st.session_state.equipe = df_equipe[[c for c in EQUIPE_COLONNES if c in df_equipe.columns or c == "id"]]
@@ -731,60 +684,47 @@ with st.sidebar:
     st.markdown(f'<h4 class="section-title">{ico_restore} Restaurer depuis ZIP</h4>', unsafe_allow_html=True)
     zip_upload = st.file_uploader("Importer un ZIP de sauvegarde", type=["zip"], label_visibility="collapsed", key="zip_upload")
     if zip_upload is not None:
-        # Signature unique du fichier pour éviter de retraiter le même ZIP à chaque rerun
-        _zip_sig = f"{zip_upload.name}|{zip_upload.size}"
-        if st.session_state.get("_processed_zip") != _zip_sig:
-            try:
-                with zipfile.ZipFile(io.BytesIO(zip_upload.read())) as zf:
-                    noms = zf.namelist()
-                    restored = []
+        try:
+            with zipfile.ZipFile(io.BytesIO(zip_upload.read())) as zf:
+                noms = zf.namelist()
+                restored = []
 
-                    if "data/registre_risques.csv" in noms:
-                        df_r = pd.read_csv(io.BytesIO(zf.read("data/registre_risques.csv")))
-                        df_r["id"] = [str(uuid.uuid4()) for _ in range(len(df_r))]
-                        df_r = df_r[[c for c in COLONNES if c in df_r.columns or c == "id"]]
-                        st.session_state.risques = df_r
-                        sauvegarder()
-                        restored.append("registre_risques.csv")
+                if "data/registre_risques.csv" in noms:
+                    df_r = pd.read_csv(io.BytesIO(zf.read("data/registre_risques.csv")))
+                    df_r["id"] = [str(uuid.uuid4()) for _ in range(len(df_r))]
+                    st.session_state.risques = df_r[[c for c in COLONNES if c in df_r.columns or c == "id"]]
+                    sauvegarder()
+                    restored.append("registre_risques.csv")
 
-                    if "data/suivi_taches.csv" in noms:
-                        df_t = pd.read_csv(io.BytesIO(zf.read("data/suivi_taches.csv")))
-                        df_t["id"] = [str(uuid.uuid4()) for _ in range(len(df_t))]
-                        if "Jalon" not in df_t.columns:
-                            df_t["Jalon"] = ""
-                        st.session_state.taches = df_t[[c for c in TACHE_COLONNES if c in df_t.columns or c == "id"]]
-                        sauvegarder_taches()
-                        restored.append("suivi_taches.csv")
+                if "data/suivi_taches.csv" in noms:
+                    df_t = pd.read_csv(io.BytesIO(zf.read("data/suivi_taches.csv")))
+                    df_t["id"] = [str(uuid.uuid4()) for _ in range(len(df_t))]
+                    if "Jalon" not in df_t.columns:
+                        df_t["Jalon"] = ""
+                    st.session_state.taches = df_t[[c for c in TACHE_COLONNES if c in df_t.columns or c == "id"]]
+                    sauvegarder_taches()
+                    restored.append("suivi_taches.csv")
 
-                    if "data/equipe_completions.csv" in noms:
-                        df_e = pd.read_csv(io.BytesIO(zf.read("data/equipe_completions.csv")))
-                        df_e["id"] = [str(uuid.uuid4()) for _ in range(len(df_e))]
-                        for _col in ["Collaborateur", "Poste", "Manager", "Numéro", "Email"]:
-                            if _col not in df_e.columns:
-                                df_e[_col] = ""
-                        st.session_state.equipe = df_e[[c for c in EQUIPE_COLONNES if c in df_e.columns or c == "id"]]
-                        sauvegarder_equipe()
-                        restored.append("equipe_completions.csv")
+                if "data/equipe_completions.csv" in noms:
+                    df_e = pd.read_csv(io.BytesIO(zf.read("data/equipe_completions.csv")))
+                    df_e["id"] = [str(uuid.uuid4()) for _ in range(len(df_e))]
+                    for _col in ["Collaborateur", "Poste", "Manager", "Numéro", "Email"]:
+                        if _col not in df_e.columns:
+                            df_e[_col] = ""
+                    st.session_state.equipe = df_e[[c for c in EQUIPE_COLONNES if c in df_e.columns or c == "id"]]
+                    sauvegarder_equipe()
+                    restored.append("equipe_completions.csv")
 
-                    if "data/cahier_des_charges.json" in noms:
-                        _cdc_bytes = zf.read("data/cahier_des_charges.json")
-                        if _db.use_db():
-                            _db.save_cdc(json.loads(_cdc_bytes.decode("utf-8")))
-                        else:
-                            CDC_JSON_PATH.write_bytes(_cdc_bytes)
-                        restored.append("cahier_des_charges.json")
+                if "data/cahier_des_charges.json" in noms:
+                    CDC_JSON_PATH.write_bytes(zf.read("data/cahier_des_charges.json"))
+                    restored.append("cahier_des_charges.json")
 
-                    if restored:
-                        st.session_state._processed_zip = _zip_sig
-                        _cdc_restored = "cahier_des_charges.json" in restored
-                        st.toast(f"✅ Restauré : {', '.join(restored)}")
-                        if _cdc_restored:
-                            # Force le rechargement de l'iframe CDC avec les nouvelles données
-                            st.rerun()
-                    else:
-                        st.warning("Aucun fichier reconnu dans ce ZIP.")
-            except Exception as exc:
-                st.error(f"Erreur lors de la restauration : {exc}")
+                if restored:
+                    st.success(f"Restauré : {', '.join(restored)}")
+                else:
+                    st.warning("Aucun fichier reconnu dans ce ZIP.")
+        except Exception as exc:
+            st.error(f"Erreur lors de la restauration : {exc}")
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # PAGE 1 — REGISTRE DES RISQUES
@@ -1062,16 +1002,12 @@ if page_active == "Suivi des Tâches":
 
     # ── Liste des jalons depuis le CDC ────────────────
     _t_jalon_opts = ["(Sans jalon)"]
-    try:
-        if _db.use_db():
-            _cj = _db.load_cdc() or {}
-        elif CDC_JSON_PATH.exists():
+    if CDC_JSON_PATH.exists():
+        try:
             _cj = json.loads(CDC_JSON_PATH.read_text(encoding="utf-8"))
-        else:
-            _cj = {}
-        _t_jalon_opts += [str(j[0]) for j in _cj.get("jalons", []) if j and str(j[0]).strip()]
-    except Exception:
-        pass
+            _t_jalon_opts += [str(j[0]) for j in _cj.get("jalons", []) if j and str(j[0]).strip()]
+        except Exception:
+            pass
 
     st.divider()
 
@@ -1195,30 +1131,26 @@ if page_active == "Suivi des Tâches":
 # PAGE 3 — PLANNING
 # ═══════════════════════════════════════════════════════════════════════════════
 if page_active == "Planning":
-    # ── Lecture des jalons depuis le CDC ────────────────────────────────────
+    # ── Lecture des jalons depuis le fichier CDC ─────────────────────────────
     _jalons_data = []
     _nom_projet  = ""
     _chef_projet = ""
     _date_debut  = ""
-    try:
-        if _db.use_db():
-            _cdc = _db.load_cdc() or {}
-        elif CDC_JSON_PATH.exists():
+    if CDC_JSON_PATH.exists():
+        try:
             _cdc = json.loads(CDC_JSON_PATH.read_text(encoding="utf-8"))
-        else:
-            _cdc = {}
-        _nom_projet  = _cdc.get("nom_projet", "")
-        _chef_projet = _cdc.get("chef_projet", "")
-        _date_debut  = _cdc.get("date_debut", "")
-        for _j in _cdc.get("jalons", []):
-            if len(_j) >= 2 and str(_j[1]).strip():
-                _jalons_data.append([
-                    str(_j[0]) if len(_j) > 0 else "",
-                    str(_j[1]),
-                    str(_j[2]) if len(_j) > 2 else ""
-                ])
-    except Exception:
-        pass
+            _nom_projet  = _cdc.get("nom_projet", "")
+            _chef_projet = _cdc.get("chef_projet", "")
+            _date_debut  = _cdc.get("date_debut", "")
+            for _j in _cdc.get("jalons", []):
+                if len(_j) >= 2 and str(_j[1]).strip():
+                    _jalons_data.append([
+                        str(_j[0]) if len(_j) > 0 else "",
+                        str(_j[1]),
+                        str(_j[2]) if len(_j) > 2 else ""
+                    ])
+        except Exception:
+            pass
 
     # ── Tâches liées aux jalons ──────────────────────────────────────
     _tasks_data = []
@@ -1590,24 +1522,17 @@ if page_active == "Cahier des Charges":
     _cdc_path = Path(__file__).parent / "assets" / "cahier_des_charges.html"
     if _cdc_path.exists():
 
-        # ── Injection des données CDC dans le HTML ──────────────────────
+        # ── Injection des données fichier dans le HTML ───────────────────
         _cdc_initial = "null"
         _cdc_sync_token = "0"
-        try:
-            if _db.use_db():
-                _raw_bytes = _db.load_cdc_raw()
-                if _raw_bytes:
-                    _raw = _raw_bytes.decode("utf-8")
-                    json.loads(_raw)  # validation
-                    _cdc_initial = _raw
-                    _cdc_sync_token = hashlib.sha256(_raw_bytes).hexdigest()[:16]
-            elif CDC_JSON_PATH.exists():
+        if CDC_JSON_PATH.exists():
+            try:
                 _raw = CDC_JSON_PATH.read_text(encoding="utf-8")
-                json.loads(_raw)
+                json.loads(_raw)          # valide le JSON avant injection
                 _cdc_initial = _raw
                 _cdc_sync_token = hashlib.sha256(_raw.encode("utf-8")).hexdigest()[:16]
-        except Exception:
-            pass
+            except Exception:
+                pass
 
         _cdc_html = _cdc_path.read_text(encoding="utf-8")
         _cdc_html = _cdc_html.replace(
