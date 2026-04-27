@@ -1,43 +1,45 @@
 """
 Service d'authentification.
 
-Remplace :
-  - hashlib.sha256 + comparaison dans check_password() de Gestion-de-projet-App.py
-  - Le stockage du hash dans l'URL (?auth=...)
-Par :
-  - Vérification du mot de passe → émission d'un JWT signé (HS256)
-  - JWT stocké en cookie HttpOnly (invisible au JS, protégé contre XSS)
+Authentification par e-mail + mot de passe (bcrypt) stocké en base.
+JWT HttpOnly cookie — sub = UUID de l'utilisateur.
 """
 from __future__ import annotations
 
-import hashlib
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 
+from asyncpg import Connection
 from fastapi import HTTPException, status
 from jose import JWTError, jwt
+import bcrypt as _bcrypt
 
 from app.config import settings
 
+
 _CREDENTIALS_EXCEPTION = HTTPException(
     status_code=status.HTTP_401_UNAUTHORIZED,
-    detail="Mot de passe incorrect ou session expirée.",
+    detail="Session invalide ou expirée. Veuillez vous reconnecter.",
     headers={"WWW-Authenticate": "Bearer"},
 )
 
 
-def verify_password(plain_password: str) -> bool:
-    """
-    Compare le SHA-256 du mot de passe saisi avec PASSWORD_HASH dans .env.
-    Compatible avec le hash existant dans .streamlit/secrets.toml.
-    """
-    digest = hashlib.sha256(plain_password.encode("utf-8")).hexdigest()
-    return digest == settings.password_hash
+# ── Mots de passe ─────────────────────────────────────────────────────────────
+
+def hash_password(password: str) -> str:
+    return _bcrypt.hashpw(password.encode(), _bcrypt.gensalt()).decode()
 
 
-def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
+def verify_password(plain: str, hashed: str) -> bool:
+    return _bcrypt.checkpw(plain.encode(), hashed.encode())
+
+
+# ── JWT ───────────────────────────────────────────────────────────────────────
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """
-    Génère un JWT signé avec SECRET_KEY (algorithme HS256).
-    Inclut une expiration (défaut : ACCESS_TOKEN_EXPIRE_MINUTES).
+    Génère un JWT signé avec SECRET_KEY (HS256).
+    data["sub"] doit contenir l'UUID de l'utilisateur (str).
     """
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + (
@@ -61,3 +63,27 @@ def decode_access_token(token: str) -> dict:
         return payload
     except JWTError:
         raise _CREDENTIALS_EXCEPTION
+
+
+# ── Authentification ──────────────────────────────────────────────────────────
+
+async def authenticate_user(
+    conn: Connection, email: str, password: str
+) -> dict | None:
+    """
+    Cherche l'utilisateur par e-mail, vérifie le mot de passe bcrypt.
+    Retourne le dict utilisateur ou None si les identifiants sont invalides.
+    """
+    row = await conn.fetchrow(
+        "SELECT id::text, email, nom, poste, mot_de_passe, is_admin, is_active "
+        "FROM utilisateurs WHERE email=$1",
+        email.lower().strip(),
+    )
+    if not row:
+        return None
+    user = dict(row)
+    if not verify_password(password, user["mot_de_passe"]):
+        return None
+    if not user["is_active"]:
+        return None
+    return user

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { getRisques, createRisque, updateRisque, deleteRisque } from '../api/risques'
+import { useProject } from '../context/ProjectContext'
 import KpiCard from '../components/KpiCard'
 import Badge, { PrioriteBadge } from '../components/Badge'
 import Modal from '../components/Modal'
@@ -15,6 +16,7 @@ function Notification({ msg, type }) {
 }
 
 export default function RisquesPage() {
+  const { projet } = useProject()
   const [risques,  setRisques]  = useState([])
   const [loading,  setLoading]  = useState(true)
   const [saving,   setSaving]   = useState(false)
@@ -41,7 +43,7 @@ export default function RisquesPage() {
   const load = async () => {
     setLoading(true)
     try {
-      const { data } = await getRisques()
+      const { data } = await getRisques(projet.id)
       setRisques(data)
     } catch {
       notify('Erreur lors du chargement des risques.', 'error')
@@ -71,7 +73,7 @@ export default function RisquesPage() {
   const handleAdd = async (data) => {
     setSaving(true)
     try {
-      await createRisque(data)
+      await createRisque(projet.id, data)
       await load()
       setAddOpen(false)
       notify('Risque ajouté avec succès.')

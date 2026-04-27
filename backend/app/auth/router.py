@@ -1,45 +1,56 @@
 """
 Endpoints d'authentification.
 
-POST /auth/login  → vérifie le mot de passe, émet un JWT dans un cookie HttpOnly
+POST /auth/login  → vérifie email + mot de passe, émet un JWT dans un cookie HttpOnly
+GET  /auth/me     → retourne les infos de l'utilisateur connecté
 POST /auth/logout → supprime le cookie côté client
 """
-from fastapi import APIRouter, HTTPException, Response, status
+from asyncpg import Pool
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from app.auth import service as auth_service
-from app.auth.schemas import LoginRequest, TokenResponse
+from app.auth.dependencies import get_current_user
+from app.auth.schemas import LoginRequest, MeResponse, TokenResponse
 from app.config import settings
+from app.db.pool import get_pool
 
 router = APIRouter()
 
-# Durée de vie du cookie en secondes (doit correspondre à ACCESS_TOKEN_EXPIRE_MINUTES)
 _COOKIE_MAX_AGE = settings.access_token_expire_minutes * 60
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(payload: LoginRequest, response: Response):
+async def login(payload: LoginRequest, response: Response, pool: Pool = Depends(get_pool)):
     """
-    Authentifie l'utilisateur avec son mot de passe.
+    Authentifie l'utilisateur (email + mot de passe bcrypt).
     En cas de succès : émet un cookie HttpOnly 'access_token' contenant le JWT.
-    En cas d'échec  : HTTP 401.
     """
-    if not auth_service.verify_password(payload.password):
+    async with pool.acquire() as conn:
+        user = await auth_service.authenticate_user(conn, payload.email, payload.password)
+
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Mot de passe incorrect.",
+            detail="E-mail ou mot de passe incorrect.",
         )
 
-    token = auth_service.create_access_token(data={"sub": "admin"})
+    token = auth_service.create_access_token(data={"sub": user["id"]})
 
     response.set_cookie(
         key="access_token",
         value=token,
-        httponly=True,       # invisible au JavaScript → protège contre XSS
-        secure=False,        # True en production (HTTPS uniquement)
-        samesite="lax",      # protège contre CSRF
+        httponly=True,
+        secure=False,   # True en production (HTTPS)
+        samesite="lax",
         max_age=_COOKIE_MAX_AGE,
     )
     return TokenResponse(access_token=token)
+
+
+@router.get("/me", response_model=MeResponse)
+async def me(current_user: dict = Depends(get_current_user)):
+    """Retourne les informations de l'utilisateur connecté."""
+    return current_user
 
 
 @router.post("/logout", status_code=204)

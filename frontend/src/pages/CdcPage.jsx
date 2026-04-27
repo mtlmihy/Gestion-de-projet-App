@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect } from 'react'
 import { getCdc, updateCdc } from '../api/cdc'
+import { useProject } from '../context/ProjectContext'
 
 // ── Structure JSON vide ───────────────────────────────────────────────────────
 const EMPTY = {
@@ -295,6 +296,7 @@ function Notification({ msg, type }) {
 
 // ── Composant principal ───────────────────────────────────────────────────────
 export default function CdcPage() {
+  const { projet } = useProject()
   const [cdc,      setCdc]     = useState(EMPTY)
   const [loading,  setLoading] = useState(true)
   const [saving,   setSaving]  = useState(false)
@@ -308,7 +310,7 @@ export default function CdcPage() {
 
   // Chargement initial
   useEffect(() => {
-    getCdc()
+    getCdc(projet.id)
       .then(({ data }) => {
         setLastSaved(data.derniere_maj ? new Date(data.derniere_maj) : null)
         try {
@@ -342,7 +344,7 @@ export default function CdcPage() {
   const handleSave = async () => {
     setSaving(true)
     try {
-      const { data } = await updateCdc(JSON.stringify(cdc))
+      const { data } = await updateCdc(projet.id, JSON.stringify(cdc))
       setLastSaved(data.derniere_maj ? new Date(data.derniere_maj) : null)
       notify('Cahier des charges sauvegardé.')
     } catch {

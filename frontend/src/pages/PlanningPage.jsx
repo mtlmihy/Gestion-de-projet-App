@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { getCdc } from '../api/cdc'
 import { getTaches } from '../api/taches'
+import { useProject } from '../context/ProjectContext'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const TODAY = new Date()
@@ -130,6 +131,7 @@ function TimelineSVG({ jalons, startDate, endDate }) {
 
 // ── Composant principal ───────────────────────────────────────────────────────
 export default function PlanningPage() {
+  const { projet } = useProject()
   const [jalons,     setJalons]     = useState([])
   const [taches,     setTaches]     = useState([])
   const [meta,       setMeta]       = useState({ nom: '', chef: '', dateDebut: '' })
@@ -141,8 +143,10 @@ export default function PlanningPage() {
     setTimeout(() => setNotif({ msg: '', type: 'ok' }), 3500)
   }
 
-  useEffect(() => {
-    const loadCdc = getCdc().then(({ data }) => {
+  const load = useCallback(() => {
+    if (!projet?.id) return
+    setLoading(true)
+    const loadCdc = getCdc(projet.id).then(({ data }) => {
       try {
         const raw = typeof data.contenu === 'string' ? JSON.parse(data.contenu) : (data.contenu ?? {})
         setMeta({
@@ -163,12 +167,21 @@ export default function PlanningPage() {
       }
     }).catch(() => { /* pas de CDC — page s'affiche vide */ })
 
-    const loadTaches = getTaches().then(({ data }) => {
+    const loadTaches = getTaches(projet.id).then(({ data }) => {
       setTaches(data)
     }).catch(() => notify('Erreur lors du chargement des tâches.', 'error'))
 
     Promise.all([loadCdc, loadTaches]).finally(() => setLoading(false))
-  }, [])
+  }, [projet?.id])
+
+  // Recharge à chaque fois que la page redevient visible (retour depuis Tâches/CDC)
+  useEffect(() => {
+    const onVisible = () => { if (document.visibilityState === 'visible') load() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [load])
+
+  useEffect(() => { load() }, [load])
 
   // Enrichir jalons avec leur couleur (calculée ici pour réutiliser)
   const enrichedJalons = useMemo(() =>

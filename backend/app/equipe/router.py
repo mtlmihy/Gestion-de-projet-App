@@ -1,33 +1,25 @@
 from __future__ import annotations
 from typing import List
 from asyncpg import Pool
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from app.auth.dependencies import get_current_user
 from app.db.pool import get_pool
 from app.equipe import service as svc
 from app.equipe.schemas import MembreCreate, MembreRead, MembreUpdate
-from app.projets import service as proj_svc
 
 router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
-async def _projet_actif(pool: Pool) -> str:
-    async with pool.acquire() as conn:
-        return await proj_svc.ensure_default(conn)
-
-
 @router.get("/", response_model=List[MembreRead])
-async def list_equipe(pool: Pool = Depends(get_pool)):
-    pid = await _projet_actif(pool)
+async def list_equipe(projet_id: str = Query(...), pool: Pool = Depends(get_pool)):
     async with pool.acquire() as conn:
-        return await svc.get_all(conn, pid)
+        return await svc.get_all(conn, projet_id)
 
 
 @router.post("/", response_model=MembreRead, status_code=201)
-async def create_membre(payload: MembreCreate, pool: Pool = Depends(get_pool)):
-    pid = await _projet_actif(pool)
+async def create_membre(payload: MembreCreate, projet_id: str = Query(...), pool: Pool = Depends(get_pool)):
     async with pool.acquire() as conn:
-        return await svc.create(conn, pid, payload.model_dump())
+        return await svc.create(conn, projet_id, payload.model_dump())
 
 
 @router.put("/{membre_id}", response_model=MembreRead)

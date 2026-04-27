@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getEquipe, createMembre, updateMembre, deleteMembre } from '../api/equipe'
+import { useProject } from '../context/ProjectContext'
 import KpiCard from '../components/KpiCard'
 import Modal from '../components/Modal'
 import ConfirmDialog from '../components/ConfirmDialog'
@@ -122,6 +123,7 @@ function OrgChart({ equipe, onEdit, onDelete }) {
 /* ─── Page ───────────────────────────────────────────────────── */
 
 export default function EquipePage() {
+  const { projet } = useProject()
   const [equipe,     setEquipe]     = useState([])
   const [loading,    setLoading]    = useState(true)
   const [saving,     setSaving]     = useState(false)
@@ -138,7 +140,7 @@ export default function EquipePage() {
 
   const load = async () => {
     setLoading(true)
-    try   { const { data } = await getEquipe(); setEquipe(data) }
+    try   { const { data } = await getEquipe(projet.id); setEquipe(data) }
     catch { notify('Erreur lors du chargement.', 'error') }
     finally { setLoading(false) }
   }
@@ -147,7 +149,7 @@ export default function EquipePage() {
 
   const handleAdd = async (data) => {
     setSaving(true)
-    try   { await createMembre(data); await load(); setAddOpen(false); notify('Membre ajouté.') }
+    try   { await createMembre(projet.id, data); await load(); setAddOpen(false); notify('Membre ajouté.') }
     catch { notify("Erreur lors de l'ajout.", 'error') }
     finally { setSaving(false) }
   }

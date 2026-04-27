@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { getTaches, createTache, updateTache, deleteTache } from '../api/taches'
 import { getCdc } from '../api/cdc'
+import { useProject } from '../context/ProjectContext'
 import KpiCard from '../components/KpiCard'
 import Badge from '../components/Badge'
 import ProgressBar from '../components/ProgressBar'
@@ -17,6 +18,7 @@ function Notification({ msg, type }) {
 }
 
 export default function TachesPage() {
+  const { projet } = useProject()
   const [taches,     setTaches]     = useState([])
   const [loading,    setLoading]    = useState(true)
   const [saving,     setSaving]     = useState(false)
@@ -37,14 +39,14 @@ export default function TachesPage() {
 
   const load = async () => {
     setLoading(true)
-    try { const { data } = await getTaches(); setTaches(data) }
+    try { const { data } = await getTaches(projet.id); setTaches(data) }
     catch { notify('Erreur lors du chargement.', 'error') }
     finally { setLoading(false) }
   }
 
   useEffect(() => {
     load()
-    getCdc().then(({ data }) => {
+    getCdc(projet.id).then(({ data }) => {
       try {
         const raw = typeof data.contenu === 'string' ? JSON.parse(data.contenu) : (data.contenu ?? {})
         const noms = (raw.jalons ?? [])
@@ -72,7 +74,7 @@ export default function TachesPage() {
 
   const handleAdd = async (data) => {
     setSaving(true)
-    try { await createTache(data); await load(); setAddOpen(false); notify('Tâche ajoutée.') }
+    try   { await createTache(projet.id, data); await load(); setAddOpen(false); notify('Tâche ajoutée.') }
     catch { notify('Erreur lors de l\'ajout.', 'error') }
     finally { setSaving(false) }
   }

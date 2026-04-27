@@ -10,6 +10,7 @@ export default defineConfig({
       // pas les requêtes de page (ex: GET /risques au refresh F5).
       // Sans le "/", Vite proxifiait /risques → FastAPI → 307 → localhost:8000.
       '/auth/':    { target: 'http://localhost:8000', changeOrigin: true, secure: false },
+      '/users/':   { target: 'http://localhost:8000', changeOrigin: true, secure: false },
       '/risques/': { target: 'http://localhost:8000', changeOrigin: true, secure: false },
       '/taches/':  { target: 'http://localhost:8000', changeOrigin: true, secure: false },
       '/equipe/':  { target: 'http://localhost:8000', changeOrigin: true, secure: false },

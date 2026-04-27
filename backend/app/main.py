@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.db.pool import init_pool, close_pool
 from app.auth.router import router as auth_router
+from app.users.router import router as users_router
 from app.projets.router import router as projets_router
 from app.risques.router import router as risques_router
 from app.taches.router import router as taches_router
@@ -41,6 +42,7 @@ app.add_middleware(
 
 # ── Routers ───────────────────────────────────────────────────────────────────
 app.include_router(auth_router,    prefix="/auth",    tags=["Auth"])
+app.include_router(users_router,   prefix="/users",   tags=["Utilisateurs"])
 app.include_router(projets_router, prefix="/projets", tags=["Projets"])
 app.include_router(risques_router, prefix="/risques", tags=["Risques"])
 app.include_router(taches_router,  prefix="/taches",  tags=["Tâches"])
