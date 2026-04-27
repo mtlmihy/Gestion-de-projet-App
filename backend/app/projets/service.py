@@ -13,7 +13,7 @@ async def get_accessible(conn: Connection, user_id: str, is_admin: bool) -> list
     if is_admin:
         rows = await conn.fetch(
             """
-            SELECT p.id::text, p.nom, p.description, p.statut::text,
+            SELECT p.id::text, p.nom, p.description, p.statut::text, p.est_cloture,
                    pm.role::text AS mon_role
             FROM projets p
             LEFT JOIN projet_membres pm ON pm.projet_id = p.id AND pm.utilisateur_id = $1::uuid
@@ -24,7 +24,7 @@ async def get_accessible(conn: Connection, user_id: str, is_admin: bool) -> list
     else:
         rows = await conn.fetch(
             """
-            SELECT p.id::text, p.nom, p.description, p.statut::text,
+            SELECT p.id::text, p.nom, p.description, p.statut::text, p.est_cloture,
                    pm.role::text AS mon_role
             FROM projets p
             JOIN projet_membres pm ON pm.projet_id = p.id AND pm.utilisateur_id = $1::uuid
@@ -91,6 +91,32 @@ async def update(conn: Connection, projet_id: str, data: dict) -> dict | None:
 async def delete(conn: Connection, projet_id: str) -> bool:
     result = await conn.execute("DELETE FROM projets WHERE id=$1::uuid", projet_id)
     return result == "DELETE 1"
+
+
+async def cloturer(conn: Connection, projet_id: str) -> dict | None:
+    row = await conn.fetchrow(
+        """
+        UPDATE projets
+        SET est_cloture = TRUE, date_cloture = NOW()
+        WHERE id = $1::uuid
+        RETURNING id::text, nom, description, statut::text, est_cloture
+        """,
+        projet_id,
+    )
+    return dict(row) if row else None
+
+
+async def reactiver(conn: Connection, projet_id: str) -> dict | None:
+    row = await conn.fetchrow(
+        """
+        UPDATE projets
+        SET est_cloture = FALSE, date_cloture = NULL
+        WHERE id = $1::uuid
+        RETURNING id::text, nom, description, statut::text, est_cloture
+        """,
+        projet_id,
+    )
+    return dict(row) if row else None
 
 
 async def ensure_default(conn: Connection) -> str:

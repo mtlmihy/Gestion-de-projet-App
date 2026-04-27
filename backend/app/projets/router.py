@@ -57,6 +57,40 @@ async def delete_projet(projet_id: str, pool: Pool = Depends(get_pool)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Projet introuvable.")
 
 
+@router.post("/{projet_id}/cloturer", response_model=ProjetRead)
+async def cloturer_projet(
+    projet_id: str,
+    pool: Pool = Depends(get_pool),
+    current_user: dict = Depends(get_current_user),
+):
+    """Clôture un projet (lecture seule). Réservé au Propriétaire ou admin."""
+    await _check_owner_or_admin(projet_id, current_user, pool)
+    async with pool.acquire() as conn:
+        result = await svc.cloturer(conn, projet_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Projet introuvable.")
+    return result
+
+
+@router.post("/{projet_id}/reactiver", response_model=ProjetRead)
+async def reactiver_projet(
+    projet_id: str,
+    pool: Pool = Depends(get_pool),
+    current_user: dict = Depends(get_current_user),
+):
+    """Réactive un projet clôturé. Réservé aux administrateurs uniquement."""
+    if not current_user["is_admin"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Seul un administrateur peut réactiver un projet clôturé.",
+        )
+    async with pool.acquire() as conn:
+        result = await svc.reactiver(conn, projet_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Projet introuvable.")
+    return result
+
+
 # ── Membres du projet ─────────────────────────────────────────────────────────
 
 async def _check_owner_or_admin(projet_id: str, current_user: dict, pool: Pool) -> None:

@@ -20,6 +20,7 @@ class ProjetUpdate(ProjetBase):
 class ProjetRead(ProjetBase):
     id: str
     mon_role: Optional[str] = None
+    est_cloture: bool = False
     model_config = {"from_attributes": True}
 
 

@@ -2,12 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
 import {
   getUsers, createUser, updateUser, deleteUser, resetPassword,
-  getMembres, addMembre, updateMembre, removeMembre,
 } from '../api/users'
-import client from '../api/client'
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
-const ROLES = ['Propriétaire', 'Éditeur', 'Lecteur', 'Client_Limité']
 
 const ALL_PAGES = [
   { id: 'cdc',      label: 'Cahier des Charges' },
@@ -341,8 +337,8 @@ function UsersTab({ currentUser }) {
   )
 }
 
-// ── Onglet Membres du projet ──────────────────────────────────────────────────
-function MembresTab({ currentUser }) {
+// ── (SUPPRIMÉ) Onglet Membres du projet — géré via le bouton Accès sur chaque carte projet
+function _MembresTab_UNUSED({ currentUser }) {
   const [projets,  setProjets]  = useState([])
   const [projetId, setProjetId] = useState(null)
   const [membres,  setMembres]  = useState([])
@@ -533,14 +529,19 @@ function MembresTab({ currentUser }) {
 // ── Page principale Administration ───────────────────────────────────────────
 export default function AdminPage() {
   const { user, isAdmin } = useAuth()
-  const [tab, setTab] = useState('users')
 
-  // Seuls les admins accèdent à l'onglet "Utilisateurs"
-  // Les Propriétaires de projet peuvent accéder à "Membres"
-  const tabs = [
-    ...(isAdmin ? [{ id: 'users', label: 'Utilisateurs' }] : []),
-    { id: 'membres', label: 'Membres du projet' },
-  ]
+  if (!isAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center">
+          <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          </svg>
+        </div>
+        <h1 className="text-lg font-bold text-gray-800">Accès réservé aux administrateurs</h1>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -554,31 +555,12 @@ export default function AdminPage() {
         </div>
         <div>
           <div className="text-xl font-bold text-gray-900">Administration</div>
-          <div className="text-xs text-gray-400">Gestion des utilisateurs et des accès projets</div>
+          <div className="text-xs text-gray-400">Création et configuration des utilisateurs</div>
         </div>
       </div>
 
-      {/* Onglets */}
-      <div className="bg-white border border-gray-100 rounded-2xl shadow-sm">
-        <div className="flex border-b border-gray-100 px-4">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                tab === t.id
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-        <div className="p-6">
-          {tab === 'users'   && isAdmin  && <UsersTab currentUser={user} />}
-          {tab === 'membres'            && <MembresTab currentUser={user} />}
-        </div>
+      <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+        <UsersTab currentUser={user} />
       </div>
     </div>
   )

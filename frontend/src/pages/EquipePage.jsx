@@ -130,6 +130,7 @@ function OrgChart({ equipe, onEdit, onDelete }) {
 
 export default function EquipePage() {
   const { projet, estLecteur, estProprietaire } = useProject()
+  const peutModifier = estProprietaire && !estLecteur
   const [equipe,     setEquipe]     = useState([])
   const [loading,    setLoading]    = useState(true)
   const [saving,     setSaving]     = useState(false)
@@ -190,7 +191,7 @@ export default function EquipePage() {
         <button
           onClick={() => setAddOpen(true)}
           className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-          hidden={!estProprietaire}
+          hidden={!peutModifier}
         >
           <span className="text-lg leading-none">＋</span> Ajouter un membre
         </button>
@@ -246,7 +247,7 @@ export default function EquipePage() {
                       {m.poste && <p className="text-xs text-gray-500">{m.poste}</p>}
                     </div>
                   </div>
-                  {estProprietaire && (
+                  {peutModifier && (
                     <div className="flex items-center gap-1">
                       <button onClick={() => setEditItem(m)} className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50" title="Modifier">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -276,7 +277,7 @@ export default function EquipePage() {
       ) : (
         /* ── Organigramme ── */
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm min-h-48">
-          <OrgChart equipe={equipe} onEdit={estProprietaire ? setEditItem : null} onDelete={estProprietaire ? setDeleteItem : null} />
+          <OrgChart equipe={equipe} onEdit={peutModifier ? setEditItem : null} onDelete={peutModifier ? setDeleteItem : null} />
         </div>
       )}
 

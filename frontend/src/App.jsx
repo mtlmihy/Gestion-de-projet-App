@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { ProjectProvider } from './context/ProjectContext'
 import { useAuth } from './context/AuthContext'
@@ -34,9 +34,11 @@ function PageGuard({ page, children }) {
   return canAccess(page) ? <>{children}</> : <AccessDenied />
 }
 
-// Redirige vers /projets si aucun projet sélectionné
+// Redirige vers /projets si aucun projet sélectionné (sauf pour /admin)
 function ProjectRoute({ children }) {
   const { projet } = useProject()
+  const { pathname } = useLocation()
+  if (pathname.startsWith('/admin')) return <>{children}</>
   return projet ? <>{children}</> : <Navigate to="/projets" replace />
 }
 

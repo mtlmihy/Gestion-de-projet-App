@@ -24,8 +24,8 @@ export function ProjectProvider({ children }) {
     setProjetState(null)
   }, [])
 
-  // Lecture seule si le rôle est Lecteur ou Client_Limite, sauf pour les admins
-  const estLecteur     = !isAdmin && ROLES_LECTURE_SEULE.includes(projet?.mon_role)
+  // Lecture seule si : projet clôturé (sauf admin) OU rôle Lecteur/Client_Limite
+  const estLecteur     = !isAdmin && (projet?.est_cloture || ROLES_LECTURE_SEULE.includes(projet?.mon_role))
   // Peut gérer les membres : admin ou Propriétaire du projet
   const estProprietaire = isAdmin || projet?.mon_role === 'Proprietaire'
 

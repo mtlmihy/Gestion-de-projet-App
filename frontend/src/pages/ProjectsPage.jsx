@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useProject } from '../context/ProjectContext'
-import { getProjets, createProjet, deleteProjet } from '../api/projets'
+import { getProjets, createProjet, deleteProjet, cloturerProjet, reactiverProjet } from '../api/projets'
 import { getMembres, addMembre, updateMembre, removeMembre, getUsersDisponibles } from '../api/users'
 
 // ── Couleur par statut ────────────────────────────────────────────────────────
@@ -290,13 +290,30 @@ function CreateModal({ onClose, onCreated }) {
 }
 
 // ── Carte projet ─────────────────────────────────────────────────────────────
-function ProjetCard({ projet, onSelect, onDelete, onGererAcces, isAdmin }) {
-  const peutGererAcces = isAdmin || projet.mon_role === 'Proprietaire'
+function ProjetCard({ projet, onSelect, onDelete, onGererAcces, onCloturer, onReactiver, isAdmin }) {
+  const estProprietaire = isAdmin || projet.mon_role === 'Proprietaire'
+  const peutCloturer    = !projet.est_cloture && estProprietaire
+  const peutReactiver   = projet.est_cloture && isAdmin
   return (
     <div
       onClick={() => onSelect(projet)}
-      className="group relative bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md hover:border-blue-200 transition-all cursor-pointer p-5 flex flex-col gap-3"
+      className={`group relative bg-white border rounded-2xl shadow-sm hover:shadow-md transition-all cursor-pointer p-5 flex flex-col gap-3 ${
+        projet.est_cloture
+          ? 'border-gray-300 opacity-80 hover:border-gray-400'
+          : 'border-gray-100 hover:border-blue-200'
+      }`}
     >
+      {/* Badge clôturé */}
+      {projet.est_cloture && (
+        <div className="absolute top-3 right-3 flex items-center gap-1 bg-gray-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+          <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <rect x="3" y="11" width="18" height="11" rx="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          Clôturé
+        </div>
+      )}
+
       {/* En-tête */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
@@ -304,7 +321,7 @@ function ProjetCard({ projet, onSelect, onDelete, onGererAcces, isAdmin }) {
             {projet.nom}
           </h3>
         </div>
-        <StatutBadge statut={projet.statut} />
+        {!projet.est_cloture && <StatutBadge statut={projet.statut} />}
       </div>
 
       {/* Description */}
@@ -316,13 +333,31 @@ function ProjetCard({ projet, onSelect, onDelete, onGererAcces, isAdmin }) {
       <div className="flex items-center justify-between mt-auto pt-1">
         <RoleBadge role={projet.mon_role} />
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          {peutGererAcces && (
+          {estProprietaire && (
             <button
               onClick={(e) => { e.stopPropagation(); onGererAcces(projet) }}
               className="text-xs text-blue-500 hover:text-blue-700 font-medium px-2 py-1 rounded-lg hover:bg-blue-50"
               title="Gérer les accès"
             >
               Accès
+            </button>
+          )}
+          {peutCloturer && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onCloturer(projet) }}
+              className="text-xs text-orange-500 hover:text-orange-700 font-medium px-2 py-1 rounded-lg hover:bg-orange-50"
+              title="Clôturer le projet"
+            >
+              Clôturer
+            </button>
+          )}
+          {peutReactiver && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onReactiver(projet) }}
+              className="text-xs text-green-600 hover:text-green-800 font-medium px-2 py-1 rounded-lg hover:bg-green-50"
+              title="Réactiver le projet"
+            >
+              Réactiver
             </button>
           )}
           {isAdmin && (
@@ -388,7 +423,25 @@ export default function ProjectsPage() {
       setError(err?.response?.data?.detail ?? 'Erreur lors de la suppression.')
     }
   }
+  const handleCloturer = async (projet) => {
+    if (!confirm(`Clôturer « ${projet.nom} » ? Le projet passera en lecture seule.`)) return
+    try {
+      await cloturerProjet(projet.id)
+      setProjets((p) => p.map((x) => x.id === projet.id ? { ...x, est_cloture: true } : x))
+    } catch (err) {
+      setError(err?.response?.data?.detail ?? 'Erreur lors de la clôture.')
+    }
+  }
 
+  const handleReactiver = async (projet) => {
+    if (!confirm(`Réactiver « ${projet.nom} » ?`)) return
+    try {
+      await reactiverProjet(projet.id)
+      setProjets((p) => p.map((x) => x.id === projet.id ? { ...x, est_cloture: false } : x))
+    } catch (err) {
+      setError(err?.response?.data?.detail ?? 'Erreur lors de la réactivation.')
+    }
+  }
   const initiales = (user?.nom ?? user?.email ?? '?')
     .split(' ').map((p) => p[0]?.toUpperCase()).slice(0, 2).join('')
 
@@ -501,6 +554,8 @@ export default function ProjectsPage() {
                 onSelect={handleSelect}
                 onDelete={handleDelete}
                 onGererAcces={(p) => setAccesProjet(p)}
+                onCloturer={handleCloturer}
+                onReactiver={handleReactiver}
                 isAdmin={isAdmin}
               />
             ))}
