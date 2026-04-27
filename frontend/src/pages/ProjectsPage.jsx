@@ -388,6 +388,7 @@ export default function ProjectsPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [accesProjet, setAccesProjet] = useState(null)
   const [error,      setError]      = useState('')
+  const [filtre,     setFiltre]     = useState('tous') // 'tous' | 'actifs' | 'clotures'
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -516,6 +517,31 @@ export default function ProjectsPage() {
           <div className="mb-6 px-4 py-3 bg-red-50 text-red-700 border border-red-200 rounded-xl text-sm">{error}</div>
         )}
 
+        {/* Filtres */}
+        {!loading && projets.length > 0 && (() => {
+          const nbActifs   = projets.filter((p) => !p.est_cloture).length
+          const nbClotures = projets.filter((p) =>  p.est_cloture).length
+          return (
+            <div className="flex items-center gap-2 mb-6">
+              {[['tous', `Tous (${projets.length})`], ['actifs', `En cours (${nbActifs})`], ['clotures', `Clôturés (${nbClotures})`]].map(([val, label]) => (
+                <button
+                  key={val}
+                  onClick={() => setFiltre(val)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${
+                    filtre === val
+                      ? val === 'clotures'
+                        ? 'bg-gray-700 text-white border-gray-700'
+                        : 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )
+        })()}
+
         {/* Grille */}
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -545,9 +571,22 @@ export default function ProjectsPage() {
               </button>
             )}
           </div>
-        ) : (
+        ) : (() => {
+          const projetsFiltres = projets.filter((p) =>
+            filtre === 'actifs'   ? !p.est_cloture :
+            filtre === 'clotures' ?  p.est_cloture :
+            true
+          )
+          if (projetsFiltres.length === 0) return (
+            <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+              <p className="text-sm text-gray-400">
+                {filtre === 'actifs'   ? 'Aucun projet en cours.' : 'Aucun projet clôturé.'}
+              </p>
+            </div>
+          )
+          return (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {projets.map((p) => (
+            {projetsFiltres.map((p) => (
               <ProjetCard
                 key={p.id}
                 projet={p}
@@ -560,7 +599,8 @@ export default function ProjectsPage() {
               />
             ))}
           </div>
-        )}
+          )
+        })()}
       </main>
 
       {showCreate && (
