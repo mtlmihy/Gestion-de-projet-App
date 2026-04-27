@@ -45,14 +45,16 @@ const inp = 'w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ou
 const lbl = 'block text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1'
 
 const ROLES = ['Proprietaire', 'Editeur', 'Lecteur', 'Client_Limite']
+const ROLES_SANS_PROPRIO = ['Editeur', 'Lecteur', 'Client_Limite']
 
 // ── Modal gestion des accès ───────────────────────────────────────────────────
-function GestionAccesModal({ projet, onClose }) {
+function GestionAccesModal({ projet, onClose, isAdmin }) {
+  const rolesDisponibles = isAdmin ? ROLES : ROLES_SANS_PROPRIO
   const [membres,    setMembres]  = useState([])
   const [users,      setUsers]    = useState([])
   const [loading,    setLoading]  = useState(true)
   const [showAdd,    setShowAdd]  = useState(false)
-  const [addForm,    setAddForm]  = useState({ user_id: '', role: 'Lecteur' })
+  const [addForm,    setAddForm]  = useState({ user_id: '', role: isAdmin ? 'Proprietaire' : 'Lecteur' })
   const [notif,      setNotif]    = useState({ msg: '', type: 'success' })
 
   const notify = (msg, type = 'success') => {
@@ -61,10 +63,14 @@ function GestionAccesModal({ projet, onClose }) {
   }
 
   useEffect(() => {
-    Promise.all([getMembres(projet.id), getUsersDisponibles()]).then(([m, u]) => {
-      setMembres(m.data)
-      setUsers(u.data)
-    }).catch(() => notify('Erreur de chargement.', 'error')).finally(() => setLoading(false))
+    setLoading(true)
+    getMembres(projet.id)
+      .then(({ data }) => setMembres(data))
+      .catch(() => notify('Erreur de chargement des membres.', 'error'))
+      .finally(() => setLoading(false))
+    getUsersDisponibles()
+      .then(({ data }) => setUsers(data))
+      .catch(() => {}) // non bloquant : impact uniquement le formulaire d'ajout
   }, [projet.id])
 
   const membresIds      = new Set(membres.map((m) => m.user_id))
@@ -77,7 +83,7 @@ function GestionAccesModal({ projet, onClose }) {
       const { data } = await getMembres(projet.id)
       setMembres(data)
       setShowAdd(false)
-      setAddForm({ user_id: '', role: 'Lecteur' })
+      setAddForm({ user_id: '', role: isAdmin ? 'Proprietaire' : 'Lecteur' })
       notify('Membre ajouté.')
     } catch (err) { notify(err?.response?.data?.detail ?? 'Erreur.', 'error') }
   }
@@ -87,7 +93,9 @@ function GestionAccesModal({ projet, onClose }) {
       await updateMembre(projet.id, userId, role)
       setMembres((m) => m.map((mb) => mb.user_id === userId ? { ...mb, role } : mb))
       notify('Rôle mis à jour.')
-    } catch { notify('Erreur.', 'error') }
+    } catch (err) {
+      notify(err?.response?.data?.detail ?? 'Erreur lors de la modification du rôle.', 'error')
+    }
   }
 
   const handleRemove = async (userId, email) => {
@@ -156,13 +164,17 @@ function GestionAccesModal({ projet, onClose }) {
                     <td className="px-4 py-3 font-medium text-gray-900">{m.nom ?? '—'}</td>
                     <td className="px-4 py-3 text-gray-500 text-xs">{m.email}</td>
                     <td className="px-4 py-3">
-                      <select
-                        value={m.role}
-                        onChange={(e) => handleRoleChange(m.user_id, e.target.value)}
-                        className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      >
-                        {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
-                      </select>
+                      {!isAdmin && m.role === 'Proprietaire' ? (
+                        <span className="text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-2 py-1">Propriétaire</span>
+                      ) : (
+                        <select
+                          value={m.role}
+                          onChange={(e) => handleRoleChange(m.user_id, e.target.value)}
+                          className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        >
+                          {rolesDisponibles.map((r) => <option key={r} value={r}>{r}</option>)}
+                        </select>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <button
@@ -205,7 +217,7 @@ function GestionAccesModal({ projet, onClose }) {
                   value={addForm.role}
                   onChange={(e) => setAddForm((f) => ({ ...f, role: e.target.value }))}
                 >
-                  {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                  {rolesDisponibles.map((r) => <option key={r} value={r}>{r}</option>)}
                 </select>
               </div>
             </div>
@@ -608,7 +620,7 @@ export default function ProjectsPage() {
       )}
 
       {accesProjet && (
-        <GestionAccesModal projet={accesProjet} onClose={() => setAccesProjet(null)} />
+        <GestionAccesModal projet={accesProjet} onClose={() => setAccesProjet(null)} isAdmin={isAdmin} />
       )}
     </div>
   )

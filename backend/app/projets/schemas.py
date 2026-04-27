@@ -48,4 +48,5 @@ class MembreRead(BaseModel):
     email: str
     nom: Optional[str] = None
     poste: Optional[str] = None
+    role: Optional[str] = None
     role: str

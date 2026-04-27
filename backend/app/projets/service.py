@@ -184,7 +184,7 @@ async def update_membre_role(conn: Connection, projet_id: str, user_id: str, rol
     )
     if not row:
         return None
-    return await conn.fetchrow(
+    full = await conn.fetchrow(
         """
         SELECT u.id::text AS user_id, u.email, u.nom, u.poste, pm.role::text AS role
         FROM projet_membres pm JOIN utilisateurs u ON u.id=pm.utilisateur_id
@@ -192,6 +192,7 @@ async def update_membre_role(conn: Connection, projet_id: str, user_id: str, rol
         """,
         projet_id, user_id,
     )
+    return dict(full) if full else None
 
 
 async def remove_membre(conn: Connection, projet_id: str, user_id: str) -> bool:

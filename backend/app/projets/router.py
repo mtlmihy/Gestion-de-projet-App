@@ -125,6 +125,8 @@ async def add_membre(
     await _check_owner_or_admin(projet_id, current_user, pool)
     if payload.role not in ROLES_VALIDES:
         raise HTTPException(status_code=422, detail=f"Rôle invalide. Valeurs autorisées : {ROLES_VALIDES}")
+    if payload.role == "Proprietaire" and not current_user["is_admin"]:
+        raise HTTPException(status_code=403, detail="Seul un administrateur peut attribuer le rôle Propriétaire.")
     async with pool.acquire() as conn:
         membre = await svc.add_membre(conn, projet_id, payload.user_id, payload.role)
     if not membre:
@@ -143,6 +145,8 @@ async def update_membre(
     await _check_owner_or_admin(projet_id, current_user, pool)
     if payload.role not in ROLES_VALIDES:
         raise HTTPException(status_code=422, detail=f"Rôle invalide. Valeurs autorisées : {ROLES_VALIDES}")
+    if payload.role == "Proprietaire" and not current_user["is_admin"]:
+        raise HTTPException(status_code=403, detail="Seul un administrateur peut attribuer le rôle Propriétaire.")
     async with pool.acquire() as conn:
         result = await svc.update_membre_role(conn, projet_id, user_id, payload.role)
     if not result:
