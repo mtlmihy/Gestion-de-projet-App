@@ -1,63 +1,58 @@
--- =============================================================================
--- Migration 001 — Schéma initial
--- Remplace init_db() de db.py (Streamlit)
--- À exécuter UNE SEULE FOIS sur la base cible :
---   psql -U postgres -d AppGDP -f 001_init.sql
--- =============================================================================
+-- Statuts pour le cycle de vie du projet
+CREATE TYPE projet_statut AS ENUM ('Brouillon', 'En cours', 'En pause', 'Clôturé');
 
--- ── Risques ───────────────────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS risques (
-    id          TEXT        PRIMARY KEY,
-    identifiant TEXT        NOT NULL,
-    description TEXT        NOT NULL DEFAULT '',
-    categorie   TEXT        NOT NULL DEFAULT '',
-    probabilite TEXT        NOT NULL DEFAULT 'Faible',
-    impact      TEXT        NOT NULL DEFAULT 'Faible',
-    priorite    INTEGER     NOT NULL DEFAULT 1 CHECK (priorite IN (1, 2, 3)),
-    responsable TEXT        NOT NULL DEFAULT '',
-    attenuation TEXT        NOT NULL DEFAULT '',
-    statut      TEXT        NOT NULL DEFAULT 'Ouvert',
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- Niveaux de droits sur un projet
+CREATE TYPE projet_role AS ENUM ('Propriétaire', 'Éditeur', 'Lecteur', 'Client_Limité');
+
+CREATE TABLE utilisateurs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    nom VARCHAR(100),
+    poste VARCHAR(100),
+    mot_de_passe TEXT NOT NULL, -- Pour la gestion de l'accès
+    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- ── Tâches ───────────────────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS taches (
-    id          TEXT        PRIMARY KEY,
-    nom         TEXT        NOT NULL,
-    description TEXT        NOT NULL DEFAULT '',
-    importance  TEXT        NOT NULL DEFAULT 'Moyenne',
-    avancement  INTEGER     NOT NULL DEFAULT 0 CHECK (avancement BETWEEN 0 AND 100),
-    assigne     TEXT        NOT NULL DEFAULT '',
-    jalon       TEXT        NOT NULL DEFAULT '',
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+CREATE TABLE projets (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nom VARCHAR(255) NOT NULL,
+    description TEXT,
+    statut projet_statut DEFAULT 'Brouillon',
+    createur_id UUID REFERENCES utilisateurs(id), -- Qui a créé le projet
+    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    date_cloture TIMESTAMP
 );
 
--- ── Équipe ───────────────────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS equipe (
-    id            TEXT        PRIMARY KEY,
-    collaborateur TEXT        NOT NULL,
-    poste         TEXT        NOT NULL DEFAULT '',
-    manager       TEXT        NOT NULL DEFAULT '',
-    numero        TEXT        NOT NULL DEFAULT '',
-    email         TEXT        NOT NULL DEFAULT '',
-    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+CREATE TABLE projet_membres (
+    projet_id UUID REFERENCES projets(id) ON DELETE CASCADE,
+    utilisateur_id UUID REFERENCES utilisateurs(id) ON DELETE CASCADE,
+    role projet_role NOT NULL,
+    PRIMARY KEY (projet_id, utilisateur_id)
 );
 
--- ── Cahier des Charges ────────────────────────────────────────────────────────
--- Une seule ligne (id = 1), upsert à chaque sauvegarde.
-CREATE TABLE IF NOT EXISTS cahier_des_charges (
-    id         INTEGER     PRIMARY KEY DEFAULT 1,
-    data       JSONB       NOT NULL DEFAULT '{}',
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- Cahier des charges (un seul par projet)
+CREATE TABLE cdc (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    projet_id UUID UNIQUE REFERENCES projets(id) ON DELETE CASCADE, -- UNIQUE = 1 projet a 1 CDC
+    contenu TEXT,
+    derniere_maj TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-ALTER TABLE cahier_des_charges
-    ADD CONSTRAINT IF NOT EXISTS single_row CHECK (id = 1);
+-- Tâches
+CREATE TABLE taches (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    projet_id UUID REFERENCES projets(id) ON DELETE CASCADE,
+    nom VARCHAR(255) NOT NULL,
+    description TEXT,
+    assigne_a UUID REFERENCES utilisateurs(id), -- Liaison propre vers un utilisateur
+    statut VARCHAR(50),
+    echeance DATE
+);
 
--- ── Index utiles ──────────────────────────────────────────────────────────────
-CREATE INDEX IF NOT EXISTS idx_risques_statut    ON risques (statut);
-CREATE INDEX IF NOT EXISTS idx_risques_priorite  ON risques (priorite);
-CREATE INDEX IF NOT EXISTS idx_taches_jalon      ON taches  (jalon);
-CREATE INDEX IF NOT EXISTS idx_equipe_manager    ON equipe  (manager);
+-- Risques
+CREATE TABLE risques (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    projet_id UUID REFERENCES projets(id) ON DELETE CASCADE,
+    nom VARCHAR(255) NOT NULL,
+    gravite INT CHECK (gravite BETWEEN 1 AND 5)
+);

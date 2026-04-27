@@ -1,54 +1,34 @@
-"""
-Requêtes PostgreSQL pour le Cahier des Charges.
-→ Implémentées à l'Étape 3.
-
-Remplace intégralement le daemon HTTP local (_CDCSaveHandler) de
-Gestion-de-projet-App.py, qui gérait :
-  GET  /cdc_version → hash de détection de changement
-  GET  /cdc_data    → lecture du JSON depuis le disque
-  POST /save_cdc    → écriture du JSON sur le disque
-
-Ici, les routes FastAPI lisent/écrivent directement en PostgreSQL
-(colonne JSONB dans la table cahier_des_charges).
-"""
 from __future__ import annotations
-
-import hashlib
-import json
-
 from asyncpg import Connection
+import uuid
 
 
-async def get(conn: Connection) -> dict | None:
-    """SELECT data, updated_at FROM cahier_des_charges WHERE id = 1."""
+def _row(r) -> dict:
+    d = dict(r)
+    d["id"]        = str(d["id"])
+    d["projet_id"] = str(d["projet_id"])
+    return d
+
+
+async def get(conn: Connection, projet_id: str) -> dict | None:
     row = await conn.fetchrow(
-        "SELECT data, updated_at FROM cahier_des_charges WHERE id = 1"
+        "SELECT id, projet_id, contenu, derniere_maj FROM cdc WHERE projet_id=$1::uuid",
+        projet_id,
     )
-    return dict(row) if row else None
+    return _row(row) if row else None
 
 
-async def upsert(conn: Connection, data: dict) -> dict:
-    """Upsert atomique sur la ligne unique id = 1."""
+async def upsert(conn: Connection, projet_id: str, contenu: str) -> dict:
     row = await conn.fetchrow(
         """
-        INSERT INTO cahier_des_charges (id, data, updated_at)
-        VALUES (1, $1::jsonb, NOW())
-        ON CONFLICT (id) DO UPDATE
-            SET data = $1::jsonb, updated_at = NOW()
-        RETURNING data, updated_at
+        INSERT INTO cdc (id, projet_id, contenu, derniere_maj)
+        VALUES ($1::uuid, $2::uuid, $3, NOW())
+        ON CONFLICT (projet_id) DO UPDATE
+            SET contenu = $3, derniere_maj = NOW()
+        RETURNING id, projet_id, contenu, derniere_maj
         """,
-        json.dumps(data, ensure_ascii=False),
+        str(uuid.uuid4()),
+        projet_id,
+        contenu,
     )
-    return dict(row)
-
-
-async def get_version_hash(conn: Connection) -> str:
-    """Retourne un hash SHA-256 tronqué à 16 chars pour détecter les changements."""
-    row = await conn.fetchrow(
-        "SELECT data FROM cahier_des_charges WHERE id = 1"
-    )
-    if row is None:
-        return "0" * 16
-    # asyncpg retourne le JSONB déjà désérialisé — on re-sérialise de façon déterministe
-    raw = json.dumps(row["data"], sort_keys=True, ensure_ascii=False)
-    return hashlib.sha256(raw.encode()).hexdigest()[:16]
+    return _row(row)

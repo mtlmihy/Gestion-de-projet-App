@@ -1,30 +1,35 @@
-"""
-Requêtes PostgreSQL pour les risques.
-Remplace save_risques() et load_risques() de db.py (Streamlit).
-"""
 from __future__ import annotations
-
 import uuid
-
 from asyncpg import Connection
 
 
-async def get_all(conn: Connection) -> list[dict]:
-    rows = await conn.fetch("SELECT * FROM risques ORDER BY identifiant")
-    return [dict(r) for r in rows]
+def _row(r) -> dict:
+    d = dict(r)
+    d["id"]         = str(d["id"])
+    d["projet_id"]  = str(d["projet_id"])
+    return d
 
 
-async def create(conn: Connection, data: dict) -> dict:
+async def get_all(conn: Connection, projet_id: str) -> list[dict]:
+    rows = await conn.fetch(
+        "SELECT * FROM risques WHERE projet_id=$1::uuid ORDER BY nom",
+        projet_id,
+    )
+    return [_row(r) for r in rows]
+
+
+async def create(conn: Connection, projet_id: str, data: dict) -> dict:
     row = await conn.fetchrow(
         """
         INSERT INTO risques
-            (id, identifiant, description, categorie,
-             probabilite, impact, priorite, responsable, attenuation, statut)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+            (id, projet_id, nom, description, categorie,
+             probabilite, impact, priorite, responsable, attenuation, statut, gravite)
+        VALUES ($1::uuid,$2::uuid,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
         RETURNING *
         """,
         str(uuid.uuid4()),
-        data["identifiant"],
+        projet_id,
+        data["nom"],
         data.get("description", ""),
         data.get("categorie", ""),
         data.get("probabilite", "Faible"),
@@ -33,23 +38,23 @@ async def create(conn: Connection, data: dict) -> dict:
         data.get("responsable", ""),
         data.get("attenuation", ""),
         data.get("statut", "Ouvert"),
+        data.get("gravite", 1),
     )
-    return dict(row)
+    return _row(row)
 
 
 async def update(conn: Connection, risque_id: str, data: dict) -> dict | None:
     row = await conn.fetchrow(
         """
         UPDATE risques
-        SET identifiant=$2, description=$3, categorie=$4,
+        SET nom=$2, description=$3, categorie=$4,
             probabilite=$5, impact=$6, priorite=$7,
-            responsable=$8, attenuation=$9, statut=$10,
-            updated_at=NOW()
-        WHERE id=$1
+            responsable=$8, attenuation=$9, statut=$10, gravite=$11
+        WHERE id=$1::uuid
         RETURNING *
         """,
         risque_id,
-        data["identifiant"],
+        data["nom"],
         data.get("description", ""),
         data.get("categorie", ""),
         data.get("probabilite", "Faible"),
@@ -58,11 +63,13 @@ async def update(conn: Connection, risque_id: str, data: dict) -> dict | None:
         data.get("responsable", ""),
         data.get("attenuation", ""),
         data.get("statut", "Ouvert"),
+        data.get("gravite", 1),
     )
-    return dict(row) if row else None
+    return _row(row) if row else None
 
 
 async def delete(conn: Connection, risque_id: str) -> bool:
-    """DELETE FROM risques WHERE id = $1."""
-    result = await conn.execute("DELETE FROM risques WHERE id=$1", risque_id)
+    result = await conn.execute("DELETE FROM risques WHERE id=$1::uuid", risque_id)
     return result == "DELETE 1"
+
+

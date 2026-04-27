@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+/* ── Org chart tree connectors ─────────────────────────────────
+   Each .org-child-cell draws:
+   - ::before  → horizontal bar connecting siblings
+   - ::after   → vertical stub dropping from the bar to the card
+   .org-parent-connector → vertical stub going from parent card
+                           down to the horizontal bar
+────────────────────────────────────────────────────────────── */
+
+.org-children {
+  display: flex;
+  align-items: flex-start;
+}
+
+.org-child-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  padding: 0 12px;
+  padding-top: 24px;
+}
+
+/* Horizontal bar spanning the full cell width */
+.org-child-cell::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  border-top: 2px solid #d1d5db;
+}
+
+/* Left half hidden for first child (bar only goes right from center) */
+.org-child-cell:first-child::before { left: 50%; }
+
+/* Right half hidden for last child (bar only goes left from center) */
+.org-child-cell:last-child::before  { right: 50%; }
+
+/* Only child → no horizontal bar at all */
+.org-child-cell:only-child::before  { display: none; }
+
+/* Vertical stub from bar down to the card */
+.org-child-cell::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 24px;
+  background: #d1d5db;
+}
+
+/* Vertical stub going from parent card down to the bar */
+.org-parent-connector {
+  width: 2px;
+  background: #d1d5db;
+  height: 24px;
+  flex-shrink: 0;
+}
