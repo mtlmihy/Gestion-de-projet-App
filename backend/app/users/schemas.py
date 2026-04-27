@@ -38,6 +38,16 @@ class UserRead(BaseModel):
     is_active: bool
     peut_creer_projet: bool
     pages_autorisees: Optional[list[str]] = None
+    model_config = {"from_attributes": True}
+
+
+class UserPublic(BaseModel):
+    """Infos minimales exposées à tout utilisateur connecté (pas de données sensibles)."""
+    id: str
+    email: str
+    nom: Optional[str] = None
+    poste: Optional[str] = None
+    model_config = {"from_attributes": True}
 
 
 class ResetPasswordRequest(BaseModel):

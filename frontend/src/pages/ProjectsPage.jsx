@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useProject } from '../context/ProjectContext'
 import { getProjets, createProjet, deleteProjet } from '../api/projets'
+import { getMembres, addMembre, updateMembre, removeMembre, getUsersDisponibles } from '../api/users'
 
 // ── Couleur par statut ────────────────────────────────────────────────────────
 const STATUT_STYLE = {
@@ -42,6 +43,186 @@ function RoleBadge({ role }) {
 // ── Modal nouveau projet ──────────────────────────────────────────────────────
 const inp = 'w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition'
 const lbl = 'block text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1'
+
+const ROLES = ['Proprietaire', 'Editeur', 'Lecteur', 'Client_Limite']
+
+// ── Modal gestion des accès ───────────────────────────────────────────────────
+function GestionAccesModal({ projet, onClose }) {
+  const [membres,    setMembres]  = useState([])
+  const [users,      setUsers]    = useState([])
+  const [loading,    setLoading]  = useState(true)
+  const [showAdd,    setShowAdd]  = useState(false)
+  const [addForm,    setAddForm]  = useState({ user_id: '', role: 'Lecteur' })
+  const [notif,      setNotif]    = useState({ msg: '', type: 'success' })
+
+  const notify = (msg, type = 'success') => {
+    setNotif({ msg, type })
+    setTimeout(() => setNotif({ msg: '', type: 'success' }), 3000)
+  }
+
+  useEffect(() => {
+    Promise.all([getMembres(projet.id), getUsersDisponibles()]).then(([m, u]) => {
+      setMembres(m.data)
+      setUsers(u.data)
+    }).catch(() => notify('Erreur de chargement.', 'error')).finally(() => setLoading(false))
+  }, [projet.id])
+
+  const membresIds      = new Set(membres.map((m) => m.user_id))
+  const usersDisponibles = users.filter((u) => !membresIds.has(u.id))
+
+  const handleAdd = async (e) => {
+    e.preventDefault()
+    try {
+      await addMembre(projet.id, addForm)
+      const { data } = await getMembres(projet.id)
+      setMembres(data)
+      setShowAdd(false)
+      setAddForm({ user_id: '', role: 'Lecteur' })
+      notify('Membre ajouté.')
+    } catch (err) { notify(err?.response?.data?.detail ?? 'Erreur.', 'error') }
+  }
+
+  const handleRoleChange = async (userId, role) => {
+    try {
+      await updateMembre(projet.id, userId, role)
+      setMembres((m) => m.map((mb) => mb.user_id === userId ? { ...mb, role } : mb))
+      notify('Rôle mis à jour.')
+    } catch { notify('Erreur.', 'error') }
+  }
+
+  const handleRemove = async (userId, email) => {
+    if (!confirm(`Retirer ${email} du projet ?`)) return
+    try {
+      await removeMembre(projet.id, userId)
+      setMembres((m) => m.filter((mb) => mb.user_id !== userId))
+      notify('Membre retiré.')
+    } catch (err) { notify(err?.response?.data?.detail ?? 'Erreur.', 'error') }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 max-h-[90vh] flex flex-col">
+        {/* Titre */}
+        <div className="flex items-center justify-between mb-4 flex-shrink-0">
+          <div>
+            <h2 className="text-base font-bold text-gray-900">Gestion des accès</h2>
+            <p className="text-xs text-gray-400 mt-0.5">{projet.nom}</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+        </div>
+
+        {/* Notification */}
+        {notif.msg && (
+          <div className={`mb-3 text-sm px-3 py-2 rounded-xl border flex-shrink-0 ${
+            notif.type === 'error'
+              ? 'text-red-700 bg-red-50 border-red-200'
+              : 'text-green-700 bg-green-50 border-green-200'
+          }`}>{notif.msg}</div>
+        )}
+
+        {/* Actions */}
+        <div className="flex items-center justify-between mb-3 flex-shrink-0">
+          <p className="text-sm text-gray-500">{membres.length} membre{membres.length !== 1 ? 's' : ''}</p>
+          <button
+            onClick={() => setShowAdd(true)}
+            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-3 py-1.5 rounded-xl transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Ajouter
+          </button>
+        </div>
+
+        {/* Tableau */}
+        <div className="overflow-y-auto flex-1 rounded-xl border border-gray-100">
+          {loading ? (
+            <div className="text-center py-12 text-gray-400 text-sm">Chargement…</div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 sticky top-0">
+                <tr>
+                  {['Nom', 'E-mail', 'Rôle', ''].map((h) => (
+                    <th key={h} className="text-left text-xs font-semibold uppercase tracking-wide text-gray-400 px-4 py-3">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {membres.length === 0 && (
+                  <tr><td colSpan="4" className="px-4 py-8 text-center text-gray-400 text-sm">Aucun membre.</td></tr>
+                )}
+                {membres.map((m) => (
+                  <tr key={m.user_id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3 font-medium text-gray-900">{m.nom ?? '—'}</td>
+                    <td className="px-4 py-3 text-gray-500 text-xs">{m.email}</td>
+                    <td className="px-4 py-3">
+                      <select
+                        value={m.role}
+                        onChange={(e) => handleRoleChange(m.user_id, e.target.value)}
+                        className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      >
+                        {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                      </select>
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => handleRemove(m.user_id, m.email)}
+                        className="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-1 rounded-lg hover:bg-red-50 transition-colors"
+                      >
+                        Retirer
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* Sous-formulaire ajout */}
+        {showAdd && (
+          <form onSubmit={handleAdd} className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-100 flex-shrink-0 space-y-3">
+            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Ajouter un membre</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={lbl}>Utilisateur *</label>
+                <select
+                  className={inp}
+                  required
+                  value={addForm.user_id}
+                  onChange={(e) => setAddForm((f) => ({ ...f, user_id: e.target.value }))}
+                >
+                  <option value="">— Sélectionner —</option>
+                  {usersDisponibles.map((u) => (
+                    <option key={u.id} value={u.id}>{u.nom ?? u.email} ({u.email})</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className={lbl}>Rôle</label>
+                <select
+                  className={inp}
+                  value={addForm.role}
+                  onChange={(e) => setAddForm((f) => ({ ...f, role: e.target.value }))}
+                >
+                  {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button type="button" onClick={() => setShowAdd(false)} className="flex-1 border border-gray-200 rounded-xl py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">
+                Annuler
+              </button>
+              <button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-1.5 text-sm font-semibold transition-colors">
+                Ajouter
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  )
+}
 
 function CreateModal({ onClose, onCreated }) {
   const [form, setForm] = useState({ nom: '', description: '', statut: 'En cours' })
@@ -109,7 +290,8 @@ function CreateModal({ onClose, onCreated }) {
 }
 
 // ── Carte projet ─────────────────────────────────────────────────────────────
-function ProjetCard({ projet, onSelect, onDelete, isAdmin }) {
+function ProjetCard({ projet, onSelect, onDelete, onGererAcces, isAdmin }) {
+  const peutGererAcces = isAdmin || projet.mon_role === 'Proprietaire'
   return (
     <div
       onClick={() => onSelect(projet)}
@@ -133,14 +315,25 @@ function ProjetCard({ projet, onSelect, onDelete, isAdmin }) {
       {/* Footer */}
       <div className="flex items-center justify-between mt-auto pt-1">
         <RoleBadge role={projet.mon_role} />
-        {isAdmin && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onDelete(projet) }}
-            className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-red-400 hover:text-red-600 font-medium px-2 py-1 rounded-lg hover:bg-red-50"
-          >
-            Supprimer
-          </button>
-        )}
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {peutGererAcces && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onGererAcces(projet) }}
+              className="text-xs text-blue-500 hover:text-blue-700 font-medium px-2 py-1 rounded-lg hover:bg-blue-50"
+              title="Gérer les accès"
+            >
+              Accès
+            </button>
+          )}
+          {isAdmin && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(projet) }}
+              className="text-xs text-red-400 hover:text-red-600 font-medium px-2 py-1 rounded-lg hover:bg-red-50"
+            >
+              Supprimer
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Indicateur hover */}
@@ -151,13 +344,14 @@ function ProjetCard({ projet, onSelect, onDelete, isAdmin }) {
 
 // ── Page principale ───────────────────────────────────────────────────────────
 export default function ProjectsPage() {
-  const { user, isAdmin, peutCreerProjet } = useAuth()
+  const { user, isAdmin, peutCreerProjet, logout } = useAuth()
   const { setProjet } = useProject()
   const navigate = useNavigate()
 
   const [projets,    setProjets]    = useState([])
   const [loading,    setLoading]    = useState(true)
   const [showCreate, setShowCreate] = useState(false)
+  const [accesProjet, setAccesProjet] = useState(null)
   const [error,      setError]      = useState('')
 
   const load = useCallback(async () => {
@@ -226,6 +420,18 @@ export default function ProjectsPage() {
               <span className="hidden md:block font-medium">{user?.nom ?? user?.email}</span>
               {isAdmin && <span className="bg-red-100 text-red-600 text-xs font-bold px-1.5 py-0.5 rounded">Admin</span>}
             </div>
+            <button
+              onClick={logout}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+              title="Se déconnecter"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              <span className="hidden sm:block">Déconnexion</span>
+            </button>
           </div>
         </div>
       </header>
@@ -294,6 +500,7 @@ export default function ProjectsPage() {
                 projet={p}
                 onSelect={handleSelect}
                 onDelete={handleDelete}
+                onGererAcces={(p) => setAccesProjet(p)}
                 isAdmin={isAdmin}
               />
             ))}
@@ -303,6 +510,10 @@ export default function ProjectsPage() {
 
       {showCreate && (
         <CreateModal onClose={() => setShowCreate(false)} onCreated={handleCreated} />
+      )}
+
+      {accesProjet && (
+        <GestionAccesModal projet={accesProjet} onClose={() => setAccesProjet(null)} />
       )}
     </div>
   )

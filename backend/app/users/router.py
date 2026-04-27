@@ -17,9 +17,30 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.auth.dependencies import get_current_user, require_admin
 from app.db.pool import get_pool
 from app.users import service as svc
-from app.users.schemas import ResetPasswordRequest, UserCreate, UserRead, UserUpdate
+from app.users.schemas import ResetPasswordRequest, UserCreate, UserPublic, UserRead, UserUpdate
 
 router = APIRouter(dependencies=[Depends(require_admin)])
+
+
+# Endpoint accessible à tout utilisateur connecté — retourne uniquement id/nom/email/poste
+# Utilisé par les propriétaires de projet pour inviter des membres
+_public_router = APIRouter(dependencies=[Depends(get_current_user)])
+
+
+@_public_router.get("/disponibles", response_model=List[UserPublic])
+async def list_users_disponibles(
+    pool: Pool = Depends(get_pool),
+    current_user: dict = Depends(get_current_user),
+):
+    """Retourne tous les utilisateurs actifs non-admin (sauf l'appelant)."""
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            "SELECT id::text, email, nom, poste FROM utilisateurs "
+            "WHERE is_active = TRUE AND is_admin = FALSE AND id != $1::uuid "
+            "ORDER BY COALESCE(nom, email)",
+            current_user["id"],
+        )
+    return [dict(r) for r in rows]
 
 
 @router.get("/", response_model=List[UserRead])

@@ -54,28 +54,34 @@ function OrgCard({ node, onEdit, onDelete }) {
       <p className="text-sm font-semibold text-gray-900 truncate mt-2 leading-tight">{node.collaborateur}</p>
       {node.poste && <p className="text-xs text-gray-400 truncate mt-0.5">{node.poste}</p>}
       {/* Actions visibles au survol */}
-      <div className="flex justify-center gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button
-          onClick={() => onEdit(node)}
-          className="p-1 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50"
-          title="Modifier"
-        >
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-          </svg>
-        </button>
-        <button
-          onClick={() => onDelete(node)}
-          className="p-1 rounded text-gray-400 hover:text-red-600 hover:bg-red-50"
-          title="Supprimer"
-        >
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <polyline points="3 6 5 6 21 6"/>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-          </svg>
-        </button>
-      </div>
+      {(onEdit || onDelete) && (
+        <div className="flex justify-center gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          {onEdit && (
+            <button
+              onClick={() => onEdit(node)}
+              className="p-1 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+              title="Modifier"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={() => onDelete(node)}
+              className="p-1 rounded text-gray-400 hover:text-red-600 hover:bg-red-50"
+              title="Supprimer"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -123,7 +129,7 @@ function OrgChart({ equipe, onEdit, onDelete }) {
 /* ─── Page ───────────────────────────────────────────────────── */
 
 export default function EquipePage() {
-  const { projet } = useProject()
+  const { projet, estLecteur, estProprietaire } = useProject()
   const [equipe,     setEquipe]     = useState([])
   const [loading,    setLoading]    = useState(true)
   const [saving,     setSaving]     = useState(false)
@@ -184,6 +190,7 @@ export default function EquipePage() {
         <button
           onClick={() => setAddOpen(true)}
           className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          hidden={!estProprietaire}
         >
           <span className="text-lg leading-none">＋</span> Ajouter un membre
         </button>
@@ -239,20 +246,22 @@ export default function EquipePage() {
                       {m.poste && <p className="text-xs text-gray-500">{m.poste}</p>}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => setEditItem(m)} className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50" title="Modifier">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                      </svg>
-                    </button>
-                    <button onClick={() => setDeleteItem(m)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50" title="Supprimer">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <polyline points="3 6 5 6 21 6"/>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                      </svg>
-                    </button>
-                  </div>
+                  {estProprietaire && (
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => setEditItem(m)} className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50" title="Modifier">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button onClick={() => setDeleteItem(m)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50" title="Supprimer">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <polyline points="3 6 5 6 21 6"/>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-1 text-xs text-gray-600">
                   {m.manager && <p><span className="font-medium text-gray-400">Manager : </span>{m.manager}</p>}
@@ -267,7 +276,7 @@ export default function EquipePage() {
       ) : (
         /* ── Organigramme ── */
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm min-h-48">
-          <OrgChart equipe={equipe} onEdit={setEditItem} onDelete={setDeleteItem} />
+          <OrgChart equipe={equipe} onEdit={estProprietaire ? setEditItem : null} onDelete={estProprietaire ? setDeleteItem : null} />
         </div>
       )}
 

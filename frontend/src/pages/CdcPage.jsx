@@ -296,7 +296,7 @@ function Notification({ msg, type }) {
 
 // ── Composant principal ───────────────────────────────────────────────────────
 export default function CdcPage() {
-  const { projet } = useProject()
+  const { projet, estLecteur } = useProject()
   const [cdc,      setCdc]     = useState(EMPTY)
   const [loading,  setLoading] = useState(true)
   const [saving,   setSaving]  = useState(false)
@@ -433,6 +433,7 @@ export default function CdcPage() {
             onClick={handleSave}
             disabled={saving}
             className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
+            hidden={estLecteur}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
@@ -457,12 +458,12 @@ export default function CdcPage() {
           ].map(([field, label, placeholder]) => (
             <div key={field}>
               <label className={lbl}>{label}</label>
-              <input className={inp} type="text" value={cdc[field] ?? ''} onChange={set(field)} placeholder={placeholder} />
+              <input className={inp} type="text" value={cdc[field] ?? ''} onChange={set(field)} placeholder={placeholder} disabled={estLecteur} />
             </div>
           ))}
           <div>
             <label className={lbl}>Date de début du projet</label>
-            <input className={inp} type="date" value={cdc.date_debut ?? ''} onChange={set('date_debut')} />
+            <input className={inp} type="date" value={cdc.date_debut ?? ''} onChange={set('date_debut')} disabled={estLecteur} />
           </div>
         </div>
       </Card>
@@ -477,6 +478,7 @@ export default function CdcPage() {
           <button
             onClick={addRow('history', ['', '', '', ''])}
             className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+            hidden={estLecteur}
           >
             <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
               <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -496,12 +498,12 @@ export default function CdcPage() {
             <tbody className="divide-y divide-gray-50">
               {history.map((row, ri) => (
                 <tr key={ri} className="group">
-                  <td className="py-2 pr-3 w-24"><input className={rowIn} value={row[0] ?? ''} onChange={setCell('history', ri, 0)} placeholder="1.0" /></td>
-                  <td className="py-2 pr-3 w-36"><input className={rowIn} value={row[1] ?? ''} onChange={setCell('history', ri, 1)} placeholder="Auteur" /></td>
-                  <td className="py-2 pr-3"><input className={rowIn} value={row[2] ?? ''} onChange={setCell('history', ri, 2)} placeholder="Description" /></td>
-                  <td className="py-2 pr-3 w-36"><input className={rowIn} type="date" value={row[3] ?? ''} onChange={setCell('history', ri, 3)} /></td>
+                  <td className="py-2 pr-3 w-24"><input className={rowIn} value={row[0] ?? ''} onChange={setCell('history', ri, 0)} placeholder="1.0" disabled={estLecteur} /></td>
+                  <td className="py-2 pr-3 w-36"><input className={rowIn} value={row[1] ?? ''} onChange={setCell('history', ri, 1)} placeholder="Auteur" disabled={estLecteur} /></td>
+                  <td className="py-2 pr-3"><input className={rowIn} value={row[2] ?? ''} onChange={setCell('history', ri, 2)} placeholder="Description" disabled={estLecteur} /></td>
+                  <td className="py-2 pr-3 w-36"><input className={rowIn} type="date" value={row[3] ?? ''} onChange={setCell('history', ri, 3)} disabled={estLecteur} /></td>
                   <td className="py-2 w-8 text-center">
-                    <button onClick={removeRow('history', ri)} className="text-gray-200 hover:text-red-400 transition-colors text-sm">✕</button>
+                    {!estLecteur && <button onClick={removeRow('history', ri)} className="text-gray-200 hover:text-red-400 transition-colors text-sm">✕</button>}
                   </td>
                 </tr>
               ))}
@@ -528,7 +530,7 @@ export default function CdcPage() {
         <Card key={field}>
           <SectionHeader n={n} title={title} />
           <p className={help}>{helpText}</p>
-          <textarea className={ta} value={cdc[field] ?? ''} onChange={set(field)} placeholder={placeholder} />
+          <textarea className={ta} value={cdc[field] ?? ''} onChange={set(field)} placeholder={placeholder} disabled={estLecteur} />
         </Card>
       ))}
 
@@ -536,7 +538,7 @@ export default function CdcPage() {
       <Card>
         <SectionHeader n="R" title="Risques identifiés" color="red" />
         <p className={help}>Listez les risques connus (1 par ligne). Ex : Dépassement budgétaire, Manque de ressources, Résistance au changement…</p>
-        <textarea className={`${ta} min-h-[100px]`} value={cdc.risques ?? ''} onChange={set('risques')} placeholder="Un risque par ligne…" />
+        <textarea className={`${ta} min-h-[100px]`} value={cdc.risques ?? ''} onChange={set('risques')} placeholder="Un risque par ligne…" disabled={estLecteur} />
       </Card>
 
       {/* ── Jalons & Planning ──────────────────────────────────────────── */}
@@ -546,6 +548,7 @@ export default function CdcPage() {
           <button
             onClick={addRow('jalons', ['', '', ''])}
             className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+            hidden={estLecteur}
           >
             <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
               <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -566,11 +569,11 @@ export default function CdcPage() {
             <tbody className="divide-y divide-gray-50">
               {jalons.map((row, ri) => (
                 <tr key={ri} className="group">
-                  <td className="py-2 pr-3 w-[34%]"><input className={rowIn} value={row[0] ?? ''} onChange={setCell('jalons', ri, 0)} placeholder="Ex : Lancement" /></td>
-                  <td className="py-2 pr-3 w-32"><input className={rowIn} type="date" value={row[1] ?? ''} onChange={setCell('jalons', ri, 1)} /></td>
-                  <td className="py-2 pr-3"><input className={rowIn} value={row[2] ?? ''} onChange={setCell('jalons', ri, 2)} placeholder="Description du livrable" /></td>
+                  <td className="py-2 pr-3 w-[34%]"><input className={rowIn} value={row[0] ?? ''} onChange={setCell('jalons', ri, 0)} placeholder="Ex : Lancement" disabled={estLecteur} /></td>
+                  <td className="py-2 pr-3 w-32"><input className={rowIn} type="date" value={row[1] ?? ''} onChange={setCell('jalons', ri, 1)} disabled={estLecteur} /></td>
+                  <td className="py-2 pr-3"><input className={rowIn} value={row[2] ?? ''} onChange={setCell('jalons', ri, 2)} placeholder="Description du livrable" disabled={estLecteur} /></td>
                   <td className="py-2 w-8 text-center">
-                    <button onClick={removeRow('jalons', ri)} className="text-gray-200 hover:text-red-400 transition-colors text-sm">✕</button>
+                    {!estLecteur && <button onClick={removeRow('jalons', ri)} className="text-gray-200 hover:text-red-400 transition-colors text-sm">✕</button>}
                   </td>
                 </tr>
               ))}
@@ -583,7 +586,7 @@ export default function CdcPage() {
       <Card>
         <SectionHeader n="8" title="Budget" />
         <p className={help}>Montant des investissements, prestataires, hébergement, coût des ressources, maintenance, licences, éléments techniques, etc.</p>
-        <textarea className={ta} value={cdc.budget ?? ''} onChange={set('budget')} placeholder="Décrivez le budget du projet…" />
+        <textarea className={ta} value={cdc.budget ?? ''} onChange={set('budget')} placeholder="Décrivez le budget du projet…" disabled={estLecteur} />
       </Card>
 
       {/* ── Barre d'actions collante ────────────────────────────────────── */}
@@ -618,6 +621,7 @@ export default function CdcPage() {
             onClick={handleSave}
             disabled={saving}
             className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold px-5 py-2 rounded-xl transition-colors"
+            hidden={estLecteur}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
