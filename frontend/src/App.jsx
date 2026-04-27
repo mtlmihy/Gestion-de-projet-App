@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { ProjectProvider } from './context/ProjectContext'
+import { ThemeProvider } from './context/ThemeContext'
 import { useAuth } from './context/AuthContext'
 import { useProject } from './context/ProjectContext'
 import PrivateRoute from './components/PrivateRoute'
@@ -44,8 +45,9 @@ function ProjectRoute({ children }) {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <ProjectProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <ProjectProvider>
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
@@ -74,6 +76,7 @@ export default function App() {
         </BrowserRouter>
       </ProjectProvider>
     </AuthProvider>
+    </ThemeProvider>
   )
 }
 

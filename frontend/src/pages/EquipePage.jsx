@@ -49,10 +49,10 @@ function buildTree(members) {
 
 function OrgCard({ node, onEdit, onDelete }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl shadow-sm px-3 py-3 w-40 text-center group hover:border-blue-300 hover:shadow-md transition-all">
+    <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl shadow-sm px-3 py-3 w-40 text-center group hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md transition-all">
       <Avatar name={node.collaborateur} size="lg" />
-      <p className="text-sm font-semibold text-gray-900 truncate mt-2 leading-tight">{node.collaborateur}</p>
-      {node.poste && <p className="text-xs text-gray-400 truncate mt-0.5">{node.poste}</p>}
+      <p className="text-sm font-semibold text-gray-900 dark:text-slate-100 truncate mt-2 leading-tight">{node.collaborateur}</p>
+      {node.poste && <p className="text-xs text-gray-400 dark:text-slate-500 truncate mt-0.5">{node.poste}</p>}
       {/* Actions visibles au survol */}
       {(onEdit || onDelete) && (
         <div className="flex justify-center gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -181,7 +181,7 @@ export default function EquipePage() {
     <div>
       {/* En-tête */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
           <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
             <path d="M23 21v-2a4 4 0 0 0-3-3.87m-4-12a4 4 0 0 1 0 7.75"/>
@@ -207,7 +207,7 @@ export default function EquipePage() {
       </div>
 
       {/* Onglets */}
-      <div className="flex gap-1 mb-4 bg-gray-100 p-1 rounded-lg w-fit">
+      <div className="flex gap-1 mb-4 bg-gray-100 dark:bg-slate-700 p-1 rounded-lg w-fit">
         {[
           { id: 'organigramme', label: 'Organigramme' },
           { id: 'grille',       label: 'Grille' },
@@ -217,8 +217,8 @@ export default function EquipePage() {
             onClick={() => setTab(t.id)}
             className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
               tab === t.id
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-white dark:bg-slate-600 text-gray-900 dark:text-slate-100 shadow-sm'
+                : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'
             }`}
           >
             {t.label}
@@ -232,19 +232,19 @@ export default function EquipePage() {
 
       ) : tab === 'grille' ? (
         equipe.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex items-center justify-center h-32 text-gray-400 text-sm">
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm flex items-center justify-center h-32 text-gray-400 dark:text-slate-500 text-sm">
             Aucun membre enregistré.
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {equipe.map((m) => (
-              <div key={m.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex flex-col gap-3">
+              <div key={m.id} className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm p-4 flex flex-col gap-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <Avatar name={m.collaborateur} />
                     <div>
-                      <p className="font-semibold text-gray-900 text-sm">{m.collaborateur}</p>
-                      {m.poste && <p className="text-xs text-gray-500">{m.poste}</p>}
+                      <p className="font-semibold text-gray-900 dark:text-slate-100 text-sm">{m.collaborateur}</p>
+                      {m.poste && <p className="text-xs text-gray-500 dark:text-slate-400">{m.poste}</p>}
                     </div>
                   </div>
                   {peutModifier && (
@@ -264,10 +264,10 @@ export default function EquipePage() {
                     </div>
                   )}
                 </div>
-                <div className="space-y-1 text-xs text-gray-600">
-                  {m.manager && <p><span className="font-medium text-gray-400">Manager : </span>{m.manager}</p>}
-                  {m.email   && <p><span className="font-medium text-gray-400">Email : </span><a href={`mailto:${m.email}`} className="text-blue-600 hover:underline">{m.email}</a></p>}
-                  {m.numero  && <p><span className="font-medium text-gray-400">Tél. : </span>{m.numero}</p>}
+                <div className="space-y-1 text-xs text-gray-600 dark:text-slate-400">
+                  {m.manager && <p><span className="font-medium text-gray-400 dark:text-slate-500">Manager : </span>{m.manager}</p>}
+                  {m.email   && <p><span className="font-medium text-gray-400 dark:text-slate-500">Email : </span><a href={`mailto:${m.email}`} className="text-blue-600 hover:underline">{m.email}</a></p>}
+                  {m.numero  && <p><span className="font-medium text-gray-400 dark:text-slate-500">Tél. : </span>{m.numero}</p>}
                 </div>
               </div>
             ))}
@@ -276,7 +276,7 @@ export default function EquipePage() {
 
       ) : (
         /* ── Organigramme ── */
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm min-h-48">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm min-h-48">
           <OrgChart equipe={equipe} onEdit={peutModifier ? setEditItem : null} onDelete={peutModifier ? setDeleteItem : null} />
         </div>
       )}

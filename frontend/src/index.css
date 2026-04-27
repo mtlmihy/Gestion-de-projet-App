@@ -1,5 +1,47 @@
 @import "tailwindcss";
 
+/* ── Activation du mode sombre via classe .dark sur <html> ─────────────────── */
+@variant dark (&:where(.dark, .dark *));
+
+/* ── Variables couleurs (identiques à Gestion-de-projet-App.py) ─────────────── */
+:root {
+  --bg-page:    #f9fafb;
+  --bg-card:    #ffffff;
+  --bg-surface: #f3f4f6;
+  --border:     #e5e7eb;
+  --border-soft:#f3f4f6;
+  --text-body:  #1e293b;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+  --accent:     #2563eb;
+}
+
+:root.dark {
+  --bg-page:    #0f172a;
+  --bg-card:    #1e293b;
+  --bg-surface: #263348;
+  --border:     #334155;
+  --border-soft:#1e293b;
+  --text-body:  #f1f5f9;
+  --text-muted: #94a3b8;
+  --text-light: #64748b;
+  --accent:     #3b82f6;
+}
+
+/* ── Application globale des variables ──────────────────────────────────────── */
+html, body {
+  background-color: var(--bg-page);
+  color: var(--text-body);
+  transition: background-color 0.25s, color 0.25s;
+}
+
+/* ── Transitions douces sur tous les éléments de fond/texte ─────────────────── */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color;
+  transition-duration: 0.2s;
+  transition-timing-function: ease;
+}
+
 /* ── Org chart tree connectors ─────────────────────────────────
    Each .org-child-cell draws:
    - ::before  → horizontal bar connecting siblings

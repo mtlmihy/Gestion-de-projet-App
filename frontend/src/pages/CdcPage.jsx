@@ -14,11 +14,11 @@ const EMPTY = {
 }
 
 // ── Helpers styles ────────────────────────────────────────────────────────────
-const inp  = 'w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition'
-const ta   = 'w-full border border-gray-200 rounded-xl px-3 py-3 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical leading-relaxed transition min-h-[130px]'
-const lbl  = 'block text-[.68rem] font-semibold uppercase tracking-wide text-gray-400 mb-1'
-const help = 'text-[.75rem] text-gray-400 italic mb-3 ml-9 leading-snug'
-const rowIn = 'w-full border-0 bg-transparent text-sm text-gray-700 px-1 py-0.5 rounded focus:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400'
+const inp  = 'w-full border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-gray-800 dark:text-slate-100 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition'
+const ta   = 'w-full border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-3 text-sm text-gray-800 dark:text-slate-100 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical leading-relaxed transition min-h-[130px]'
+const lbl  = 'block text-[.68rem] font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-1'
+const help = 'text-[.75rem] text-gray-400 dark:text-slate-500 italic mb-3 ml-9 leading-snug'
+const rowIn = 'w-full border-0 bg-transparent text-sm text-gray-700 dark:text-slate-300 px-1 py-0.5 rounded focus:bg-gray-50 dark:focus:bg-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-400'
 
 // ── Helpers export PDF / Charte Projet ───────────────────────────────────────
 function escH(s) {
@@ -258,7 +258,7 @@ function buildCharterHtml(cdc) {
 // ── Sous-composants ───────────────────────────────────────────────────────────
 function Card({ children }) {
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-7 shadow-sm hover:shadow-md transition-shadow">
+    <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-7 shadow-sm hover:shadow-md transition-shadow">
       {children}
     </div>
   )
@@ -279,7 +279,7 @@ function SectionHeader({ n, title, color }) {
   return (
     <div className="flex items-center gap-2.5 mb-1">
       <SectionNum n={n} color={color} />
-      <span className="text-[.94rem] font-semibold text-gray-800">{title}</span>
+      <span className="text-[.94rem] font-semibold text-gray-800 dark:text-slate-200">{title}</span>
     </div>
   )
 }
@@ -419,13 +419,13 @@ export default function CdcPage() {
             </svg>
           </div>
           <div>
-            <div className="text-xl font-bold text-gray-900 leading-tight">Cahier des Charges</div>
-            <div className="text-xs text-gray-400">Document de cadrage projet</div>
+            <div className="text-xl font-bold text-gray-900 dark:text-slate-100 leading-tight">Cahier des Charges</div>
+            <div className="text-xs text-gray-400 dark:text-slate-500">Document de cadrage projet</div>
           </div>
         </div>
         <div className="flex items-center gap-3">
           {lastSaved && (
-            <span className="text-xs text-gray-400 hidden sm:block">
+            <span className="text-xs text-gray-400 dark:text-slate-500 hidden sm:block">
               Sauvegardé le {lastSaved.toLocaleString('fr-FR')}
             </span>
           )}
@@ -472,12 +472,12 @@ export default function CdcPage() {
       <Card>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
-            <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-gray-100 text-xs font-bold text-gray-500">H</span>
-            <span className="text-[.94rem] font-semibold text-gray-800">Historique des versions</span>
+            <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-gray-100 dark:bg-slate-700 text-xs font-bold text-gray-500 dark:text-slate-400">H</span>
+            <span className="text-[.94rem] font-semibold text-gray-800 dark:text-slate-200">Historique des versions</span>
           </div>
           <button
             onClick={addRow('history', ['', '', '', ''])}
-            className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+            className="flex items-center gap-1.5 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-600 dark:text-slate-300 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
             hidden={estLecteur}
           >
             <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -489,13 +489,13 @@ export default function CdcPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100">
+              <tr className="border-b border-gray-100 dark:border-slate-700">
                 {['Version', 'Auteur', 'Description', 'Date', ''].map((h) => (
-                  <th key={h} className="text-left text-[.68rem] font-semibold uppercase tracking-wide text-gray-400 pb-2.5 pr-3 last:pr-0">{h}</th>
+                  <th key={h} className="text-left text-[.68rem] font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 pb-2.5 pr-3 last:pr-0">{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-50 dark:divide-slate-700">
               {history.map((row, ri) => (
                 <tr key={ri} className="group">
                   <td className="py-2 pr-3 w-24"><input className={rowIn} value={row[0] ?? ''} onChange={setCell('history', ri, 0)} placeholder="1.0" disabled={estLecteur} /></td>
@@ -547,7 +547,7 @@ export default function CdcPage() {
           <SectionHeader n="7" title="Jalons & Planning" />
           <button
             onClick={addRow('jalons', ['', '', ''])}
-            className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+            className="flex items-center gap-1.5 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-600 dark:text-slate-300 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
             hidden={estLecteur}
           >
             <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -560,13 +560,13 @@ export default function CdcPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100">
+              <tr className="border-b border-gray-100 dark:border-slate-700">
                 {['Jalon / Phase', 'Date cible', 'Description / Livrable', ''].map((h) => (
-                  <th key={h} className="text-left text-[.68rem] font-semibold uppercase tracking-wide text-gray-400 pb-2.5 pr-3 last:pr-0">{h}</th>
+                  <th key={h} className="text-left text-[.68rem] font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 pb-2.5 pr-3 last:pr-0">{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-50 dark:divide-slate-700">
               {jalons.map((row, ri) => (
                 <tr key={ri} className="group">
                   <td className="py-2 pr-3 w-[34%]"><input className={rowIn} value={row[0] ?? ''} onChange={setCell('jalons', ri, 0)} placeholder="Ex : Lancement" disabled={estLecteur} /></td>

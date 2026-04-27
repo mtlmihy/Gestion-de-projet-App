@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useProject } from '../context/ProjectContext'
+import ThemeToggleButton from './ThemeToggleButton'
 
 const LINKS = [
   { to: '/cdc',      label: 'Cahier des Charges', page: 'cdc'      },
@@ -39,7 +40,7 @@ export default function NavBar() {
   }
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
+    <header className="sticky top-0 z-40 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 shadow-sm transition-colors">
       <div className="max-w-screen-xl mx-auto px-4 h-14 flex items-center gap-3">
         {/* Logo + projet actif */}
         <div className="flex items-center gap-2 shrink-0">
@@ -56,7 +57,7 @@ export default function NavBar() {
                 className="flex items-center gap-1.5 max-w-[160px] group"
                 title="Changer de projet"
               >
-                <span className="text-sm font-semibold text-gray-800 truncate group-hover:text-blue-600 transition-colors">
+                <span className="text-sm font-semibold text-gray-800 dark:text-slate-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                   {projet.nom}
                 </span>
                 <svg className="w-3 h-3 text-gray-400 group-hover:text-blue-500 shrink-0 transition-colors" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -76,8 +77,8 @@ export default function NavBar() {
               className={({ isActive }) =>
                 `px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
                   isActive
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    ? 'bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400'
+                    : 'text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-slate-100'
                 }`
               }
             >
@@ -91,8 +92,8 @@ export default function NavBar() {
               className={({ isActive }) =>
                 `px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
                   isActive
-                    ? 'bg-gray-800 text-white'
-                    : 'text-gray-600 hover:bg-gray-800 hover:text-white'
+                    ? 'bg-gray-800 dark:bg-slate-700 text-white'
+                    : 'text-gray-600 dark:text-slate-400 hover:bg-gray-800 dark:hover:bg-slate-700 hover:text-white'
                 }`
               }
             >
@@ -104,17 +105,19 @@ export default function NavBar() {
         {/* Utilisateur connecté + Déconnexion */}
         <div className="shrink-0 flex items-center gap-2">
           {user && (
-            <div className="flex items-center gap-2 text-sm text-gray-600">
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-400">
               <UserAvatar user={user} />
               <span className="hidden md:block font-medium">{user.nom ?? user.email}</span>
               {isAdmin && (
-                <span className="hidden md:block bg-red-100 text-red-600 text-xs font-bold px-1.5 py-0.5 rounded">Admin</span>
+                <span className="hidden md:block bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 text-xs font-bold px-1.5 py-0.5 rounded">Admin</span>
               )}
             </div>
           )}
+          {/* Bouton jour / nuit */}
+          <ThemeToggleButton />
           <button
             onClick={handleLogout}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-slate-100 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />

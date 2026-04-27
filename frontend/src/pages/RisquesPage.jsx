@@ -112,14 +112,14 @@ export default function RisquesPage() {
     }
   }
 
-  const selLabel = 'text-xs font-medium text-gray-600'
-  const selCls   = 'border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400'
+  const selLabel = 'text-xs font-medium text-gray-600 dark:text-slate-400'
+  const selCls   = 'border border-gray-300 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400'
 
   return (
     <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
           <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
           </svg>
@@ -146,9 +146,9 @@ export default function RisquesPage() {
       </div>
 
       {/* Filtres */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-4">
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm mb-4">
         <button
-          className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-700"
+          className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-700 dark:text-slate-300"
           onClick={() => setShowFilters((v) => !v)}
         >
           <span className="flex items-center gap-2">
@@ -163,11 +163,11 @@ export default function RisquesPage() {
         </button>
 
         {showFilters && (
-          <div className="border-t border-gray-100 px-4 py-3 grid grid-cols-2 sm:grid-cols-5 gap-3">
+          <div className="border-t border-gray-100 dark:border-slate-700 px-4 py-3 grid grid-cols-2 sm:grid-cols-5 gap-3">
             <div className="flex flex-col gap-1">
               <label className={selLabel}>Recherche</label>
               <input
-                className="border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="border border-gray-300 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder="Identifiant…"
                 value={fSearch}
                 onChange={(e) => setFSearch(e.target.value)}
@@ -202,35 +202,35 @@ export default function RisquesPage() {
       </div>
 
       {/* Tableau */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
         {loading ? (
-          <div className="flex items-center justify-center h-32 text-gray-400 text-sm">Chargement…</div>
+          <div className="flex items-center justify-center h-32 text-gray-400 dark:text-slate-500 text-sm">Chargement…</div>
         ) : filtered.length === 0 ? (
-          <div className="flex items-center justify-center h-32 text-gray-400 text-sm">
+          <div className="flex items-center justify-center h-32 text-gray-400 dark:text-slate-500 text-sm">
             {risques.length === 0 ? 'Aucun risque enregistré.' : 'Aucun risque ne correspond aux filtres.'}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gray-50 dark:bg-slate-700 border-b border-gray-200 dark:border-slate-600">
                 <tr>
                   {['P', 'Identifiant', 'Catégorie', 'Probabilité', 'Impact', 'Responsable', 'Statut', ''].map((h) => (
-                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
+                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
                 {filtered.map((r) => (
-                  <tr key={r.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
                     <td className="px-4 py-3"><PrioriteBadge value={r.priorite} /></td>
                     <td className="px-4 py-3 max-w-[200px]">
-                      <p className="font-medium text-gray-900 truncate">{r.identifiant}</p>
-                      {r.description && <p className="text-xs text-gray-400 truncate mt-0.5">{r.description}</p>}
+                      <p className="font-medium text-gray-900 dark:text-slate-100 truncate">{r.identifiant}</p>
+                      {r.description && <p className="text-xs text-gray-400 dark:text-slate-500 truncate mt-0.5">{r.description}</p>}
                     </td>
                     <td className="px-4 py-3"><Badge type="categorie" value={r.categorie} /></td>
                     <td className="px-4 py-3"><Badge type="probabilite" value={r.probabilite} /></td>
                     <td className="px-4 py-3"><Badge type="impact" value={r.impact} /></td>
-                    <td className="px-4 py-3 text-gray-700 whitespace-nowrap">{r.responsable}</td>
+                    <td className="px-4 py-3 text-gray-700 dark:text-slate-300 whitespace-nowrap">{r.responsable}</td>
                     <td className="px-4 py-3"><Badge type="statut" value={r.statut} /></td>
                     <td className="px-4 py-3">
                       {!estLecteur && (
@@ -263,7 +263,7 @@ export default function RisquesPage() {
           </div>
         )}
         {filtered.length > 0 && (
-          <div className="px-4 py-2.5 border-t border-gray-100 text-xs text-gray-400">
+          <div className="px-4 py-2.5 border-t border-gray-100 dark:border-slate-700 text-xs text-gray-400 dark:text-slate-500">
             {filtered.length} risque{filtered.length > 1 ? 's' : ''} affiché{filtered.length > 1 ? 's' : ''}
             {filtered.length !== total && ` sur ${total}`}
           </div>

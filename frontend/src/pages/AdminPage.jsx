@@ -28,7 +28,7 @@ function PagesSelector({ value, onChange }) {
   }
   return (
     <div className="space-y-1.5">
-      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer font-medium">
+      <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300 cursor-pointer font-medium">
         <input
           type="checkbox"
           className="accent-blue-600 w-4 h-4"
@@ -39,7 +39,7 @@ function PagesSelector({ value, onChange }) {
       </label>
       <div className="ml-1 grid grid-cols-2 gap-1 pt-1">
         {ALL_PAGES.map((p) => (
-          <label key={p.id} className={`flex items-center gap-2 text-sm cursor-pointer px-2 py-1 rounded-lg transition-colors ${allChecked ? 'text-gray-300' : 'text-gray-700 hover:bg-gray-50'}`}>
+          <label key={p.id} className={`flex items-center gap-2 text-sm cursor-pointer px-2 py-1 rounded-lg transition-colors ${allChecked ? 'text-gray-300 dark:text-slate-600' : 'text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}>
             <input
               type="checkbox"
               className="accent-blue-600 w-4 h-4"
@@ -81,10 +81,10 @@ function Notification({ msg, type }) {
 function Modal({ title, onClose, children }) {
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md p-6">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-base font-bold text-gray-900">{title}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+          <h2 className="text-base font-bold text-gray-900 dark:text-slate-100">{title}</h2>
+          <button onClick={onClose} className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 text-xl leading-none">✕</button>
         </div>
         {children}
       </div>
@@ -92,8 +92,8 @@ function Modal({ title, onClose, children }) {
   )
 }
 
-const inp = 'w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition'
-const lbl = 'block text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1'
+const inp = 'w-full border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition'
+const lbl = 'block text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-1'
 
 // ── Onglet Utilisateurs ──────────────────────────────────────────────────────
 function UsersTab({ currentUser }) {
@@ -183,7 +183,7 @@ function UsersTab({ currentUser }) {
       <Notification msg={notif.msg} type={notif.type} />
 
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-gray-500">{users.length} utilisateur{users.length !== 1 ? 's' : ''}</p>
+        <p className="text-sm text-gray-500 dark:text-slate-400">{users.length} utilisateur{users.length !== 1 ? 's' : ''}</p>
         <button
           onClick={() => { setModal('create') }}
           className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
@@ -198,21 +198,21 @@ function UsersTab({ currentUser }) {
       {loading ? (
         <div className="text-center py-12 text-gray-400 text-sm">Chargement…</div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-gray-100">
+        <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-slate-700">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-slate-700">
               <tr>
                 {['Nom', 'E-mail', 'Poste', 'Rôle', 'Pages', 'Statut', ''].map((h) => (
-                  <th key={h} className="text-left text-xs font-semibold uppercase tracking-wide text-gray-400 px-4 py-3">{h}</th>
+                  <th key={h} className="text-left text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 px-4 py-3">{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-50 dark:divide-slate-700">
               {users.map((u) => (
-                <tr key={u.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 font-medium text-gray-900">{u.nom ?? '—'}</td>
-                  <td className="px-4 py-3 text-gray-600">{u.email}</td>
-                  <td className="px-4 py-3 text-gray-500">{u.poste ?? '—'}</td>
+                <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+                  <td className="px-4 py-3 font-medium text-gray-900 dark:text-slate-100">{u.nom ?? '—'}</td>
+                  <td className="px-4 py-3 text-gray-600 dark:text-slate-400">{u.email}</td>
+                  <td className="px-4 py-3 text-gray-500 dark:text-slate-400">{u.poste ?? '—'}</td>
                   <td className="px-4 py-3">
                     {u.is_admin
                       ? <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full">Admin</span>
@@ -257,18 +257,18 @@ function UsersTab({ currentUser }) {
             <div><label className={lbl}>Nom</label><input className={inp} value={form.nom} onChange={setF('nom')} placeholder="Prénom Nom" /></div>
             <div><label className={lbl}>Poste</label><input className={inp} value={form.poste} onChange={setF('poste')} placeholder="Chef de projet…" /></div>
             <div><label className={lbl}>Mot de passe *</label><input className={inp} type="password" required minLength={6} value={form.password} onChange={setF('password')} /></div>
-            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300 cursor-pointer">
               <input type="checkbox" className="accent-red-600" checked={form.is_admin} onChange={setF('is_admin')} />
               Administrateur (accès total)
             </label>
             {!form.is_admin && (
-              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+              <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300 cursor-pointer">
                 <input type="checkbox" className="accent-blue-600" checked={form.peut_creer_projet} onChange={setF('peut_creer_projet')} />
                 Chef de projet (peut créer des projets)
               </label>
             )}
             {!form.is_admin && (
-              <div className="border border-gray-100 rounded-xl p-3 bg-gray-50">
+              <div className="border border-gray-100 dark:border-slate-600 rounded-xl p-3 bg-gray-50 dark:bg-slate-700">
                 <div className={`${lbl} mb-2`}>Pages accessibles</div>
                 <PagesSelector
                   value={form.pages_autorisees}
@@ -277,7 +277,7 @@ function UsersTab({ currentUser }) {
               </div>
             )}
             <div className="flex gap-2 pt-2">
-              <button type="button" onClick={() => setModal(null)} className="flex-1 border border-gray-200 rounded-xl py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">Annuler</button>
+              <button type="button" onClick={() => setModal(null)} className="flex-1 border border-gray-200 dark:border-slate-600 rounded-xl py-2 text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">Annuler</button>
               <button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-2 text-sm font-semibold transition-colors">Créer</button>
             </div>
           </form>
@@ -290,22 +290,22 @@ function UsersTab({ currentUser }) {
           <form onSubmit={handleEdit} className="space-y-3">
             <div><label className={lbl}>Nom</label><input className={inp} value={editForm.nom} onChange={setE('nom')} /></div>
             <div><label className={lbl}>Poste</label><input className={inp} value={editForm.poste} onChange={setE('poste')} /></div>
-            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300 cursor-pointer">
               <input type="checkbox" className="accent-red-600" checked={editForm.is_admin} onChange={setE('is_admin')} />
               Administrateur
             </label>
             {!editForm.is_admin && (
-              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+              <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300 cursor-pointer">
                 <input type="checkbox" className="accent-blue-600" checked={editForm.peut_creer_projet} onChange={setE('peut_creer_projet')} />
                 Chef de projet (peut créer des projets)
               </label>
             )}
-            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300 cursor-pointer">
               <input type="checkbox" className="accent-blue-600" checked={editForm.is_active} onChange={setE('is_active')} />
               Compte actif
             </label>
             {!editForm.is_admin && (
-              <div className="border border-gray-100 rounded-xl p-3 bg-gray-50">
+              <div className="border border-gray-100 dark:border-slate-600 rounded-xl p-3 bg-gray-50 dark:bg-slate-700">
                 <div className={`${lbl} mb-2`}>Pages accessibles</div>
                 <PagesSelector
                   value={editForm.pages_autorisees}
@@ -314,7 +314,7 @@ function UsersTab({ currentUser }) {
               </div>
             )}
             <div className="flex gap-2 pt-2">
-              <button type="button" onClick={() => setModal(null)} className="flex-1 border border-gray-200 rounded-xl py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">Annuler</button>
+              <button type="button" onClick={() => setModal(null)} className="flex-1 border border-gray-200 dark:border-slate-600 rounded-xl py-2 text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">Annuler</button>
               <button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-2 text-sm font-semibold transition-colors">Enregistrer</button>
             </div>
           </form>
@@ -327,7 +327,7 @@ function UsersTab({ currentUser }) {
           <form onSubmit={handlePwd} className="space-y-3">
             <div><label className={lbl}>Nouveau mot de passe *</label><input className={inp} type="password" required minLength={6} value={newPwd} onChange={(e) => setNewPwd(e.target.value)} /></div>
             <div className="flex gap-2 pt-2">
-              <button type="button" onClick={() => setModal(null)} className="flex-1 border border-gray-200 rounded-xl py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">Annuler</button>
+              <button type="button" onClick={() => setModal(null)} className="flex-1 border border-gray-200 dark:border-slate-600 rounded-xl py-2 text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">Annuler</button>
               <button type="submit" className="flex-1 bg-orange-500 hover:bg-orange-600 text-white rounded-xl py-2 text-sm font-semibold transition-colors">Réinitialiser</button>
             </div>
           </form>
@@ -538,7 +538,7 @@ export default function AdminPage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
           </svg>
         </div>
-        <h1 className="text-lg font-bold text-gray-800">Accès réservé aux administrateurs</h1>
+        <h1 className="text-lg font-bold text-gray-800 dark:text-slate-200">Accès réservé aux administrateurs</h1>
       </div>
     )
   }
@@ -554,12 +554,12 @@ export default function AdminPage() {
           </svg>
         </div>
         <div>
-          <div className="text-xl font-bold text-gray-900">Administration</div>
-          <div className="text-xs text-gray-400">Création et configuration des utilisateurs</div>
+          <div className="text-xl font-bold text-gray-900 dark:text-slate-100">Administration</div>
+          <div className="text-xs text-gray-400 dark:text-slate-500">Création et configuration des utilisateurs</div>
         </div>
       </div>
 
-      <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+      <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl shadow-sm p-6">
         <UsersTab currentUser={user} />
       </div>
     </div>

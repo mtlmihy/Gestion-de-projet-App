@@ -3,7 +3,7 @@ import NavBar from './NavBar'
 
 export default function Layout() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors">
       <NavBar />
       <main className="max-w-screen-xl mx-auto px-4 py-6">
         <Outlet />

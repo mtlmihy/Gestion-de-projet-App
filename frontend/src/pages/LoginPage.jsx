@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import ThemeToggleButton from '../components/ThemeToggleButton'
 
 export default function LoginPage() {
   const [email,    setEmail]    = useState('')
@@ -25,8 +26,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-200 w-full max-w-sm p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center p-4 transition-colors">
+      {/* Bouton thème en haut à droite */}
+      <div className="fixed top-3 right-3">
+        <ThemeToggleButton className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 shadow-sm" />
+      </div>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-gray-200 dark:border-slate-700 w-full max-w-sm p-8">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
           <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mb-3">
@@ -34,20 +39,20 @@ export default function LoginPage() {
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-gray-900">Gestion de Projet</h1>
-          <p className="text-sm text-gray-500 mt-1">Accès sécurisé</p>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-slate-100">Gestion de Projet</h1>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Accès sécurisé</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
               E-mail
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="prenom.nom@domaine.fr"
               autoFocus
               required
@@ -55,21 +60,21 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
               Mot de passe
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="••••••••"
               required
             />
           </div>
 
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
+            <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg px-3 py-2">{error}</p>
           )}
 
           <button

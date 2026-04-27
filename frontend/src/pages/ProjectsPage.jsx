@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useProject } from '../context/ProjectContext'
+import ThemeToggleButton from '../components/ThemeToggleButton'
 import { getProjets, createProjet, deleteProjet, cloturerProjet, reactiverProjet } from '../api/projets'
 import { getMembres, addMembre, updateMembre, removeMembre, getUsersDisponibles } from '../api/users'
 
@@ -41,8 +42,8 @@ function RoleBadge({ role }) {
 }
 
 // ── Modal nouveau projet ──────────────────────────────────────────────────────
-const inp = 'w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition'
-const lbl = 'block text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1'
+const inp = 'w-full border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition'
+const lbl = 'block text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-1'
 
 const ROLES = ['Proprietaire', 'Editeur', 'Lecteur', 'Client_Limite']
 const ROLES_SANS_PROPRIO = ['Editeur', 'Lecteur', 'Client_Limite']
@@ -108,29 +109,29 @@ function GestionAccesModal({ projet, onClose, isAdmin }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 bg-black/40 dark:bg-black/60 z-50 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl p-6 max-h-[90vh] flex flex-col border border-gray-100 dark:border-slate-700">
         {/* Titre */}
         <div className="flex items-center justify-between mb-4 flex-shrink-0">
           <div>
-            <h2 className="text-base font-bold text-gray-900">Gestion des accès</h2>
-            <p className="text-xs text-gray-400 mt-0.5">{projet.nom}</p>
+            <h2 className="text-base font-bold text-gray-900 dark:text-slate-100">Gestion des accès</h2>
+            <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{projet.nom}</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+          <button onClick={onClose} className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 text-xl leading-none">✕</button>
         </div>
 
         {/* Notification */}
         {notif.msg && (
           <div className={`mb-3 text-sm px-3 py-2 rounded-xl border flex-shrink-0 ${
             notif.type === 'error'
-              ? 'text-red-700 bg-red-50 border-red-200'
-              : 'text-green-700 bg-green-50 border-green-200'
+              ? 'text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800'
+              : 'text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800'
           }`}>{notif.msg}</div>
         )}
 
         {/* Actions */}
         <div className="flex items-center justify-between mb-3 flex-shrink-0">
-          <p className="text-sm text-gray-500">{membres.length} membre{membres.length !== 1 ? 's' : ''}</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400">{membres.length} membre{membres.length !== 1 ? 's' : ''}</p>
           <button
             onClick={() => setShowAdd(true)}
             className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-3 py-1.5 rounded-xl transition-colors"
@@ -143,26 +144,26 @@ function GestionAccesModal({ projet, onClose, isAdmin }) {
         </div>
 
         {/* Tableau */}
-        <div className="overflow-y-auto flex-1 rounded-xl border border-gray-100">
+        <div className="overflow-y-auto flex-1 rounded-xl border border-gray-100 dark:border-slate-700">
           {loading ? (
-            <div className="text-center py-12 text-gray-400 text-sm">Chargement…</div>
+            <div className="text-center py-12 text-gray-400 dark:text-slate-500 text-sm">Chargement…</div>
           ) : (
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 sticky top-0">
+              <thead className="bg-gray-50 dark:bg-slate-800 sticky top-0">
                 <tr>
                   {['Nom', 'E-mail', 'Rôle', ''].map((h) => (
-                    <th key={h} className="text-left text-xs font-semibold uppercase tracking-wide text-gray-400 px-4 py-3">{h}</th>
+                    <th key={h} className="text-left text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 px-4 py-3">{h}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
                 {membres.length === 0 && (
-                  <tr><td colSpan="4" className="px-4 py-8 text-center text-gray-400 text-sm">Aucun membre.</td></tr>
+                  <tr><td colSpan="4" className="px-4 py-8 text-center text-gray-400 dark:text-slate-500 text-sm">Aucun membre.</td></tr>
                 )}
                 {membres.map((m) => (
-                  <tr key={m.user_id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 font-medium text-gray-900">{m.nom ?? '—'}</td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">{m.email}</td>
+                  <tr key={m.user_id} className="hover:bg-gray-50 dark:hover:bg-slate-800/60 transition-colors">
+                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-slate-100">{m.nom ?? '—'}</td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-slate-400 text-xs">{m.email}</td>
                     <td className="px-4 py-3">
                       {!isAdmin && m.role === 'Proprietaire' ? (
                         <span className="text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-2 py-1">Propriétaire</span>
@@ -170,7 +171,7 @@ function GestionAccesModal({ projet, onClose, isAdmin }) {
                         <select
                           value={m.role}
                           onChange={(e) => handleRoleChange(m.user_id, e.target.value)}
-                          className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="text-xs border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         >
                           {rolesDisponibles.map((r) => <option key={r} value={r}>{r}</option>)}
                         </select>
@@ -193,8 +194,8 @@ function GestionAccesModal({ projet, onClose, isAdmin }) {
 
         {/* Sous-formulaire ajout */}
         {showAdd && (
-          <form onSubmit={handleAdd} className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-100 flex-shrink-0 space-y-3">
-            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Ajouter un membre</p>
+          <form onSubmit={handleAdd} className="mt-4 p-4 bg-gray-50 dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700 flex-shrink-0 space-y-3">
+            <p className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wide">Ajouter un membre</p>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={lbl}>Utilisateur *</label>
@@ -222,7 +223,7 @@ function GestionAccesModal({ projet, onClose, isAdmin }) {
               </div>
             </div>
             <div className="flex gap-2">
-              <button type="button" onClick={() => setShowAdd(false)} className="flex-1 border border-gray-200 rounded-xl py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">
+              <button type="button" onClick={() => setShowAdd(false)} className="flex-1 border border-gray-200 dark:border-slate-600 rounded-xl py-1.5 text-sm font-medium text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
                 Annuler
               </button>
               <button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-1.5 text-sm font-semibold transition-colors">
@@ -257,14 +258,14 @@ function CreateModal({ onClose, onCreated }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+    <div className="fixed inset-0 bg-black/40 dark:bg-black/60 z-50 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md p-6 border border-gray-100 dark:border-slate-700">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-base font-bold text-gray-900">Nouveau projet</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+          <h2 className="text-base font-bold text-gray-900 dark:text-slate-100">Nouveau projet</h2>
+          <button onClick={onClose} className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 text-xl leading-none">✕</button>
         </div>
 
-        {error && <div className="mb-3 text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-xl">{error}</div>}
+        {error && <div className="mb-3 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 px-3 py-2 rounded-xl">{error}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
@@ -288,7 +289,7 @@ function CreateModal({ onClose, onCreated }) {
             </select>
           </div>
           <div className="flex gap-2 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 border border-gray-200 rounded-xl py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+            <button type="button" onClick={onClose} className="flex-1 border border-gray-200 dark:border-slate-600 rounded-xl py-2 text-sm font-medium text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
               Annuler
             </button>
             <button type="submit" disabled={saving} className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl py-2 text-sm font-semibold transition-colors">
@@ -309,10 +310,10 @@ function ProjetCard({ projet, onSelect, onDelete, onGererAcces, onCloturer, onRe
   return (
     <div
       onClick={() => onSelect(projet)}
-      className={`group relative bg-white border rounded-2xl shadow-sm hover:shadow-md transition-all cursor-pointer p-5 flex flex-col gap-3 ${
+      className={`group relative bg-white dark:bg-slate-800 border rounded-2xl shadow-sm hover:shadow-md transition-all cursor-pointer p-5 flex flex-col gap-3 ${
         projet.est_cloture
-          ? 'border-gray-300 opacity-80 hover:border-gray-400'
-          : 'border-gray-100 hover:border-blue-200'
+          ? 'border-gray-300 dark:border-slate-600 opacity-80 hover:border-gray-400 dark:hover:border-slate-500'
+          : 'border-gray-100 dark:border-slate-700 hover:border-blue-200 dark:hover:border-blue-700'
       }`}
     >
       {/* Badge clôturé */}
@@ -329,7 +330,7 @@ function ProjetCard({ projet, onSelect, onDelete, onGererAcces, onCloturer, onRe
       {/* En-tête */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-gray-900 text-base truncate group-hover:text-blue-600 transition-colors">
+          <h3 className="font-bold text-gray-900 dark:text-slate-100 text-base truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
             {projet.nom}
           </h3>
         </div>
@@ -337,7 +338,7 @@ function ProjetCard({ projet, onSelect, onDelete, onGererAcces, onCloturer, onRe
       </div>
 
       {/* Description */}
-      <p className="text-sm text-gray-500 line-clamp-2 min-h-[2.5rem]">
+      <p className="text-sm text-gray-500 dark:text-slate-400 line-clamp-2 min-h-[2.5rem]">
         {projet.description || <span className="italic text-gray-300">Aucune description</span>}
       </p>
 
@@ -459,9 +460,9 @@ export default function ProjectsPage() {
     .split(' ').map((p) => p[0]?.toUpperCase()).slice(0, 2).join('')
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 shadow-sm">
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 shadow-sm">
         <div className="max-w-screen-xl mx-auto px-4 h-14 flex items-center justify-between">
           <span className="flex items-center gap-2 font-bold text-blue-600 text-sm">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -479,16 +480,16 @@ export default function ProjectsPage() {
                 Administration
               </button>
             )}
-            <div className="flex items-center gap-2 text-sm text-gray-600">
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-400">
               <span className="w-7 h-7 rounded-full bg-blue-600 text-white text-xs font-bold inline-flex items-center justify-center">
                 {initiales}
               </span>
               <span className="hidden md:block font-medium">{user?.nom ?? user?.email}</span>
-              {isAdmin && <span className="bg-red-100 text-red-600 text-xs font-bold px-1.5 py-0.5 rounded">Admin</span>}
+              {isAdmin && <span className="bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 text-xs font-bold px-1.5 py-0.5 rounded">Admin</span>}
             </div>
             <button
               onClick={logout}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-slate-100 transition-colors"
               title="Se déconnecter"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -498,6 +499,7 @@ export default function ProjectsPage() {
               </svg>
               <span className="hidden sm:block">Déconnexion</span>
             </button>
+            <ThemeToggleButton />
           </div>
         </div>
       </header>
@@ -507,8 +509,8 @@ export default function ProjectsPage() {
         {/* Titre + bouton */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Mes projets</h1>
-            <p className="text-sm text-gray-400 mt-1">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Mes projets</h1>
+            <p className="text-sm text-gray-400 dark:text-slate-500 mt-1">
               {isAdmin ? 'Vous êtes administrateur — tous les projets sont visibles.' : 'Projets auxquels vous participez.'}
             </p>
           </div>
@@ -526,7 +528,7 @@ export default function ProjectsPage() {
         </div>
 
         {error && (
-          <div className="mb-6 px-4 py-3 bg-red-50 text-red-700 border border-red-200 rounded-xl text-sm">{error}</div>
+          <div className="mb-6 px-4 py-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-xl text-sm">{error}</div>
         )}
 
         {/* Filtres */}
@@ -544,7 +546,7 @@ export default function ProjectsPage() {
                       ? val === 'clotures'
                         ? 'bg-gray-700 text-white border-gray-700'
                         : 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-400 border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700'
                   }`}
                 >
                   {label}
@@ -558,7 +560,7 @@ export default function ProjectsPage() {
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white rounded-2xl border border-gray-100 h-36 animate-pulse" />
+              <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 h-36 animate-pulse" />
             ))}
           </div>
         ) : projets.length === 0 ? (

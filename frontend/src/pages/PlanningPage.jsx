@@ -57,7 +57,7 @@ function jalonAvg(jalon, tasks) {
 function MiniBar({ value, color = '#3b82f6' }) {
   const pct = Math.max(0, Math.min(100, value ?? 0))
   return (
-    <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+    <div className="w-full bg-gray-100 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
       <div className="h-1.5 rounded-full transition-all" style={{ width: `${pct}%`, background: pct >= 100 ? '#16a34a' : color }} />
     </div>
   )
@@ -221,7 +221,7 @@ export default function PlanningPage() {
     <div className="space-y-4">
       <PageHeader />
       {notif.msg && <Notif {...notif} />}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center h-48 text-gray-400 gap-2">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm flex flex-col items-center justify-center h-48 text-gray-400 gap-2">
         <span className="text-3xl">📅</span>
         <p className="text-sm font-medium text-gray-600">Aucun jalon défini</p>
         <p className="text-xs text-gray-400">Renseignez des jalons dans le Cahier des Charges.</p>
@@ -258,12 +258,12 @@ export default function PlanningPage() {
       </div>
 
       {/* ── Barre de progression globale ───────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-4">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm px-6 py-4">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400">Avancement global du projet</span>
+          <span className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500">Avancement global du projet</span>
           <span className="text-sm font-bold text-blue-600">{progressPct} %</span>
         </div>
-        <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+        <div className="w-full bg-gray-100 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden">
           <div
             className="h-2.5 rounded-full transition-all duration-500"
             style={{
@@ -274,7 +274,7 @@ export default function PlanningPage() {
             }}
           />
         </div>
-        <div className="flex justify-between mt-1.5 text-[.68rem] text-gray-400">
+        <div className="flex justify-between mt-1.5 text-[.68rem] text-gray-400 dark:text-slate-500">
           <span>{fmtDate(startDate)}</span>
           <span className="text-red-500 font-semibold">Aujourd'hui : {fmtDate(TODAY)}</span>
           <span>{fmtDate(endDate)}</span>
@@ -282,14 +282,14 @@ export default function PlanningPage() {
       </div>
 
       {/* ── Timeline SVG ───────────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-5 overflow-x-auto">
-        <div className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 mb-4">Timeline</div>
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm px-6 py-5 overflow-x-auto">
+        <div className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-4">Timeline</div>
         <TimelineSVG jalons={enrichedJalons} startDate={startDate} endDate={endDate} />
       </div>
 
       {/* ── Cartes jalons ──────────────────────────────────────────────── */}
       <div>
-        <div className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 mb-3">Détail des jalons</div>
+        <div className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-3">Détail des jalons</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {enrichedJalons.map((j, i) => {
             const col    = j._color
@@ -306,15 +306,15 @@ export default function PlanningPage() {
             const bg = bgMap[col] ?? 'bg-gray-50 border-gray-100'
 
             return (
-              <div key={i} className={`relative bg-white border rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow overflow-hidden`}>
+              <div key={i} className={`relative bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow overflow-hidden`}>
                 {/* Accent coloré à gauche */}
                 <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ background: col }} />
 
                 <div className="ml-2">
-                  <div className="text-[.65rem] font-bold text-gray-400 uppercase tracking-wide mb-1">
+                  <div className="text-[.65rem] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-1">
                     Jalon {i + 1}{linked.length > 0 ? ` · ${linked.length} tâche${linked.length > 1 ? 's' : ''}` : ''}
                   </div>
-                  <div className="text-sm font-bold text-gray-900 leading-tight mb-2">{j.label}</div>
+                  <div className="text-sm font-bold text-gray-900 dark:text-slate-100 leading-tight mb-2">{j.label}</div>
 
                   {/* Badge statut */}
                   <span
@@ -329,7 +329,7 @@ export default function PlanningPage() {
                     <span className="text-gray-400 font-normal">({diffStr})</span>
                   </div>
 
-                  {j.desc && <p className="text-xs text-gray-400 leading-snug mb-2">{j.desc}</p>}
+                  {j.desc && <p className="text-xs text-gray-400 dark:text-slate-500 leading-snug mb-2">{j.desc}</p>}
 
                   {/* Barre avancement tâches */}
                   {avg !== null ? (
@@ -341,12 +341,12 @@ export default function PlanningPage() {
                       <MiniBar value={avg} color={col} />
                     </div>
                   ) : (
-                    <p className="text-[.7rem] text-gray-300 italic mt-2">Aucune tâche associée</p>
+                      <p className="text-[.7rem] text-gray-300 dark:text-slate-600 italic mt-2">Aucune tâche associée</p>
                   )}
 
                   {/* Liste des tâches */}
                   {linked.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
+                    <div className="mt-3 pt-3 border-t border-gray-100 dark:border-slate-700 space-y-2">
                       {linked.map((t) => (
                         <div key={t.id} className="flex items-center gap-2">
                           <span className="text-[.65rem] font-bold text-right w-7 flex-shrink-0" style={{ color: (t.avancement ?? 0) >= 100 ? '#16a34a' : '#94a3b8' }}>
@@ -355,7 +355,7 @@ export default function PlanningPage() {
                           <div className="flex-shrink-0 w-12">
                             <MiniBar value={t.avancement ?? 0} color={(t.avancement ?? 0) >= 100 ? '#16a34a' : '#3b82f6'} />
                           </div>
-                          <span className="text-[.72rem] text-gray-700 truncate">{t.nom}</span>
+                          <span className="text-[.72rem] text-gray-700 dark:text-slate-300 truncate">{t.nom}</span>
                         </div>
                       ))}
                     </div>
@@ -379,8 +379,8 @@ function PageHeader() {
         </svg>
       </div>
       <div>
-        <div className="text-xl font-bold text-gray-900 leading-tight">Planning</div>
-        <div className="text-xs text-gray-400">Jalons &amp; avancement</div>
+        <div className="text-xl font-bold text-gray-900 dark:text-slate-100 leading-tight">Planning</div>
+        <div className="text-xs text-gray-400 dark:text-slate-500">Jalons &amp; avancement</div>
       </div>
     </div>
   )
