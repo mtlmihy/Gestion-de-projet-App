@@ -25,7 +25,7 @@ function UserAvatar({ user }) {
 
 export default function NavBar() {
   const { logout, user, isAdmin, canAccess } = useAuth()
-  const { projet, clearProjet } = useProject()
+  const { projet, clearProjet, canAccessPage } = useProject()
   const navigate = useNavigate()
 
   const handleLogout = async () => {
@@ -70,7 +70,7 @@ export default function NavBar() {
 
         {/* Nav links */}
         <nav className="flex items-center gap-0.5 overflow-x-auto flex-1">
-          {LINKS.filter(({ page }) => canAccess(page)).map(({ to, label }) => (
+          {LINKS.filter(({ page }) => canAccess(page) && canAccessPage(page)).map(({ to, label }) => (
             <NavLink
               key={to}
               to={to}
