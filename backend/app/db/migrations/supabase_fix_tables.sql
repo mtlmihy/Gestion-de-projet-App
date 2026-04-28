@@ -46,3 +46,21 @@ DO $$ BEGIN ALTER TYPE projet_role RENAME VALUE 'Client_Limité' TO 'Client_Limi
 -- Pages accessibles par membre (pour le rôle Client_Limite, NULL = toutes)
 ALTER TABLE projet_membres
     ADD COLUMN IF NOT EXISTS pages_autorisees TEXT[] DEFAULT NULL;
+
+-- ── equipe ────────────────────────────────────────────────────────────────────
+-- Création de la table si elle n'existe pas (cause d'erreur 500 sur /equipe/)
+CREATE TABLE IF NOT EXISTS equipe (
+    id            UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+    projet_id     UUID         REFERENCES projets(id) ON DELETE CASCADE,
+    collaborateur VARCHAR(255) NOT NULL,
+    poste         TEXT         NOT NULL DEFAULT '',
+    manager       TEXT         NOT NULL DEFAULT '',
+    numero        TEXT         NOT NULL DEFAULT '',
+    email         TEXT         NOT NULL DEFAULT ''
+);
+
+ALTER TABLE equipe
+    ADD COLUMN IF NOT EXISTS poste   TEXT NOT NULL DEFAULT '',
+    ADD COLUMN IF NOT EXISTS manager TEXT NOT NULL DEFAULT '',
+    ADD COLUMN IF NOT EXISTS numero  TEXT NOT NULL DEFAULT '',
+    ADD COLUMN IF NOT EXISTS email   TEXT NOT NULL DEFAULT '';
