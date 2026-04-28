@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from typing import List, Optional
+import json
+from typing import Any, List, Optional
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -25,6 +27,19 @@ class Settings(BaseSettings):
 
     # ── CORS ──────────────────────────────────────────────────────────────────
     cors_origins: List[str] = ["http://localhost:5173", "http://localhost:3000"]
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def parse_cors(cls, v: Any) -> Any:
+        """Accepte une string JSON, une liste séparée par virgules, ou une liste."""
+        if isinstance(v, str):
+            v = v.strip()
+            try:
+                parsed = json.loads(v)
+                return parsed if isinstance(parsed, list) else [parsed]
+            except (json.JSONDecodeError, ValueError):
+                return [o.strip() for o in v.split(",") if o.strip()]
+        return v
 
     # ── Cookies (auth) ────────────────────────────────────────────────────────
     # En prod cross-site (frontend Vercel ↔ backend Render) :
