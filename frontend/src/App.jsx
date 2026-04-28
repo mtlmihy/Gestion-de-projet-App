@@ -32,7 +32,8 @@ function AccessDenied() {
 
 function PageGuard({ page, children }) {
   const { canAccess } = useAuth()
-  return canAccess(page) ? <>{children}</> : <AccessDenied />
+  const { canAccessPage } = useProject()
+  return (canAccess(page) && canAccessPage(page)) ? <>{children}</> : <AccessDenied />
 }
 
 // Redirige vers /projets si aucun projet sélectionné (sauf pour /admin)

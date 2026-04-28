@@ -29,8 +29,18 @@ export function ProjectProvider({ children }) {
   // Peut gérer les membres : admin ou Propriétaire du projet
   const estProprietaire = isAdmin || projet?.mon_role === 'Proprietaire'
 
+  // Vérifie l'accès à une page pour l'utilisateur courant dans ce projet.
+  // Admin / Proprietaire / Editeur / Lecteur → toutes les pages.
+  // Client_Limite → uniquement les pages listées dans mes_pages (null = toutes).
+  const canAccessPage = (page) => {
+    if (isAdmin) return true
+    if (projet?.mon_role !== 'Client_Limite') return true
+    if (projet?.mes_pages == null) return true
+    return projet.mes_pages.includes(page)
+  }
+
   return (
-    <ProjectContext.Provider value={{ projet, setProjet, clearProjet, estLecteur, estProprietaire }}>
+    <ProjectContext.Provider value={{ projet, setProjet, clearProjet, estLecteur, estProprietaire, canAccessPage }}>
       {children}
     </ProjectContext.Provider>
   )

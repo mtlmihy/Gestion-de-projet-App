@@ -6,7 +6,7 @@ from app.auth.dependencies import get_current_user
 from app.db.pool import get_pool
 from app.projets import service as svc
 from app.projets.schemas import (
-    MembreCreate, MembreRead, MembreUpdate,
+    MembreCreate, MembreRead, MembrePagesUpdate, MembreUpdate,
     ProjetCreate, ProjetRead, ProjetStatutUpdate, ProjetUpdate,
     ROLES_VALIDES,
 )
@@ -182,4 +182,21 @@ async def remove_membre(
         deleted = await svc.remove_membre(conn, projet_id, user_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Membre introuvable.")
+
+
+@router.patch("/{projet_id}/membres/{user_id}/pages", response_model=MembreRead)
+async def update_membre_pages(
+    projet_id: str,
+    user_id: str,
+    payload: MembrePagesUpdate,
+    pool: Pool = Depends(get_pool),
+    current_user: dict = Depends(get_current_user),
+):
+    """Définit les pages accessibles pour un membre Client_Limité. Réservé au Propriétaire ou admin."""
+    await _check_owner_or_admin(projet_id, current_user, pool)
+    async with pool.acquire() as conn:
+        result = await svc.update_membre_pages(conn, projet_id, user_id, payload.pages_autorisees)
+    if not result:
+        raise HTTPException(status_code=404, detail="Membre introuvable.")
+    return result
 

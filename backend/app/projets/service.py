@@ -14,7 +14,7 @@ async def get_accessible(conn: Connection, user_id: str, is_admin: bool) -> list
         rows = await conn.fetch(
             """
             SELECT p.id::text, p.nom, p.description, p.statut::text, p.est_cloture,
-                   pm.role::text AS mon_role
+                   pm.role::text AS mon_role, pm.pages_autorisees AS mes_pages
             FROM projets p
             LEFT JOIN projet_membres pm ON pm.projet_id = p.id AND pm.utilisateur_id = $1::uuid
             ORDER BY p.date_creation
@@ -25,7 +25,7 @@ async def get_accessible(conn: Connection, user_id: str, is_admin: bool) -> list
         rows = await conn.fetch(
             """
             SELECT p.id::text, p.nom, p.description, p.statut::text, p.est_cloture,
-                   pm.role::text AS mon_role
+                   pm.role::text AS mon_role, pm.pages_autorisees AS mes_pages
             FROM projets p
             JOIN projet_membres pm ON pm.projet_id = p.id AND pm.utilisateur_id = $1::uuid
             ORDER BY p.date_creation
@@ -148,7 +148,8 @@ async def ensure_default(conn: Connection) -> str:
 async def get_membres(conn: Connection, projet_id: str) -> list[dict]:
     rows = await conn.fetch(
         """
-        SELECT u.id::text AS user_id, u.email, u.nom, u.poste, pm.role::text AS role
+        SELECT u.id::text AS user_id, u.email, u.nom, u.poste, pm.role::text AS role,
+               pm.pages_autorisees
         FROM projet_membres pm
         JOIN utilisateurs u ON u.id = pm.utilisateur_id
         WHERE pm.projet_id = $1::uuid
@@ -174,7 +175,8 @@ async def add_membre(conn: Connection, projet_id: str, user_id: str, role: str) 
     )
     row = await conn.fetchrow(
         """
-        SELECT u.id::text AS user_id, u.email, u.nom, u.poste, pm.role::text AS role
+        SELECT u.id::text AS user_id, u.email, u.nom, u.poste, pm.role::text AS role,
+               pm.pages_autorisees
         FROM projet_membres pm
         JOIN utilisateurs u ON u.id = pm.utilisateur_id
         WHERE pm.projet_id=$1::uuid AND pm.utilisateur_id=$2::uuid
@@ -197,7 +199,33 @@ async def update_membre_role(conn: Connection, projet_id: str, user_id: str, rol
         return None
     full = await conn.fetchrow(
         """
-        SELECT u.id::text AS user_id, u.email, u.nom, u.poste, pm.role::text AS role
+        SELECT u.id::text AS user_id, u.email, u.nom, u.poste, pm.role::text AS role,
+               pm.pages_autorisees
+        FROM projet_membres pm JOIN utilisateurs u ON u.id=pm.utilisateur_id
+        WHERE pm.projet_id=$1::uuid AND pm.utilisateur_id=$2::uuid
+        """,
+        projet_id, user_id,
+    )
+    return dict(full) if full else None
+
+
+async def update_membre_pages(
+    conn: Connection, projet_id: str, user_id: str, pages: list | None
+) -> dict | None:
+    row = await conn.fetchrow(
+        """
+        UPDATE projet_membres SET pages_autorisees=$3
+        WHERE projet_id=$1::uuid AND utilisateur_id=$2::uuid
+        RETURNING utilisateur_id::text AS user_id
+        """,
+        projet_id, user_id, pages,
+    )
+    if not row:
+        return None
+    full = await conn.fetchrow(
+        """
+        SELECT u.id::text AS user_id, u.email, u.nom, u.poste, pm.role::text AS role,
+               pm.pages_autorisees
         FROM projet_membres pm JOIN utilisateurs u ON u.id=pm.utilisateur_id
         WHERE pm.projet_id=$1::uuid AND pm.utilisateur_id=$2::uuid
         """,

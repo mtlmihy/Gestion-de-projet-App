@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Fragment } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useProject } from '../context/ProjectContext'
 import ThemeToggleButton from '../components/ThemeToggleButton'
 import { getProjets, createProjet, deleteProjet, cloturerProjet, reactiverProjet, updateStatutProjet } from '../api/projets'
-import { getMembres, addMembre, updateMembre, removeMembre, getUsersDisponibles } from '../api/users'
+import { getMembres, addMembre, updateMembre, updateMembrePages, removeMembre, getUsersDisponibles } from '../api/users'
 
 // ── Couleur par statut ────────────────────────────────────────────────────────
 const STATUT_STYLE = {
@@ -47,6 +47,14 @@ const lbl = 'block text-xs font-semibold uppercase tracking-wide text-gray-400 d
 
 const ROLES = ['Proprietaire', 'Editeur', 'Lecteur', 'Client_Limite']
 const ROLES_SANS_PROPRIO = ['Editeur', 'Lecteur', 'Client_Limite']
+const PAGES_DISPONIBLES = [
+  { key: 'cdc',      label: "Cahier des charges" },
+  { key: 'risques',  label: "Risques" },
+  { key: 'taches',   label: "Tâches" },
+  { key: 'planning', label: "Planning" },
+  { key: 'equipe',   label: "Équipe" },
+  { key: 'aide',     label: "Aide" },
+]
 
 // ── Modal gestion des accès ───────────────────────────────────────────────────
 function GestionAccesModal({ projet, onClose, isAdmin }) {
@@ -96,6 +104,24 @@ function GestionAccesModal({ projet, onClose, isAdmin }) {
       notify('Rôle mis à jour.')
     } catch (err) {
       notify(err?.response?.data?.detail ?? 'Erreur lors de la modification du rôle.', 'error')
+    }
+  }
+
+  const handlePagesChange = async (userId, page, checked) => {
+    const membre = membres.find((m) => m.user_id === userId)
+    if (!membre) return
+    // null = toutes les pages autorisées ; on travaille avec un tableau
+    const current = membre.pages_autorisees ?? PAGES_DISPONIBLES.map((p) => p.key)
+    const next = checked
+      ? [...new Set([...current, page])]
+      : current.filter((p) => p !== page)
+    // Si toutes cochées → null (accès total)
+    const payload = next.length === PAGES_DISPONIBLES.length ? null : next
+    try {
+      await updateMembrePages(projet.id, userId, payload)
+      setMembres((m) => m.map((mb) => mb.user_id === userId ? { ...mb, pages_autorisees: payload } : mb))
+    } catch (err) {
+      notify(err?.response?.data?.detail ?? 'Erreur lors de la mise à jour des pages.', 'error')
     }
   }
 
@@ -161,7 +187,8 @@ function GestionAccesModal({ projet, onClose, isAdmin }) {
                   <tr><td colSpan="4" className="px-4 py-8 text-center text-gray-400 dark:text-slate-500 text-sm">Aucun membre.</td></tr>
                 )}
                 {membres.map((m) => (
-                  <tr key={m.user_id} className="hover:bg-gray-50 dark:hover:bg-slate-800/60 transition-colors">
+                  <Fragment key={m.user_id}>
+                  <tr className="hover:bg-gray-50 dark:hover:bg-slate-800/60 transition-colors">
                     <td className="px-4 py-3 font-medium text-gray-900 dark:text-slate-100">{m.nom ?? '—'}</td>
                     <td className="px-4 py-3 text-gray-500 dark:text-slate-400 text-xs">{m.email}</td>
                     <td className="px-4 py-3">
@@ -186,8 +213,31 @@ function GestionAccesModal({ projet, onClose, isAdmin }) {
                       </button>
                     </td>
                   </tr>
-                ))}
-              </tbody>
+                  {m.role === 'Client_Limite' && (
+                    <tr key={`${m.user_id}-pages`} className="bg-orange-50/50 dark:bg-orange-900/10">
+                      <td colSpan="4" className="px-6 pb-3 pt-1">
+                        <p className="text-xs font-semibold text-orange-700 dark:text-orange-400 mb-2">Pages accessibles pour ce membre :</p>
+                        <div className="flex flex-wrap gap-3">
+                          {PAGES_DISPONIBLES.map((p) => {
+                            const hasAccess = m.pages_autorisees == null || m.pages_autorisees.includes(p.key)
+                            return (
+                              <label key={p.key} className="flex items-center gap-1.5 text-xs text-gray-700 dark:text-slate-300 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={hasAccess}
+                                  onChange={(e) => handlePagesChange(m.user_id, p.key, e.target.checked)}
+                                  className="accent-orange-500 w-3.5 h-3.5"
+                                />
+                                {p.label}
+                              </label>
+                            )
+                          })}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  </Fragment>
+                ))}              </tbody>
             </table>
           )}
         </div>
