@@ -26,6 +26,15 @@ class Settings(BaseSettings):
     # ── CORS ──────────────────────────────────────────────────────────────────
     cors_origins: List[str] = ["http://localhost:5173", "http://localhost:3000"]
 
+    # ── Cookies (auth) ────────────────────────────────────────────────────────
+    # En prod cross-site (frontend Vercel ↔ backend Render) :
+    #   COOKIE_SECURE=true et COOKIE_SAMESITE=none
+    cookie_secure: bool = False
+    cookie_samesite: str = "lax"
+
+    # ── SSL DB (Supabase nécessite SSL) ───────────────────────────────────────
+    db_ssl: bool = False
+
 
 settings = Settings()
 

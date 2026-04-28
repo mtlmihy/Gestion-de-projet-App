@@ -40,8 +40,8 @@ async def login(payload: LoginRequest, response: Response, pool: Pool = Depends(
         key="access_token",
         value=token,
         httponly=True,
-        secure=False,   # True en production (HTTPS)
-        samesite="lax",
+        secure=settings.cookie_secure,
+        samesite=settings.cookie_samesite,
         max_age=_COOKIE_MAX_AGE,
     )
     return TokenResponse(access_token=token)
@@ -56,4 +56,9 @@ async def me(current_user: dict = Depends(get_current_user)):
 @router.post("/logout", status_code=204)
 async def logout(response: Response):
     """Invalide la session côté client en supprimant le cookie 'access_token'."""
-    response.delete_cookie(key="access_token", httponly=True, samesite="lax")
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        secure=settings.cookie_secure,
+        samesite=settings.cookie_samesite,
+    )

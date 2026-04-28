@@ -1,0 +1,36 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  Render — Infrastructure as Code
+#  Déploie le backend FastAPI à partir du dossier ./backend
+#  Doc : https://render.com/docs/blueprint-spec
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+  - type: web
+    name: gestion-projet-api
+    runtime: python
+    plan: free
+    region: frankfurt          # même région AWS que ta DB Supabase (eu-central-1)
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /docs
+    envVars:
+      # ── À renseigner manuellement dans le dashboard Render ──
+      - key: DATABASE_URL
+        sync: false             # secret, défini dans le dashboard
+      - key: SECRET_KEY
+        generateValue: true     # Render génère une clé sécurisée
+      - key: CORS_ORIGINS
+        sync: false             # ex: ["https://mon-app.vercel.app"]
+      # ── Valeurs fixes ──
+      - key: ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "480"
+      - key: DB_SSL
+        value: "true"           # Supabase exige SSL
+      - key: COOKIE_SECURE
+        value: "true"           # HTTPS obligatoire en prod
+      - key: COOKIE_SAMESITE
+        value: "none"           # cross-site (Vercel ↔ Render)
+      - key: PYTHON_VERSION
+        value: "3.12.7"

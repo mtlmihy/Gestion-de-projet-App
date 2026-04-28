@@ -1,7 +1,9 @@
 import axios from 'axios'
 
+// En dev : baseURL vide → proxy Vite (vite.config.js) gère localhost:8000
+// En prod : VITE_API_URL pointe vers l'API déployée (ex: https://app.onrender.com)
 const client = axios.create({
-  baseURL: '', // proxy Vite → pas de CORS en dev
+  baseURL: import.meta.env.VITE_API_URL || '',
   withCredentials: true,
 })
 

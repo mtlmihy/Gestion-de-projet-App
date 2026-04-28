@@ -22,6 +22,7 @@ async def init_pool() -> None:
         min_size=2,
         max_size=10,
         command_timeout=30,
+        ssl="require" if settings.db_ssl else None,
     )
 
 
