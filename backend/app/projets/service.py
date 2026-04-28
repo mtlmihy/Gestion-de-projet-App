@@ -88,6 +88,17 @@ async def update(conn: Connection, projet_id: str, data: dict) -> dict | None:
     return dict(row) if row else None
 
 
+async def update_statut(conn: Connection, projet_id: str, statut: str) -> dict | None:
+    row = await conn.fetchrow(
+        """
+        UPDATE projets SET statut=$2::projet_statut WHERE id=$1::uuid
+        RETURNING id::text, nom, description, statut::text, est_cloture
+        """,
+        projet_id, statut,
+    )
+    return dict(row) if row else None
+
+
 async def delete(conn: Connection, projet_id: str) -> bool:
     result = await conn.execute("DELETE FROM projets WHERE id=$1::uuid", projet_id)
     return result == "DELETE 1"

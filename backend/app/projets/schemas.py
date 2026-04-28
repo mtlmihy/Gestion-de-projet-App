@@ -17,6 +17,10 @@ class ProjetUpdate(ProjetBase):
     pass
 
 
+class ProjetStatutUpdate(BaseModel):
+    statut: str
+
+
 class ProjetRead(ProjetBase):
     id: str
     mon_role: Optional[str] = None

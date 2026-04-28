@@ -7,7 +7,7 @@ from app.db.pool import get_pool
 from app.projets import service as svc
 from app.projets.schemas import (
     MembreCreate, MembreRead, MembreUpdate,
-    ProjetCreate, ProjetRead, ProjetUpdate,
+    ProjetCreate, ProjetRead, ProjetStatutUpdate, ProjetUpdate,
     ROLES_VALIDES,
 )
 
@@ -46,6 +46,22 @@ async def update_projet(projet_id: str, payload: ProjetUpdate, pool: Pool = Depe
         result = await svc.update(conn, projet_id, payload.model_dump())
     if result is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Projet introuvable.")
+    return result
+
+
+@router.patch("/{projet_id}/statut", response_model=ProjetRead)
+async def change_statut(
+    projet_id: str,
+    payload: ProjetStatutUpdate,
+    pool: Pool = Depends(get_pool),
+    current_user: dict = Depends(get_current_user),
+):
+    """Change le statut d'un projet. Réservé au Propriétaire ou admin."""
+    await _check_owner_or_admin(projet_id, current_user, pool)
+    async with pool.acquire() as conn:
+        result = await svc.update_statut(conn, projet_id, payload.statut)
+    if not result:
+        raise HTTPException(status_code=404, detail="Projet introuvable.")
     return result
 
 

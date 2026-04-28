@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useProject } from '../context/ProjectContext'
 import ThemeToggleButton from '../components/ThemeToggleButton'
-import { getProjets, createProjet, deleteProjet, cloturerProjet, reactiverProjet } from '../api/projets'
+import { getProjets, createProjet, deleteProjet, cloturerProjet, reactiverProjet, updateStatutProjet } from '../api/projets'
 import { getMembres, addMembre, updateMembre, removeMembre, getUsersDisponibles } from '../api/users'
 
 // ── Couleur par statut ────────────────────────────────────────────────────────
@@ -14,7 +14,7 @@ const STATUT_STYLE = {
   'Terminé':     { dot: 'bg-blue-400',   text: 'text-blue-700',   bg: 'bg-blue-50'   },
   'Annulé':      { dot: 'bg-red-400',    text: 'text-red-600',    bg: 'bg-red-50'    },
 }
-const STATUTS = ['Brouillon', 'En cours', 'En pause', 'Terminé', 'Annulé']
+const STATUTS = ['Brouillon', 'En cours', 'En pause']
 
 function StatutBadge({ statut }) {
   const s = STATUT_STYLE[statut] ?? STATUT_STYLE['Brouillon']
@@ -303,8 +303,9 @@ function CreateModal({ onClose, onCreated }) {
 }
 
 // ── Carte projet ─────────────────────────────────────────────────────────────
-function ProjetCard({ projet, onSelect, onDelete, onGererAcces, onCloturer, onReactiver, isAdmin }) {
+function ProjetCard({ projet, onSelect, onDelete, onGererAcces, onCloturer, onReactiver, onStatutChange, isAdmin }) {
   const estProprietaire = isAdmin || projet.mon_role === 'Proprietaire'
+  const peutEditerStatut = !projet.est_cloture && estProprietaire
   const peutCloturer    = !projet.est_cloture && estProprietaire
   const peutReactiver   = projet.est_cloture && isAdmin
   return (
@@ -334,7 +335,24 @@ function ProjetCard({ projet, onSelect, onDelete, onGererAcces, onCloturer, onRe
             {projet.nom}
           </h3>
         </div>
-        {!projet.est_cloture && <StatutBadge statut={projet.statut} />}
+        {!projet.est_cloture && (
+          peutEditerStatut ? (
+            <select
+              value={projet.statut}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => { e.stopPropagation(); onStatutChange(projet, e.target.value) }}
+              className={`text-xs font-semibold px-2.5 py-1 rounded-full border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                (STATUT_STYLE[projet.statut] ?? STATUT_STYLE['Brouillon']).bg
+              } ${
+                (STATUT_STYLE[projet.statut] ?? STATUT_STYLE['Brouillon']).text
+              }`}
+            >
+              {STATUTS.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          ) : (
+            <StatutBadge statut={projet.statut} />
+          )
+        )}
       </div>
 
       {/* Description */}
@@ -454,6 +472,15 @@ export default function ProjectsPage() {
       setProjets((p) => p.map((x) => x.id === projet.id ? { ...x, est_cloture: false } : x))
     } catch (err) {
       setError(err?.response?.data?.detail ?? 'Erreur lors de la réactivation.')
+    }
+  }
+
+  const handleStatutChange = async (projet, newStatut) => {
+    try {
+      const { data } = await updateStatutProjet(projet.id, newStatut)
+      setProjets((p) => p.map((x) => x.id === projet.id ? { ...x, statut: data.statut } : x))
+    } catch (err) {
+      setError(err?.response?.data?.detail ?? 'Erreur lors du changement de statut.')
     }
   }
   const initiales = (user?.nom ?? user?.email ?? '?')
@@ -609,6 +636,7 @@ export default function ProjectsPage() {
                 onGererAcces={(p) => setAccesProjet(p)}
                 onCloturer={handleCloturer}
                 onReactiver={handleReactiver}
+                onStatutChange={handleStatutChange}
                 isAdmin={isAdmin}
               />
             ))}
