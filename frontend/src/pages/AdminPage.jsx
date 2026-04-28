@@ -5,93 +5,6 @@ import {
 } from '../api/users'
 
 
-const ALL_PAGES = [
-  { id: 'cdc',      label: 'Cahier des Charges' },
-  { id: 'risques',  label: 'Risques' },
-  { id: 'taches',   label: 'Tâches' },
-  { id: 'planning', label: 'Planning' },
-  { id: 'equipe',   label: 'Équipe' },
-  { id: 'aide',     label: 'Aide' },
-]
-
-// Affiche un sélecteur de pages. null = toutes, sinon tableau d'ids
-function PagesSelector({ value, onChange }) {
-  const allChecked = value === null
-  const toggle = (id) => {
-    if (allChecked) {
-      // Passer à une sélection personnalisée excluant cette page
-      onChange(ALL_PAGES.map((p) => p.id).filter((x) => x !== id))
-    } else {
-      const next = value.includes(id) ? value.filter((x) => x !== id) : [...value, id]
-      onChange(next)
-    }
-  }
-  return (
-    <div className="space-y-1.5">
-      <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300 cursor-pointer font-medium">
-        <input
-          type="checkbox"
-          className="accent-blue-600 w-4 h-4"
-          checked={allChecked}
-          onChange={(e) => onChange(e.target.checked ? null : ALL_PAGES.map((p) => p.id))}
-        />
-        Toutes les pages (aucune restriction)
-      </label>
-      <div className="ml-1 grid grid-cols-2 gap-1 pt-1">
-        {ALL_PAGES.map((p) => (
-          <label key={p.id} className={`flex items-center gap-2 text-sm cursor-pointer px-2 py-1 rounded-lg transition-colors ${allChecked ? 'text-gray-300 dark:text-slate-600' : 'text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}>
-            <input
-              type="checkbox"
-              className="accent-blue-600 w-4 h-4"
-              disabled={allChecked}
-              checked={allChecked || value.includes(p.id)}
-              onChange={() => toggle(p.id)}
-            />
-            {p.label}
-          </label>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function Badge({ text }) {
-  const colors = {
-    'Propriétaire':  'bg-blue-100 text-blue-700',
-    'Éditeur':       'bg-green-100 text-green-700',
-    'Lecteur':       'bg-gray-100 text-gray-600',
-    'Client_Limité': 'bg-orange-100 text-orange-700',
-  }
-  return (
-    <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${colors[text] ?? 'bg-gray-100 text-gray-600'}`}>
-      {text}
-    </span>
-  )
-}
-
-function Notification({ msg, type }) {
-  if (!msg) return null
-  const cls = type === 'error'
-    ? 'bg-red-50 text-red-700 border-red-200'
-    : 'bg-green-50 text-green-700 border-green-200'
-  return <div className={`mb-4 px-4 py-2.5 rounded-xl border text-sm font-medium ${cls}`}>{msg}</div>
-}
-
-// ── Modal générique ──────────────────────────────────────────────────────────
-function Modal({ title, onClose, children }) {
-  return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md p-6">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-base font-bold text-gray-900 dark:text-slate-100">{title}</h2>
-          <button onClick={onClose} className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 text-xl leading-none">✕</button>
-        </div>
-        {children}
-      </div>
-    </div>
-  )
-}
-
 const inp = 'w-full border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition'
 const lbl = 'block text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-1'
 
@@ -118,7 +31,7 @@ function UsersTab({ currentUser }) {
   useEffect(() => { load() }, [load])
 
   // Formulaire création
-  const [form, setForm] = useState({ email: '', nom: '', poste: '', password: '', is_admin: false, peut_creer_projet: false, pages_autorisees: null })
+  const [form, setForm] = useState({ email: '', nom: '', poste: '', password: '', is_admin: false, peut_creer_projet: false })
   const setF = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }))
 
   const handleCreate = async (e) => {
@@ -127,7 +40,7 @@ function UsersTab({ currentUser }) {
       await createUser(form)
       notify('Utilisateur créé.')
       setModal(null)
-      setForm({ email: '', nom: '', poste: '', password: '', is_admin: false, peut_creer_projet: false, pages_autorisees: null })
+      setForm({ email: '', nom: '', poste: '', password: '', is_admin: false, peut_creer_projet: false })
       load()
     } catch (err) {
       notify(err?.response?.data?.detail ?? 'Erreur.', 'error')
@@ -135,12 +48,12 @@ function UsersTab({ currentUser }) {
   }
 
   // Formulaire édition
-  const [editForm, setEditForm] = useState({ nom: '', poste: '', is_admin: false, is_active: true, peut_creer_projet: false, pages_autorisees: null })
+  const [editForm, setEditForm] = useState({ nom: '', poste: '', is_admin: false, is_active: true, peut_creer_projet: false })
   const setE = (k) => (e) => setEditForm((f) => ({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }))
 
   const openEdit = (u) => {
     setTarget(u)
-    setEditForm({ nom: u.nom ?? '', poste: u.poste ?? '', is_admin: u.is_admin, is_active: u.is_active, peut_creer_projet: u.peut_creer_projet ?? false, pages_autorisees: u.pages_autorisees ?? null })
+    setEditForm({ nom: u.nom ?? '', poste: u.poste ?? '', is_admin: u.is_admin, is_active: u.is_active, peut_creer_projet: u.peut_creer_projet ?? false })
     setModal('edit')
   }
 
@@ -180,7 +93,9 @@ function UsersTab({ currentUser }) {
 
   return (
     <div>
-      <Notification msg={notif.msg} type={notif.type} />
+      {notif.msg && (
+        <div className={`mb-4 px-4 py-2.5 rounded-xl border text-sm font-medium ${notif.type === 'error' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-green-50 text-green-700 border-green-200'}`}>{notif.msg}</div>
+      )}
 
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-gray-500 dark:text-slate-400">{users.length} utilisateur{users.length !== 1 ? 's' : ''}</p>
@@ -202,7 +117,7 @@ function UsersTab({ currentUser }) {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-slate-700">
               <tr>
-                {['Nom', 'E-mail', 'Poste', 'Rôle', 'Pages', 'Statut', ''].map((h) => (
+                {['Nom', 'E-mail', 'Poste', 'Rôle', 'Statut', ''].map((h) => (
                   <th key={h} className="text-left text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 px-4 py-3">{h}</th>
                 ))}
               </tr>
@@ -217,16 +132,6 @@ function UsersTab({ currentUser }) {
                     {u.is_admin
                       ? <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full">Admin</span>
                       : <span className="bg-gray-100 text-gray-600 text-xs font-semibold px-2 py-0.5 rounded-full">Utilisateur</span>}
-                  </td>
-                  <td className="px-4 py-3 text-xs text-gray-500">
-                    {u.is_admin
-                      ? <span className="text-blue-500 font-medium">Toutes</span>
-                      : u.pages_autorisees == null
-                        ? <span className="text-green-600 font-medium">Toutes</span>
-                        : u.pages_autorisees.length === 0
-                          ? <span className="text-red-400 font-medium">Aucune</span>
-                          : <span title={u.pages_autorisees.join(', ')}>{u.pages_autorisees.length}/{ALL_PAGES.length}</span>
-                    }
                   </td>
                   <td className="px-4 py-3">
                     {u.is_active
@@ -267,15 +172,6 @@ function UsersTab({ currentUser }) {
                 Chef de projet (peut créer des projets)
               </label>
             )}
-            {!form.is_admin && (
-              <div className="border border-gray-100 dark:border-slate-600 rounded-xl p-3 bg-gray-50 dark:bg-slate-700">
-                <div className={`${lbl} mb-2`}>Pages accessibles</div>
-                <PagesSelector
-                  value={form.pages_autorisees}
-                  onChange={(v) => setForm((f) => ({ ...f, pages_autorisees: v }))}
-                />
-              </div>
-            )}
             <div className="flex gap-2 pt-2">
               <button type="button" onClick={() => setModal(null)} className="flex-1 border border-gray-200 dark:border-slate-600 rounded-xl py-2 text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">Annuler</button>
               <button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-2 text-sm font-semibold transition-colors">Créer</button>
@@ -304,15 +200,6 @@ function UsersTab({ currentUser }) {
               <input type="checkbox" className="accent-blue-600" checked={editForm.is_active} onChange={setE('is_active')} />
               Compte actif
             </label>
-            {!editForm.is_admin && (
-              <div className="border border-gray-100 dark:border-slate-600 rounded-xl p-3 bg-gray-50 dark:bg-slate-700">
-                <div className={`${lbl} mb-2`}>Pages accessibles</div>
-                <PagesSelector
-                  value={editForm.pages_autorisees}
-                  onChange={(v) => setEditForm((f) => ({ ...f, pages_autorisees: v }))}
-                />
-              </div>
-            )}
             <div className="flex gap-2 pt-2">
               <button type="button" onClick={() => setModal(null)} className="flex-1 border border-gray-200 dark:border-slate-600 rounded-xl py-2 text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">Annuler</button>
               <button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-2 text-sm font-semibold transition-colors">Enregistrer</button>

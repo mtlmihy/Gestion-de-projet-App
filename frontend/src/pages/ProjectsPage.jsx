@@ -214,24 +214,44 @@ function GestionAccesModal({ projet, onClose, isAdmin }) {
                     </td>
                   </tr>
                   {m.role === 'Client_Limite' && (
-                    <tr key={`${m.user_id}-pages`} className="bg-orange-50/50 dark:bg-orange-900/10">
-                      <td colSpan="4" className="px-6 pb-3 pt-1">
+                    <tr className="bg-orange-50/60 dark:bg-orange-900/10">
+                      <td colSpan="4" className="px-6 pb-4 pt-2">
                         <p className="text-xs font-semibold text-orange-700 dark:text-orange-400 mb-2">Pages accessibles pour ce membre :</p>
-                        <div className="flex flex-wrap gap-3">
-                          {PAGES_DISPONIBLES.map((p) => {
-                            const hasAccess = m.pages_autorisees == null || m.pages_autorisees.includes(p.key)
-                            return (
-                              <label key={p.key} className="flex items-center gap-1.5 text-xs text-gray-700 dark:text-slate-300 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={hasAccess}
-                                  onChange={(e) => handlePagesChange(m.user_id, p.key, e.target.checked)}
-                                  className="accent-orange-500 w-3.5 h-3.5"
-                                />
-                                {p.label}
-                              </label>
-                            )
-                          })}
+                        <div className="space-y-1.5">
+                          {/* Case "Toutes les pages" */}
+                          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300 cursor-pointer font-medium">
+                            <input
+                              type="checkbox"
+                              className="accent-orange-500 w-4 h-4"
+                              checked={m.pages_autorisees == null}
+                              onChange={(e) => {
+                                const payload = e.target.checked ? null : PAGES_DISPONIBLES.map((p) => p.key)
+                                updateMembrePages(projet.id, m.user_id, payload)
+                                  .then(() => setMembres((mb) => mb.map((x) => x.user_id === m.user_id ? { ...x, pages_autorisees: payload } : x)))
+                                  .catch(() => notify('Erreur lors de la mise à jour.', 'error'))
+                              }}
+                            />
+                            Toutes les pages (aucune restriction)
+                          </label>
+                          {/* Cases individuelles */}
+                          <div className="ml-1 grid grid-cols-3 gap-1 pt-0.5">
+                            {PAGES_DISPONIBLES.map((p) => {
+                              const allPages = m.pages_autorisees == null
+                              const hasAccess = allPages || m.pages_autorisees.includes(p.key)
+                              return (
+                                <label key={p.key} className={`flex items-center gap-2 text-sm cursor-pointer px-2 py-1 rounded-lg transition-colors ${allPages ? 'text-gray-300 dark:text-slate-600' : 'text-gray-700 dark:text-slate-300 hover:bg-orange-50 dark:hover:bg-orange-900/20'}`}>
+                                  <input
+                                    type="checkbox"
+                                    className="accent-orange-500 w-3.5 h-3.5"
+                                    disabled={allPages}
+                                    checked={hasAccess}
+                                    onChange={(e) => handlePagesChange(m.user_id, p.key, e.target.checked)}
+                                  />
+                                  {p.label}
+                                </label>
+                              )
+                            })}
+                          </div>
                         </div>
                       </td>
                     </tr>
