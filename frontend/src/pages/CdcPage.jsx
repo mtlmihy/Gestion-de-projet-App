@@ -50,7 +50,7 @@ function buildPrintViewHtml(cdc) {
     </tr>`
   }).join('') || '<tr><td colspan="4" style="padding:12px;border:1px solid #e9eef5;color:#94a3b8;text-align:center;">Aucune version renseignée</td></tr>'
 
-  const jalonRows = (cdc.jalons || []).filter(r => r[0] || r[1] || r[2]).map(row => {
+  const jalonRows = [...(cdc.jalons || [])].sort((a,b)=>{ if(!a[1]&&!b[1])return 0; if(!a[1])return 1; if(!b[1])return -1; return new Date(a[1])-new Date(b[1]) }).filter(r => r[0] || r[1] || r[2]).map(row => {
     const d = row[1] ? new Date(row[1]).toLocaleDateString('fr-FR') : '—'
     return `<tr>
       <td style="padding:6px 10px;border:1px solid #e9eef5;font-weight:600;color:#1e293b;">${escH(dv(row[0]))}</td>
@@ -153,7 +153,7 @@ function buildCharterHtml(cdc) {
   const td  = 'padding:7px 10px;border:1px solid #e9eef5;'
   const tdL = td + 'font-weight:600;color:#1e293b;background:#f8fafc;'
 
-  const jalonRows = (cdc.jalons || []).filter(r => r[0] || r[1] || r[2]).map(row => {
+  const jalonRows = [...(cdc.jalons || [])].sort((a,b)=>{ if(!a[1]&&!b[1])return 0; if(!a[1])return 1; if(!b[1])return -1; return new Date(a[1])-new Date(b[1]) }).filter(r => r[0] || r[1] || r[2]).map(row => {
     const d = row[1] ? new Date(row[1]).toLocaleDateString('fr-FR') : '—'
     return `<tr><td style="${td}font-weight:600;color:#1e293b;">${escH(row[0] || '—')}</td><td style="${td}">${escH(d)}</td><td style="${td}">${escH(row[2] || '')}</td></tr>`
   }).join('') || `<tr><td colspan="3" style="${td}color:#94a3b8;text-align:center;">Aucun jalon renseigné</td></tr>`
@@ -403,7 +403,12 @@ export default function CdcPage() {
   )
 
   const history = cdc.history ?? []
-  const jalons  = cdc.jalons  ?? []
+  const jalons  = [...(cdc.jalons ?? [])].sort((a, b) => {
+    if (!a[1] && !b[1]) return 0
+    if (!a[1]) return 1
+    if (!b[1]) return -1
+    return new Date(a[1]) - new Date(b[1])
+  })
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
