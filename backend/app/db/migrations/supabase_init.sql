@@ -85,10 +85,11 @@ ALTER TABLE utilisateurs
 CREATE INDEX IF NOT EXISTS idx_utilisateurs_email ON utilisateurs (email);
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- 003 — Pages autorisées par utilisateur (NULL = toutes)
+-- 003 — Pages autorisées par utilisateur (NULL = toutes) + droit création projet
 -- ─────────────────────────────────────────────────────────────────────────────
 ALTER TABLE utilisateurs
-    ADD COLUMN IF NOT EXISTS pages_autorisees TEXT[] DEFAULT NULL;
+    ADD COLUMN IF NOT EXISTS pages_autorisees TEXT[] DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS peut_creer_projet BOOLEAN NOT NULL DEFAULT FALSE;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 004 — Clôture de projet
