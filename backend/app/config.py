@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import json
-from typing import Any, List, Optional
+from typing import List, Optional
 
-from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -26,20 +24,13 @@ class Settings(BaseSettings):
     password_hash: Optional[str] = None
 
     # ── CORS ──────────────────────────────────────────────────────────────────
-    cors_origins: List[str] = ["http://localhost:5173", "http://localhost:3000"]
+    # Stocké en str pour éviter le parsing JSON de pydantic-settings v2.
+    # Valeur : URL simple ou liste séparée par virgules.
+    cors_origins: str = "http://localhost:5173,http://localhost:3000"
 
-    @field_validator("cors_origins", mode="before")
-    @classmethod
-    def parse_cors(cls, v: Any) -> Any:
-        """Accepte une string JSON, une liste séparée par virgules, ou une liste."""
-        if isinstance(v, str):
-            v = v.strip()
-            try:
-                parsed = json.loads(v)
-                return parsed if isinstance(parsed, list) else [parsed]
-            except (json.JSONDecodeError, ValueError):
-                return [o.strip() for o in v.split(",") if o.strip()]
-        return v
+    @property
+    def cors_origins_list(self) -> List[str]:
+        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
 
     # ── Cookies (auth) ────────────────────────────────────────────────────────
     # En prod cross-site (frontend Vercel ↔ backend Render) :
