@@ -21,7 +21,7 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-    CREATE TYPE projet_role AS ENUM ('Propriétaire', 'Éditeur', 'Lecteur', 'Client_Limité');
+    CREATE TYPE projet_role AS ENUM ('Proprietaire', 'Editeur', 'Lecteur', 'Client_Limite');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
