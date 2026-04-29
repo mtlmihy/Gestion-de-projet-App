@@ -12,6 +12,7 @@ from app.risques.router import router as risques_router
 from app.taches.router import router as taches_router
 from app.equipe.router import router as equipe_router
 from app.cdc.router import router as cdc_router
+from app.liens.router import router as liens_router
 
 
 @asynccontextmanager
@@ -49,6 +50,7 @@ app.include_router(risques_router, prefix="/risques", tags=["Risques"])
 app.include_router(taches_router,  prefix="/taches",  tags=["Tâches"])
 app.include_router(equipe_router,  prefix="/equipe",  tags=["Équipe"])
 app.include_router(cdc_router,     prefix="/cdc",     tags=["Cahier des Charges"])
+app.include_router(liens_router,                      tags=["Liens externes"])
 
 
 @app.get("/health", tags=["Infra"])
