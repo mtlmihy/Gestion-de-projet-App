@@ -163,14 +163,14 @@ export default function EquipePage() {
 
   const handleEdit = async (data) => {
     setSaving(true)
-    try   { await updateMembre(editItem.id, data); await load(); setEditItem(null); notify('Membre modifié.') }
+    try   { await updateMembre(projet.id, editItem.id, data); await load(); setEditItem(null); notify('Membre modifié.') }
     catch { notify('Erreur lors de la modification.', 'error') }
     finally { setSaving(false) }
   }
 
   const handleDelete = async () => {
     setSaving(true)
-    try   { await deleteMembre(deleteItem.id); await load(); setDeleteItem(null); notify('Membre supprimé.') }
+    try   { await deleteMembre(projet.id, deleteItem.id); await load(); setDeleteItem(null); notify('Membre supprimé.') }
     catch { notify('Erreur lors de la suppression.', 'error') }
     finally { setSaving(false) }
   }
