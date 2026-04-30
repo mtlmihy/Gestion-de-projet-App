@@ -68,14 +68,44 @@ export default function TachesPage() {
     }).catch(() => {})
   }, [])
 
-  const jalonsDisponibles = useMemo(() => [ALL, ...new Set(taches.map((t) => t.jalon).filter(Boolean))], [taches])
+  const jalonsDisponibles = useMemo(() => {
+    // Fusion : jalons du CDC + jalons utilisés par les tâches + filtre courant (au cas où)
+    const set = new Set()
+    jalonsOptions.forEach((j) => { const v = (j ?? '').trim(); if (v) set.add(v) })
+    taches.forEach((t) => { const v = (t.jalon ?? '').trim(); if (v) set.add(v) })
+    if (fJalon && fJalon !== ALL) set.add(fJalon.trim())
+    return [ALL, ...Array.from(set).sort((a, b) => a.localeCompare(b, 'fr'))]
+  }, [taches, jalonsOptions, fJalon])
 
-  const filtered = useMemo(() => taches.filter((t) => {
-    if (fImportance !== ALL && t.importance !== fImportance) return false
-    if (fJalon      !== ALL && t.jalon      !== fJalon)      return false
-    if (fSearch && !t.nom.toLowerCase().includes(fSearch.toLowerCase())) return false
-    return true
-  }), [taches, fImportance, fJalon, fSearch])
+  const filtered = useMemo(() => {
+    const q   = fSearch.trim().toLowerCase()
+    const jf  = fJalon.trim()
+    return taches.filter((t) => {
+      if (fImportance !== ALL && (t.importance ?? '') !== fImportance) return false
+      if (jf !== ALL && (t.jalon ?? '').trim() !== jf) return false
+      if (q) {
+        const hay = `${t.nom ?? ''} ${t.assigne ?? ''} ${t.jalon ?? ''} ${t.description ?? ''}`.toLowerCase()
+        if (!hay.includes(q)) return false
+      }
+      return true
+    })
+  }, [taches, fImportance, fJalon, fSearch])
+
+  const activeFiltersCount = (fImportance !== ALL ? 1 : 0) + (fJalon !== ALL ? 1 : 0) + (fSearch.trim() ? 1 : 0)
+
+  // Ouvre automatiquement le panneau si un filtre est actif
+  useEffect(() => {
+    if (activeFiltersCount > 0) setShowFilters(true)
+  }, [activeFiltersCount])
+
+  const resetFilters = () => {
+    setFSearch('')
+    setFImportance(ALL)
+    setFJalon(ALL)
+    const next = new URLSearchParams(searchParams)
+    next.delete('jalon')
+    setSearchParams(next, { replace: true })
+  }
 
   const avgAvancement = taches.length
     ? Math.round(taches.reduce((s, t) => s + (t.avancement || 0), 0) / taches.length)
@@ -141,37 +171,62 @@ export default function TachesPage() {
           className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-700 dark:text-slate-300"
           onClick={() => setShowFilters((v) => !v)}
         >
-          <span>Filtres</span>
+          <span className="flex items-center gap-2">
+            Filtres
+            {activeFiltersCount > 0 && (
+              <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[.65rem] font-bold rounded-full bg-blue-600 text-white">
+                {activeFiltersCount}
+              </span>
+            )}
+            {!loading && (
+              <span className="text-xs text-gray-400 dark:text-slate-500 font-normal">
+                · {filtered.length} / {taches.length} tâche{taches.length > 1 ? 's' : ''}
+              </span>
+            )}
+          </span>
           <svg className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <polyline points="6 9 12 15 18 9"/>
           </svg>
         </button>
         {showFilters && (
-          <div className="border-t border-gray-100 dark:border-slate-700 px-4 py-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-gray-600 dark:text-slate-400">Recherche</label>
-              <input className="border border-gray-300 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="Nom…" value={fSearch} onChange={(e) => setFSearch(e.target.value)} />
+          <div className="border-t border-gray-100 dark:border-slate-700 px-4 py-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-gray-600 dark:text-slate-400">Recherche</label>
+                <input className="border border-gray-300 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="Nom, assigné, jalon…" value={fSearch} onChange={(e) => setFSearch(e.target.value)} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-gray-600 dark:text-slate-400">Importance</label>
+                <select className={selCls} value={fImportance} onChange={(e) => setFImportance(e.target.value)}>
+                  {[ALL, 'Faible', 'Moyenne', 'Élevée', 'Critique'].map((v) => <option key={v}>{v}</option>)}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-gray-600 dark:text-slate-400">Jalon</label>
+                <select className={selCls} value={fJalon} onChange={(e) => {
+                  const v = e.target.value
+                  setFJalon(v)
+                  // Garder l'URL synchronisée avec le filtre jalon
+                  const next = new URLSearchParams(searchParams)
+                  if (v && v !== ALL) next.set('jalon', v)
+                  else next.delete('jalon')
+                  setSearchParams(next, { replace: true })
+                }}>
+                  {jalonsDisponibles.map((v) => <option key={v}>{v}</option>)}
+                </select>
+              </div>
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-gray-600 dark:text-slate-400">Importance</label>
-              <select className={selCls} value={fImportance} onChange={(e) => setFImportance(e.target.value)}>
-                {[ALL, 'Faible', 'Moyenne', 'Élevée', 'Critique'].map((v) => <option key={v}>{v}</option>)}
-              </select>
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-gray-600 dark:text-slate-400">Jalon</label>
-              <select className={selCls} value={fJalon} onChange={(e) => {
-                const v = e.target.value
-                setFJalon(v)
-                // Garder l'URL synchronisée avec le filtre jalon
-                const next = new URLSearchParams(searchParams)
-                if (v && v !== ALL) next.set('jalon', v)
-                else next.delete('jalon')
-                setSearchParams(next, { replace: true })
-              }}>
-                {jalonsDisponibles.map((v) => <option key={v}>{v}</option>)}
-              </select>
-            </div>
+            {activeFiltersCount > 0 && (
+              <div className="flex justify-end mt-3">
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline"
+                >
+                  Réinitialiser les filtres
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
