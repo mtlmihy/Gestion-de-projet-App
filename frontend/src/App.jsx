@@ -63,7 +63,7 @@ export default function App() {
                 </PrivateRoute>
               }
             >
-              <Route index element={<Navigate to="/risques" replace />} />
+              <Route index element={<Navigate to="/planning" replace />} />
               <Route path="risques"  element={<PageGuard page="risques"><RisquesPage /></PageGuard>} />
               <Route path="taches"   element={<PageGuard page="taches"><TachesPage /></PageGuard>} />
               <Route path="planning" element={<PageGuard page="planning"><PlanningPage /></PageGuard>} />
