@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect } from 'react'
 import { getCdc, updateCdc } from '../api/cdc'
 import { useProject } from '../context/ProjectContext'
+import { useTheme } from '../context/ThemeContext'
 
 // ── Structure JSON vide ───────────────────────────────────────────────────────
 const EMPTY = {
@@ -126,9 +127,12 @@ function buildPrintViewHtml(cdc) {
   </div>`
 }
 
-function buildCharterHtml(cdc) {
+function buildCharterHtml(cdc, dark = false) {
   const dv    = s => escH(s || '—')
   const today = new Date().toLocaleDateString('fr-FR')
+  const tb = dark
+    ? { bodyBg: '#0f172a', barBg: '#1e293b', barBorder: '#334155', barText: '#cbd5e1', closeBg: '#334155', closeText: '#e2e8f0', printBg: '#3b82f6', printText: '#fff' }
+    : { bodyBg: '#fff',    barBg: '#f8fafc', barBorder: '#e2e8f0', barText: '#64748b', closeBg: '#f1f5f9', closeText: '#475569', printBg: '#1e293b', printText: '#fff' }
 
   const bullets = text => {
     if (!text || !text.trim()) return '<p style="color:#94a3b8;">—</p>'
@@ -185,8 +189,8 @@ function buildCharterHtml(cdc) {
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 *{font-family:'Inter',sans-serif;box-sizing:border-box;margin:0;padding:0;}
-body{background:#fff;color:#1e293b;font-size:11px;line-height:1.5;}
-.page{max-width:900px;margin:0 auto;padding:0 28px 40px;}
+body{background:${tb.bodyBg};color:#1e293b;font-size:11px;line-height:1.5;}
+.page{max-width:900px;margin:0 auto;padding:0 28px 40px;background:#fff;}
 .pbtn{display:inline-flex;align-items:center;gap:5px;border:none;border-radius:7px;padding:6px 14px;font-size:11px;font-weight:600;cursor:pointer;}
 .avoid-break{page-break-inside:avoid;break-inside:avoid;}
 @media print{
@@ -194,7 +198,7 @@ body{background:#fff;color:#1e293b;font-size:11px;line-height:1.5;}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   @page{size:A4;margin:12mm 10mm;}
   html,body{background:#fff!important;}
-  .page{padding:0!important;max-width:none!important;}
+  .page{padding:0!important;max-width:none!important;background:#fff!important;}
   .avoid-break{page-break-inside:avoid;break-inside:avoid;}
   h1,h2,h3,h4{page-break-after:avoid;break-after:avoid;}
   p,li{orphans:3;widows:3;}
@@ -205,11 +209,11 @@ body{background:#fff;color:#1e293b;font-size:11px;line-height:1.5;}
 }
 </style>
 </head><body>
-<div class="no-print" style="background:#f8fafc;border-bottom:1px solid #e2e8f0;padding:9px 20px;display:flex;justify-content:space-between;align-items:center;">
-  <span style="font-size:10px;color:#64748b;">Charte de Projet · ${escH(cdc.nom_projet || 'Sans titre')} · ${today}</span>
+<div class="no-print" style="background:${tb.barBg};border-bottom:1px solid ${tb.barBorder};padding:9px 20px;display:flex;justify-content:space-between;align-items:center;">
+  <span style="font-size:10px;color:${tb.barText};">Charte de Projet · ${escH(cdc.nom_projet || 'Sans titre')} · ${today}</span>
   <div style="display:flex;gap:8px;">
-    <button class="pbtn" style="background:#f1f5f9;color:#475569;" onclick="window.close()">✕ Fermer</button>
-    <button class="pbtn" style="background:#1e293b;color:#fff;" onclick="window.print()">🖨 Imprimer / PDF</button>
+    <button class="pbtn" style="background:${tb.closeBg};color:${tb.closeText};" onclick="window.close()">✕ Fermer</button>
+    <button class="pbtn" style="background:${tb.printBg};color:${tb.printText};" onclick="window.print()">🖨 Imprimer / PDF</button>
   </div>
 </div>
 <div class="page">
@@ -317,6 +321,7 @@ function Notification({ msg, type }) {
 // ── Composant principal ───────────────────────────────────────────────────────
 export default function CdcPage() {
   const { projet, estLecteur } = useProject()
+  const { dark } = useTheme()
   const [cdc,      setCdc]     = useState(EMPTY)
   const [loading,  setLoading] = useState(true)
   const [saving,   setSaving]  = useState(false)
@@ -390,6 +395,10 @@ export default function CdcPage() {
     const inner = buildPrintViewHtml(cdc)
     const today = new Date().toLocaleDateString('fr-FR')
     const title = `Cahier des Charges — ${cdc.nom_projet || 'Sans titre'}`
+    // Thème appliqué à la barre d'outils + au fond de la fenêtre (le document reste blanc)
+    const tb = dark
+      ? { bodyBg: '#0f172a', barBg: '#1e293b', barBorder: '#334155', barText: '#cbd5e1', closeBg: '#334155', closeText: '#e2e8f0', printBg: '#3b82f6', printText: '#fff' }
+      : { bodyBg: '#f1f5f9', barBg: '#fff', barBorder: '#e2e8f0', barText: '#64748b', closeBg: '#f1f5f9', closeText: '#475569', printBg: '#1e293b', printText: '#fff' }
     const html = `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -398,8 +407,8 @@ export default function CdcPage() {
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 *{font-family:'Inter',sans-serif;box-sizing:border-box;margin:0;padding:0;}
-body{background:#f1f5f9;color:#1e293b;}
-.shell{max-width:900px;margin:20px auto;background:#fff;box-shadow:0 4px 20px rgba(0,0,0,.08);}
+body{background:${tb.bodyBg};color:#1e293b;}
+.shell{max-width:900px;margin:20px auto;background:#fff;box-shadow:0 4px 20px rgba(0,0,0,.18);}
 .pbtn{display:inline-flex;align-items:center;gap:5px;border:none;border-radius:7px;padding:6px 14px;font-size:11px;font-weight:600;cursor:pointer;}
 @media print{
   .no-print{display:none!important;}
@@ -419,11 +428,11 @@ body{background:#f1f5f9;color:#1e293b;}
 </style>
 </head>
 <body>
-<div class="no-print" style="background:#fff;border-bottom:1px solid #e2e8f0;padding:9px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;">
-  <span style="font-size:10px;color:#64748b;">Cahier des Charges · ${escH(cdc.nom_projet || 'Sans titre')} · ${today}</span>
+<div class="no-print" style="background:${tb.barBg};border-bottom:1px solid ${tb.barBorder};padding:9px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;">
+  <span style="font-size:10px;color:${tb.barText};">Cahier des Charges · ${escH(cdc.nom_projet || 'Sans titre')} · ${today}</span>
   <div style="display:flex;gap:8px;">
-    <button class="pbtn" style="background:#f1f5f9;color:#475569;" onclick="window.close()">✕ Fermer</button>
-    <button class="pbtn" style="background:#1e293b;color:#fff;" onclick="window.print()">🖨 Imprimer / PDF</button>
+    <button class="pbtn" style="background:${tb.closeBg};color:${tb.closeText};" onclick="window.close()">✕ Fermer</button>
+    <button class="pbtn" style="background:${tb.printBg};color:${tb.printText};" onclick="window.print()">🖨 Imprimer / PDF</button>
   </div>
 </div>
 <div class="shell">${inner}</div>
@@ -437,7 +446,7 @@ body{background:#f1f5f9;color:#1e293b;}
 
   // Génération de la Charte Projet dans une nouvelle fenêtre
   const handleOpenCharter = () => {
-    const html = buildCharterHtml(cdc)
+    const html = buildCharterHtml(cdc, dark)
     const w = window.open('', '_blank')
     if (!w) { alert('Autorisez les popups pour générer la charte.'); return }
     w.document.write(html)
