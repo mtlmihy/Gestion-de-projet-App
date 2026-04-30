@@ -200,7 +200,7 @@ function GestionAccesModal({ projet, onClose, isAdmin }) {
                           onChange={(e) => handleRoleChange(m.user_id, e.target.value)}
                           className="text-xs border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         >
-                          {rolesDisponibles.map((r) => <option key={r} value={r}>{r}</option>)}
+                          {rolesDisponibles.map((r) => <option key={r} value={r}>{ROLE_LABELS[r] ?? r}</option>)}
                         </select>
                       )}
                     </td>
@@ -288,7 +288,7 @@ function GestionAccesModal({ projet, onClose, isAdmin }) {
                   value={addForm.role}
                   onChange={(e) => setAddForm((f) => ({ ...f, role: e.target.value }))}
                 >
-                  {rolesDisponibles.map((r) => <option key={r} value={r}>{r}</option>)}
+                  {rolesDisponibles.map((r) => <option key={r} value={r}>{ROLE_LABELS[r] ?? r}</option>)}
                 </select>
               </div>
             </div>

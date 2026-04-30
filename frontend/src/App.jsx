@@ -30,10 +30,18 @@ function AccessDenied() {
   )
 }
 
+// Ordre de priorité des pages pour la redirection auto
+const PAGES_ORDRE = ['planning', 'cdc', 'risques', 'taches', 'equipe', 'aide']
+
 function PageGuard({ page, children }) {
   const { canAccess } = useAuth()
   const { canAccessPage } = useProject()
-  return (canAccess(page) && canAccessPage(page)) ? <>{children}</> : <AccessDenied />
+  if (canAccess(page) && canAccessPage(page)) return <>{children}</>
+  // Cherche la première page accessible et y redirige (jamais de message d'accès refusé)
+  const fallback = PAGES_ORDRE.find((p) => canAccess(p) && canAccessPage(p))
+  if (fallback && fallback !== page) return <Navigate to={`/${fallback}`} replace />
+  // Aucune page accessible : on affiche tout de même un message (cas extrême)
+  return <AccessDenied />
 }
 
 // Redirige vers /projets si aucun projet sélectionné (sauf pour /admin)
