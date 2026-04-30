@@ -81,7 +81,7 @@ function buildPrintViewHtml(cdc) {
   ).join('')
 
   return `<div style="font-family:'Inter',sans-serif;font-size:10px;color:#1e293b;line-height:1.5;background:#fff;">
-    <div style="background:#0f172a;padding:26px 36px 22px;display:flex;justify-content:space-between;align-items:center;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+    <div class="cdc-block" style="background:#0f172a;padding:26px 36px 22px;display:flex;justify-content:space-between;align-items:center;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
       <div>
         <div style="color:#475569;font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.15em;margin-bottom:5px;">Document de cadrage · Confidentiel</div>
         <div style="color:#fff;font-size:21px;font-weight:800;letter-spacing:-.4px;line-height:1.1;">Cahier des Charges</div>
@@ -89,36 +89,36 @@ function buildPrintViewHtml(cdc) {
         <div style="color:#64748b;font-size:8.5px;margin-top:8px;">Réf. ${escH(dv(cdc.reference))} · ${today}</div>
       </div>
     </div>
-    <div style="background:#f8fafc;border-bottom:3px solid #2563eb;padding:0 36px;display:grid;grid-template-columns:repeat(5,1fr);-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+    <div class="cdc-block" style="background:#f8fafc;border-bottom:3px solid #2563eb;padding:0 36px;display:grid;grid-template-columns:repeat(5,1fr);-webkit-print-color-adjust:exact;print-color-adjust:exact;">
       ${infoStrip}
     </div>
     <div style="padding:20px 36px;">
-      <div style="margin-bottom:18px;">${shdr('H', 'Historique des versions', 'hist')}
+      <div class="cdc-block" style="margin-bottom:18px;">${shdr('H', 'Historique des versions', 'hist')}
         <table style="width:100%;border-collapse:collapse;font-size:9.5px;"><thead><tr>
           <th style="${thS}width:72px;">Version</th><th style="${thS}width:130px;">Auteur</th>
           <th style="${thS}">Description</th><th style="${thS}width:100px;">Date</th>
         </tr></thead><tbody>${histRows}</tbody></table>
       </div>
-      <div style="margin-bottom:18px;">${shdr('1', 'Contexte du projet')}${pvTextBlock(cdc.contexte)}</div>
-      <div style="margin-bottom:18px;">${shdr('2', 'Objectifs du projet')}${pvTextBlock(cdc.objectifs)}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;">
-        <div>${shdr('3', 'Périmètre')}${pvTextBlock(cdc.perimetre)}</div>
-        <div>${shdr('4', 'Aspects fonctionnels')}${pvTextBlock(cdc.fonctionnel)}</div>
+      <div class="cdc-block" style="margin-bottom:18px;">${shdr('1', 'Contexte du projet')}${pvTextBlock(cdc.contexte)}</div>
+      <div class="cdc-block" style="margin-bottom:18px;">${shdr('2', 'Objectifs du projet')}${pvTextBlock(cdc.objectifs)}</div>
+      <div class="cdc-row" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;">
+        <div class="cdc-block">${shdr('3', 'Périmètre')}${pvTextBlock(cdc.perimetre)}</div>
+        <div class="cdc-block">${shdr('4', 'Aspects fonctionnels')}${pvTextBlock(cdc.fonctionnel)}</div>
       </div>
-      <div style="margin-bottom:18px;">${shdr('5', 'Aspects techniques')}${pvTextBlock(cdc.technique)}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;">
-        <div>${shdr('6', 'Ressources')}${pvTextBlock(cdc.ressources)}</div>
-        <div>${shdr('R', 'Risques identifiés', 'risk')}${pvTextBlock(cdc.risques)}</div>
+      <div class="cdc-block" style="margin-bottom:18px;">${shdr('5', 'Aspects techniques')}${pvTextBlock(cdc.technique)}</div>
+      <div class="cdc-row" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;">
+        <div class="cdc-block">${shdr('6', 'Ressources')}${pvTextBlock(cdc.ressources)}</div>
+        <div class="cdc-block">${shdr('R', 'Risques identifiés', 'risk')}${pvTextBlock(cdc.risques)}</div>
       </div>
-      <div style="margin-bottom:18px;">${shdr('7', 'Jalons &amp; Planning')}
+      <div class="cdc-block" style="margin-bottom:18px;">${shdr('7', 'Jalons &amp; Planning')}
         <table style="width:100%;border-collapse:collapse;font-size:9.5px;"><thead><tr>
           <th style="${thS}width:35%;">Jalon / Phase</th>
           <th style="${thS}width:18%;">Date cible</th>
           <th style="${thS}">Description / Livrable</th>
         </tr></thead><tbody>${jalonRows}</tbody></table>
       </div>
-      <div style="margin-bottom:18px;">${shdr('8', 'Budget')}${pvTextBlock(cdc.budget)}</div>
-      <div style="margin-top:24px;padding-top:10px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:8px;color:#94a3b8;">
+      <div class="cdc-block" style="margin-bottom:18px;">${shdr('8', 'Budget')}${pvTextBlock(cdc.budget)}</div>
+      <div class="cdc-block" style="margin-top:24px;padding-top:10px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:8px;color:#94a3b8;">
         <span>Cahier des Charges · ${escH(dv(cdc.nom_projet))} · ${escH(dv(cdc.service))}</span>
         <span>Généré le ${today} · Document confidentiel</span>
       </div>
@@ -161,9 +161,9 @@ function buildCharterHtml(cdc) {
   const secTitle = t =>
     `<div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#1e293b;border-left:3px solid #1e293b;padding-left:8px;margin-bottom:10px;">${t}</div>`
   const box = content =>
-    `<div style="background:#f8fafc;border:1px solid #e9eef5;border-radius:8px;padding:12px 14px;">${content}</div>`
+    `<div class="avoid-break" style="background:#f8fafc;border:1px solid #e9eef5;border-radius:8px;padding:12px 14px;">${content}</div>`
   const sig = role =>
-    `<div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;">` +
+    `<div class="avoid-break" style="border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;">` +
     `<div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;margin-bottom:4px;">${role}</div>` +
     `<div style="font-size:11px;font-weight:700;color:#1e293b;margin-bottom:28px;">___________________________</div>` +
     `<div style="border-top:1px dashed #cbd5e1;margin-bottom:5px;"></div>` +
@@ -183,7 +183,27 @@ function buildCharterHtml(cdc) {
 <html lang="fr">
 <head><meta charset="UTF-8"/><title>Charte de Projet — ${escH(cdc.nom_projet || 'Sans titre')}</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
-<style>*{font-family:'Inter',sans-serif;box-sizing:border-box;margin:0;padding:0;}body{background:#fff;color:#1e293b;font-size:11px;line-height:1.5;}.page{max-width:900px;margin:0 auto;padding:0 28px 40px;}.pbtn{display:inline-flex;align-items:center;gap:5px;border:none;border-radius:7px;padding:6px 14px;font-size:11px;font-weight:600;cursor:pointer;}@media print{.no-print{display:none!important;}*{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style>
+<style>
+*{font-family:'Inter',sans-serif;box-sizing:border-box;margin:0;padding:0;}
+body{background:#fff;color:#1e293b;font-size:11px;line-height:1.5;}
+.page{max-width:900px;margin:0 auto;padding:0 28px 40px;}
+.pbtn{display:inline-flex;align-items:center;gap:5px;border:none;border-radius:7px;padding:6px 14px;font-size:11px;font-weight:600;cursor:pointer;}
+.avoid-break{page-break-inside:avoid;break-inside:avoid;}
+@media print{
+  .no-print{display:none!important;}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  @page{size:A4;margin:12mm 10mm;}
+  html,body{background:#fff!important;}
+  .page{padding:0!important;max-width:none!important;}
+  .avoid-break{page-break-inside:avoid;break-inside:avoid;}
+  h1,h2,h3,h4{page-break-after:avoid;break-after:avoid;}
+  p,li{orphans:3;widows:3;}
+  table{page-break-inside:auto;}
+  thead{display:table-header-group;}
+  tfoot{display:table-footer-group;}
+  tr,td,th{page-break-inside:avoid;break-inside:avoid;}
+}
+</style>
 </head><body>
 <div class="no-print" style="background:#f8fafc;border-bottom:1px solid #e2e8f0;padding:9px 20px;display:flex;justify-content:space-between;align-items:center;">
   <span style="font-size:10px;color:#64748b;">Charte de Projet · ${escH(cdc.nom_projet || 'Sans titre')} · ${today}</span>
@@ -193,7 +213,7 @@ function buildCharterHtml(cdc) {
   </div>
 </div>
 <div class="page">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:28px 0 18px;border-bottom:3px solid #1e293b;margin-bottom:20px;">
+  <div class="avoid-break" style="display:flex;justify-content:space-between;align-items:flex-start;padding:28px 0 18px;border-bottom:3px solid #1e293b;margin-bottom:20px;">
     <div>
       <h1 style="font-size:22px;font-weight:800;color:#0f172a;letter-spacing:-.4px;">Charte de Projet</h1>
       <p style="font-size:10px;color:#64748b;margin-top:4px;max-width:480px;line-height:1.6;">Ce document officialise les objectifs, le périmètre et les engagements du projet.<br/>Il doit être approuvé et signé par toutes les parties prenantes avant le démarrage.</p>
@@ -204,28 +224,28 @@ function buildCharterHtml(cdc) {
       </div>
     </div>
   </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px;">${infoCards}</div>
-  <div style="margin-bottom:18px;">${secTitle('Contexte du projet')}${box(`<div style="font-size:10.5px;color:#374151;line-height:1.65;">${escH(cdc.contexte || '—').replace(/\n/g, '<br/>')}</div>`)}</div>
-  <div style="margin-bottom:18px;">${secTitle('Objectifs')}${box(bullets(cdc.objectifs))}</div>
+  <div class="avoid-break" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px;">${infoCards}</div>
+  <div class="avoid-break" style="margin-bottom:18px;">${secTitle('Contexte du projet')}${box(`<div style="font-size:10.5px;color:#374151;line-height:1.65;">${escH(cdc.contexte || '—').replace(/\n/g, '<br/>')}</div>`)}</div>
+  <div class="avoid-break" style="margin-bottom:18px;">${secTitle('Objectifs')}${box(bullets(cdc.objectifs))}</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
-    <div>${secTitle('Périmètre')}${box(bullets(cdc.perimetre))}</div>
-    <div>${secTitle('Livrables attendus')}${box(numbered(cdc.fonctionnel))}</div>
+    <div class="avoid-break">${secTitle('Périmètre')}${box(bullets(cdc.perimetre))}</div>
+    <div class="avoid-break">${secTitle('Livrables attendus')}${box(numbered(cdc.fonctionnel))}</div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
-    <div>${secTitle('Risques identifiés')}${box(numbered(cdc.risques))}</div>
-    <div>${secTitle('Contraintes techniques')}${box(numbered(cdc.technique))}</div>
+    <div class="avoid-break">${secTitle('Risques identifiés')}${box(numbered(cdc.risques))}</div>
+    <div class="avoid-break">${secTitle('Contraintes techniques')}${box(numbered(cdc.technique))}</div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
-    <div>${secTitle('Ressources')}${box(bullets(cdc.ressources))}</div>
-    <div>${secTitle('Budget')}${box(bullets(cdc.budget))}</div>
+    <div class="avoid-break">${secTitle('Ressources')}${box(bullets(cdc.ressources))}</div>
+    <div class="avoid-break">${secTitle('Budget')}${box(bullets(cdc.budget))}</div>
   </div>
-  <div style="margin-bottom:18px;">${secTitle('Jalons &amp; Planning')}
+  <div class="avoid-break" style="margin-bottom:18px;">${secTitle('Jalons &amp; Planning')}
     <table style="width:100%;border-collapse:collapse;font-size:10.5px;">
       <thead><tr><th style="${th}width:35%">Jalon / Phase</th><th style="${th}width:18%">Date cible</th><th style="${th}">Description / Livrable</th></tr></thead>
       <tbody>${jalonRows}</tbody>
     </table>
   </div>
-  <div style="margin-bottom:18px;">${secTitle('Comité de validation')}
+  <div class="avoid-break" style="margin-bottom:18px;">${secTitle('Comité de validation')}
     <table style="width:100%;border-collapse:collapse;font-size:10.5px;">
       <thead><tr><th style="${th}width:30%">Rôle</th><th style="${th}width:35%">Nom</th><th style="${th}">Organisation</th></tr></thead>
       <tbody>
@@ -236,11 +256,11 @@ function buildCharterHtml(cdc) {
       </tbody>
     </table>
   </div>
-  <div style="margin-bottom:18px;">${secTitle('Approbation &amp; Signatures')}
+  <div class="avoid-break" style="margin-bottom:18px;">${secTitle('Approbation &amp; Signatures')}
     <p style="font-size:10px;color:#64748b;margin-bottom:14px;">En signant ce document, les soussignés confirment avoir pris connaissance du projet et s'engagent à soutenir sa réalisation dans le cadre défini.</p>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
-      <div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;margin-bottom:4px;">Chef de Projet</div><div style="font-size:11px;font-weight:700;color:#1e293b;margin-bottom:28px;">${dv(cdc.chef_projet)}</div><div style="border-top:1px dashed #cbd5e1;margin-bottom:5px;"></div><div style="font-size:8.5px;color:#94a3b8;">Signature | Date : ___/___/______</div></div>
-      <div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;margin-bottom:4px;">Sponsor</div><div style="font-size:11px;font-weight:700;color:#1e293b;margin-bottom:28px;">${dv(cdc.sponsor)}</div><div style="border-top:1px dashed #cbd5e1;margin-bottom:5px;"></div><div style="font-size:8.5px;color:#94a3b8;">Signature | Date : ___/___/______</div></div>
+      <div class="avoid-break" style="border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;margin-bottom:4px;">Chef de Projet</div><div style="font-size:11px;font-weight:700;color:#1e293b;margin-bottom:28px;">${dv(cdc.chef_projet)}</div><div style="border-top:1px dashed #cbd5e1;margin-bottom:5px;"></div><div style="font-size:8.5px;color:#94a3b8;">Signature | Date : ___/___/______</div></div>
+      <div class="avoid-break" style="border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;margin-bottom:4px;">Sponsor</div><div style="font-size:11px;font-weight:700;color:#1e293b;margin-bottom:28px;">${dv(cdc.sponsor)}</div><div style="border-top:1px dashed #cbd5e1;margin-bottom:5px;"></div><div style="font-size:8.5px;color:#94a3b8;">Signature | Date : ___/___/______</div></div>
       ${sig('Représentant Direction / MOA')}
       ${sig('Partie Prenante')}
       ${sig('Partie Prenante')}
@@ -372,9 +392,30 @@ export default function CdcPage() {
       style.textContent = `
         @media print {
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-          @page { size: A4; margin: 0; }
+          @page { size: A4; margin: 12mm 10mm; }
+          html, body { background: #fff !important; }
           #root { display: none !important; }
           #cdc-print-container { display: block !important; }
+          /* Sections : ne pas couper au milieu */
+          #cdc-print-container .cdc-block {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+          /* Lignes de texte : ne pas laisser orphelines/veuves */
+          #cdc-print-container p, #cdc-print-container pre, #cdc-print-container li {
+            orphans: 3;
+            widows: 3;
+          }
+          /* Tableaux : répéter l'en-tête, ne pas couper une ligne */
+          #cdc-print-container table { page-break-inside: auto; }
+          #cdc-print-container thead { display: table-header-group; }
+          #cdc-print-container tfoot { display: table-footer-group; }
+          #cdc-print-container tr, #cdc-print-container td, #cdc-print-container th {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+          /* Grilles 2 colonnes : laisser respirer si trop hautes */
+          #cdc-print-container .cdc-row { page-break-inside: auto; }
         }
       `
       document.head.appendChild(style)
