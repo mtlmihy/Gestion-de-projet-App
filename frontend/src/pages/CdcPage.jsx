@@ -648,16 +648,16 @@ body{background:${tb.bodyBg};color:#1e293b;}
       </Card>
 
       {/* ── Barre d'actions collante ────────────────────────────────────── */}
-      <div className="sticky bottom-4 bg-white border border-gray-100 rounded-2xl px-6 py-3.5 flex items-center justify-between shadow-lg z-10">
+      <div className="sticky bottom-4 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl px-6 py-3.5 flex items-center justify-between shadow-lg dark:shadow-black/40 z-10">
         {lastSaved ? (
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-gray-400 dark:text-slate-500">
             Sauvegardé le {lastSaved.toLocaleString('fr-FR')}
           </span>
         ) : <span />}
         <div className="flex items-center gap-2">
           <button
             onClick={handleExportPDF}
-            className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
+            className="flex items-center gap-1.5 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
             title="Exporter le CDC en PDF (impression)"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -667,7 +667,7 @@ body{background:${tb.bodyBg};color:#1e293b;}
           </button>
           <button
             onClick={handleOpenCharter}
-            className="flex items-center gap-1.5 bg-gray-800 hover:bg-gray-900 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
+            className="flex items-center gap-1.5 bg-gray-800 dark:bg-slate-600 hover:bg-gray-900 dark:hover:bg-slate-500 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
             title="Générer la Charte Projet dans une nouvelle fenêtre"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -678,7 +678,7 @@ body{background:${tb.bodyBg};color:#1e293b;}
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold px-5 py-2 rounded-xl transition-colors"
+            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 disabled:opacity-50 text-white text-sm font-semibold px-5 py-2 rounded-xl transition-colors"
             hidden={estLecteur}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
