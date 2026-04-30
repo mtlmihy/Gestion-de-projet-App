@@ -384,50 +384,55 @@ export default function CdcPage() {
     return () => window.removeEventListener('afterprint', cleanup)
   }, [])
 
-  // Export PDF via window.print()
+  // Export PDF : ouvre une fenêtre de visualisation (comme la Charte) avec
+  // boutons Fermer / Imprimer-PDF, plutôt que d'imprimer directement.
   const handleExportPDF = () => {
-    if (!document.getElementById('cdc-print-style')) {
-      const style = document.createElement('style')
-      style.id = 'cdc-print-style'
-      style.textContent = `
-        @media print {
-          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-          @page { size: A4; margin: 12mm 10mm; }
-          html, body { background: #fff !important; }
-          #root { display: none !important; }
-          #cdc-print-container { display: block !important; }
-          /* Sections : ne pas couper au milieu */
-          #cdc-print-container .cdc-block {
-            page-break-inside: avoid;
-            break-inside: avoid;
-          }
-          /* Lignes de texte : ne pas laisser orphelines/veuves */
-          #cdc-print-container p, #cdc-print-container pre, #cdc-print-container li {
-            orphans: 3;
-            widows: 3;
-          }
-          /* Tableaux : répéter l'en-tête, ne pas couper une ligne */
-          #cdc-print-container table { page-break-inside: auto; }
-          #cdc-print-container thead { display: table-header-group; }
-          #cdc-print-container tfoot { display: table-footer-group; }
-          #cdc-print-container tr, #cdc-print-container td, #cdc-print-container th {
-            page-break-inside: avoid;
-            break-inside: avoid;
-          }
-          /* Grilles 2 colonnes : laisser respirer si trop hautes */
-          #cdc-print-container .cdc-row { page-break-inside: auto; }
-        }
-      `
-      document.head.appendChild(style)
-    }
-    let container = document.getElementById('cdc-print-container')
-    if (!container) {
-      container = document.createElement('div')
-      container.id = 'cdc-print-container'
-      document.body.appendChild(container)
-    }
-    container.innerHTML = buildPrintViewHtml(cdc)
-    window.print()
+    const inner = buildPrintViewHtml(cdc)
+    const today = new Date().toLocaleDateString('fr-FR')
+    const title = `Cahier des Charges — ${cdc.nom_projet || 'Sans titre'}`
+    const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<title>${escH(title)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{font-family:'Inter',sans-serif;box-sizing:border-box;margin:0;padding:0;}
+body{background:#f1f5f9;color:#1e293b;}
+.shell{max-width:900px;margin:20px auto;background:#fff;box-shadow:0 4px 20px rgba(0,0,0,.08);}
+.pbtn{display:inline-flex;align-items:center;gap:5px;border:none;border-radius:7px;padding:6px 14px;font-size:11px;font-weight:600;cursor:pointer;}
+@media print{
+  .no-print{display:none!important;}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+  @page{size:A4;margin:12mm 10mm;}
+  html,body{background:#fff!important;}
+  .shell{max-width:none!important;margin:0!important;box-shadow:none!important;}
+  .cdc-block{page-break-inside:avoid;break-inside:avoid;}
+  h1,h2,h3,h4{page-break-after:avoid;break-after:avoid;}
+  p,pre,li{orphans:3;widows:3;}
+  table{page-break-inside:auto;}
+  thead{display:table-header-group;}
+  tfoot{display:table-footer-group;}
+  tr,td,th{page-break-inside:avoid;break-inside:avoid;}
+  .cdc-row{page-break-inside:auto;}
+}
+</style>
+</head>
+<body>
+<div class="no-print" style="background:#fff;border-bottom:1px solid #e2e8f0;padding:9px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;">
+  <span style="font-size:10px;color:#64748b;">Cahier des Charges · ${escH(cdc.nom_projet || 'Sans titre')} · ${today}</span>
+  <div style="display:flex;gap:8px;">
+    <button class="pbtn" style="background:#f1f5f9;color:#475569;" onclick="window.close()">✕ Fermer</button>
+    <button class="pbtn" style="background:#1e293b;color:#fff;" onclick="window.print()">🖨 Imprimer / PDF</button>
+  </div>
+</div>
+<div class="shell">${inner}</div>
+</body>
+</html>`
+    const w = window.open('', '_blank')
+    if (!w) { alert('Autorisez les popups pour générer le PDF.'); return }
+    w.document.write(html)
+    w.document.close()
   }
 
   // Génération de la Charte Projet dans une nouvelle fenêtre
