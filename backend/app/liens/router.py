@@ -1,8 +1,8 @@
 """Endpoints pour les liens externes d'un projet (Jira, Miro, Teams, …).
 
 - Lecture : tous les membres voient uniquement les liens marqués visibles ;
-  l'admin et le Propriétaire voient tout.
-- Écriture : réservée au Propriétaire du projet ou à l'administrateur.
+  l'admin, le Propriétaire et l'Éditeur voient tout.
+- Écriture : réservée au Propriétaire, Éditeur ou administrateur.
 """
 from __future__ import annotations
 from typing import List
@@ -18,19 +18,19 @@ from app.projets import service as projets_svc
 router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
-async def _is_owner_or_admin(projet_id: str, current_user: dict, pool: Pool) -> bool:
+async def _can_edit(projet_id: str, current_user: dict, pool: Pool) -> bool:
     if current_user["is_admin"]:
         return True
     async with pool.acquire() as conn:
         role = await projets_svc.get_user_role(conn, projet_id, current_user["id"])
-    return role == "Proprietaire"
+    return role in ("Proprietaire", "Editeur")
 
 
-async def _check_owner_or_admin(projet_id: str, current_user: dict, pool: Pool) -> None:
-    if not await _is_owner_or_admin(projet_id, current_user, pool):
+async def _check_can_edit(projet_id: str, current_user: dict, pool: Pool) -> None:
+    if not await _can_edit(projet_id, current_user, pool):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Réservé au propriétaire du projet ou à l'administrateur.",
+            detail="Réservé au propriétaire, éditeur ou administrateur.",
         )
 
 
@@ -40,7 +40,7 @@ async def list_liens(
     pool: Pool = Depends(get_pool),
     current_user: dict = Depends(get_current_user),
 ):
-    only_visible = not await _is_owner_or_admin(projet_id, current_user, pool)
+    only_visible = not await _can_edit(projet_id, current_user, pool)
     async with pool.acquire() as conn:
         return await svc.list_for_projet(conn, projet_id, only_visible=only_visible)
 
@@ -52,7 +52,7 @@ async def create_lien(
     pool: Pool = Depends(get_pool),
     current_user: dict = Depends(get_current_user),
 ):
-    await _check_owner_or_admin(projet_id, current_user, pool)
+    await _check_can_edit(projet_id, current_user, pool)
     async with pool.acquire() as conn:
         return await svc.create(conn, projet_id, payload.model_dump())
 
@@ -65,7 +65,7 @@ async def update_lien(
     pool: Pool = Depends(get_pool),
     current_user: dict = Depends(get_current_user),
 ):
-    await _check_owner_or_admin(projet_id, current_user, pool)
+    await _check_can_edit(projet_id, current_user, pool)
     async with pool.acquire() as conn:
         result = await svc.update(conn, lien_id, payload.model_dump())
     if not result:
@@ -81,7 +81,7 @@ async def toggle_visibilite(
     pool: Pool = Depends(get_pool),
     current_user: dict = Depends(get_current_user),
 ):
-    await _check_owner_or_admin(projet_id, current_user, pool)
+    await _check_can_edit(projet_id, current_user, pool)
     async with pool.acquire() as conn:
         result = await svc.set_visibilite(conn, lien_id, payload.visible)
     if not result:
@@ -96,7 +96,7 @@ async def delete_lien(
     pool: Pool = Depends(get_pool),
     current_user: dict = Depends(get_current_user),
 ):
-    await _check_owner_or_admin(projet_id, current_user, pool)
+    await _check_can_edit(projet_id, current_user, pool)
     async with pool.acquire() as conn:
         deleted = await svc.delete(conn, lien_id)
     if not deleted:
