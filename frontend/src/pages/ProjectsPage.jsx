@@ -47,6 +47,12 @@ const lbl = 'block text-xs font-semibold uppercase tracking-wide text-gray-400 d
 
 const ROLES = ['Proprietaire', 'Editeur', 'Lecteur', 'Client_Limite']
 const ROLES_SANS_PROPRIO = ['Editeur', 'Lecteur', 'Client_Limite']
+const ROLE_LABELS = {
+  'Proprietaire':  'Propriétaire',
+  'Editeur':       'Éditeur',
+  'Lecteur':       'Lecteur',
+  'Client_Limite': 'Client',
+}
 const PAGES_DISPONIBLES = [
   { key: 'cdc',      label: "Cahier des charges" },
   { key: 'risques',  label: "Risques" },

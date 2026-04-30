@@ -30,6 +30,7 @@ function UsersTab({ currentUser }) {
   const [notif,   setNotif]   = useState({ msg: '', type: 'ok' })
   const [modal,   setModal]   = useState(null) // null | 'create' | 'edit' | 'pwd'
   const [target,  setTarget]  = useState(null) // user en cours d'édition
+  const [submitting, setSubmitting] = useState(false)
 
   const notify = (msg, type = 'ok') => {
     setNotif({ msg, type })
@@ -51,6 +52,8 @@ function UsersTab({ currentUser }) {
 
   const handleCreate = async (e) => {
     e.preventDefault()
+    if (submitting) return
+    setSubmitting(true)
     try {
       await createUser(form)
       notify('Utilisateur créé.')
@@ -59,6 +62,8 @@ function UsersTab({ currentUser }) {
       load()
     } catch (err) {
       notify(err?.response?.data?.detail ?? 'Erreur.', 'error')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -74,12 +79,15 @@ function UsersTab({ currentUser }) {
 
   const handleEdit = async (e) => {
     e.preventDefault()
+    if (submitting) return
+    setSubmitting(true)
     try {
       await updateUser(target.id, editForm)
       notify('Utilisateur mis à jour.')
       setModal(null)
       load()
     } catch { notify('Erreur.', 'error') }
+    finally { setSubmitting(false) }
   }
 
   // Reset mot de passe
@@ -87,11 +95,14 @@ function UsersTab({ currentUser }) {
   const openPwd = (u) => { setTarget(u); setNewPwd(''); setModal('pwd') }
   const handlePwd = async (e) => {
     e.preventDefault()
+    if (submitting) return
+    setSubmitting(true)
     try {
       await resetPassword(target.id, newPwd)
       notify('Mot de passe réinitialisé.')
       setModal(null)
     } catch { notify('Erreur.', 'error') }
+    finally { setSubmitting(false) }
   }
 
   // Suppression
@@ -189,7 +200,7 @@ function UsersTab({ currentUser }) {
             )}
             <div className="flex gap-2 pt-2">
               <button type="button" onClick={() => setModal(null)} className="flex-1 border border-gray-200 dark:border-slate-600 rounded-xl py-2 text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">Annuler</button>
-              <button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-2 text-sm font-semibold transition-colors">Créer</button>
+              <button type="submit" disabled={submitting} className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-xl py-2 text-sm font-semibold transition-colors">{submitting ? 'Création…' : 'Créer'}</button>
             </div>
           </form>
         </Modal>
@@ -217,7 +228,7 @@ function UsersTab({ currentUser }) {
             </label>
             <div className="flex gap-2 pt-2">
               <button type="button" onClick={() => setModal(null)} className="flex-1 border border-gray-200 dark:border-slate-600 rounded-xl py-2 text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">Annuler</button>
-              <button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-2 text-sm font-semibold transition-colors">Enregistrer</button>
+              <button type="submit" disabled={submitting} className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-xl py-2 text-sm font-semibold transition-colors">{submitting ? 'Enregistrement…' : 'Enregistrer'}</button>
             </div>
           </form>
         </Modal>
@@ -230,7 +241,7 @@ function UsersTab({ currentUser }) {
             <div><label className={lbl}>Nouveau mot de passe *</label><input className={inp} type="password" required minLength={6} value={newPwd} onChange={(e) => setNewPwd(e.target.value)} /></div>
             <div className="flex gap-2 pt-2">
               <button type="button" onClick={() => setModal(null)} className="flex-1 border border-gray-200 dark:border-slate-600 rounded-xl py-2 text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">Annuler</button>
-              <button type="submit" className="flex-1 bg-orange-500 hover:bg-orange-600 text-white rounded-xl py-2 text-sm font-semibold transition-colors">Réinitialiser</button>
+              <button type="submit" disabled={submitting} className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-xl py-2 text-sm font-semibold transition-colors">{submitting ? 'Réinitialisation…' : 'Réinitialiser'}</button>
             </div>
           </form>
         </Modal>
