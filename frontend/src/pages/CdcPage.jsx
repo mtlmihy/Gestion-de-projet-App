@@ -403,12 +403,10 @@ export default function CdcPage() {
   )
 
   const history = cdc.history ?? []
-  const jalons  = [...(cdc.jalons ?? [])].sort((a, b) => {
-    if (!a[1] && !b[1]) return 0
-    if (!a[1]) return 1
-    if (!b[1]) return -1
-    return new Date(a[1]) - new Date(b[1])
-  })
+  // ⚠️ Pas de tri à l'écran : l'index de ligne doit rester aligné sur cdc.jalons
+  // pour que setCell('jalons', ri, ...) modifie la bonne ligne. Le tri par date
+  // est appliqué uniquement dans les exports PDF.
+  const jalons  = cdc.jalons ?? []
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto">

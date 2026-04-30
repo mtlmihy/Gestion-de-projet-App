@@ -218,7 +218,7 @@ export default function AidePage() {
         <form onSubmit={submit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-              LibellÃ© <span className="text-red-500">*</span>
+              Libellé <span className="text-red-500">*</span>
             </label>
             <input
               required
