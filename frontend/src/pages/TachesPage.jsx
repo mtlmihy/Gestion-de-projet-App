@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { getTaches, createTache, updateTache, deleteTache } from '../api/taches'
 import { getCdc } from '../api/cdc'
 import { useProject } from '../context/ProjectContext'
@@ -19,6 +20,8 @@ function Notification({ msg, type }) {
 
 export default function TachesPage() {
   const { projet, estLecteur } = useProject()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const jalonFromUrl = searchParams.get('jalon') || ''
   const [taches,     setTaches]     = useState([])
   const [loading,    setLoading]    = useState(true)
   const [saving,     setSaving]     = useState(false)
@@ -28,9 +31,17 @@ export default function TachesPage() {
   const [deleteItem, setDeleteItem] = useState(null)
   const [fSearch,    setFSearch]    = useState('')
   const [fImportance,setFImportance]= useState(ALL)
-  const [fJalon,     setFJalon]     = useState(ALL)
-  const [showFilters,setShowFilters]= useState(false)
+  const [fJalon,     setFJalon]     = useState(jalonFromUrl || ALL)
+  const [showFilters,setShowFilters]= useState(Boolean(jalonFromUrl))
   const [jalonsOptions, setJalonsOptions] = useState([])
+
+  // Si l'URL reçoit un nouveau ?jalon=..., synchroniser le filtre
+  useEffect(() => {
+    if (jalonFromUrl) {
+      setFJalon(jalonFromUrl)
+      setShowFilters(true)
+    }
+  }, [jalonFromUrl])
 
   const notify = (msg, type = 'ok') => {
     setNotif({ msg, type })
@@ -149,7 +160,15 @@ export default function TachesPage() {
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-gray-600 dark:text-slate-400">Jalon</label>
-              <select className={selCls} value={fJalon} onChange={(e) => setFJalon(e.target.value)}>
+              <select className={selCls} value={fJalon} onChange={(e) => {
+                const v = e.target.value
+                setFJalon(v)
+                // Garder l'URL synchronisée avec le filtre jalon
+                const next = new URLSearchParams(searchParams)
+                if (v && v !== ALL) next.set('jalon', v)
+                else next.delete('jalon')
+                setSearchParams(next, { replace: true })
+              }}>
                 {jalonsDisponibles.map((v) => <option key={v}>{v}</option>)}
               </select>
             </div>

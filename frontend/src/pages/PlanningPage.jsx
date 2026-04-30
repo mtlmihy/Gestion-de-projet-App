@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { getCdc } from '../api/cdc'
 import { getTaches } from '../api/taches'
 import { useProject } from '../context/ProjectContext'
@@ -64,7 +65,7 @@ function MiniBar({ value, color = '#3b82f6' }) {
 }
 
 // ── Timeline SVG ──────────────────────────────────────────────────────────────
-function TimelineSVG({ jalons, startDate, endDate }) {
+function TimelineSVG({ jalons, startDate, endDate, onSelect }) {
   const W = 900, H = 230, PL = 70, PR = 70
   const TW = W - PL - PR
   const BAR_Y = 115, BAR_H = 10
@@ -102,7 +103,12 @@ function TimelineSVG({ jalons, startDate, endDate }) {
     const ly    = above ? BAR_Y - 56 : BAR_Y + BAR_H + 62
     const dy    = above ? BAR_Y - 67 : BAR_Y + BAR_H + 73
     return (
-      <g key={i}>
+      <g
+        key={i}
+        onClick={onSelect ? () => onSelect(j.label) : undefined}
+        style={onSelect ? { cursor: 'pointer' } : undefined}
+      >
+        {onSelect && <title>{`Voir les tâches du jalon « ${j.label} »`}</title>}
         <line x1={x} y1={sy1} x2={x} y2={sy2} stroke={col} strokeWidth="1.5" strokeDasharray="3,2" opacity=".8" />
         <polygon points={`${x},${BAR_Y - DS} ${x + DS},${BAR_Y} ${x},${BAR_Y + DS} ${x - DS},${BAR_Y}`} fill={col} />
         <text x={x} y={ly} textAnchor="middle" fontSize="9" fontWeight="700" fill="#1e293b">{j.label}</text>
@@ -132,6 +138,11 @@ function TimelineSVG({ jalons, startDate, endDate }) {
 // ── Composant principal ───────────────────────────────────────────────────────
 export default function PlanningPage() {
   const { projet } = useProject()
+  const navigate = useNavigate()
+  const goToTachesByJalon = useCallback((label) => {
+    if (!label) return
+    navigate(`/taches?jalon=${encodeURIComponent(label)}`)
+  }, [navigate])
   const [jalons,     setJalons]     = useState([])
   const [taches,     setTaches]     = useState([])
   const [meta,       setMeta]       = useState({ nom: '', chef: '', dateDebut: '' })
@@ -284,7 +295,7 @@ export default function PlanningPage() {
       {/* ── Timeline SVG ───────────────────────────────────────────────── */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm px-6 py-5 overflow-x-auto">
         <div className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-4">Timeline</div>
-        <TimelineSVG jalons={enrichedJalons} startDate={startDate} endDate={endDate} />
+        <TimelineSVG jalons={enrichedJalons} startDate={startDate} endDate={endDate} onSelect={goToTachesByJalon} />
       </div>
 
       {/* ── Cartes jalons ──────────────────────────────────────────────── */}
@@ -306,7 +317,15 @@ export default function PlanningPage() {
             const bg = bgMap[col] ?? 'bg-gray-50 border-gray-100'
 
             return (
-              <div key={i} className={`relative bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow overflow-hidden`}>
+              <div
+                key={i}
+                role="button"
+                tabIndex={0}
+                onClick={() => goToTachesByJalon(j.label)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goToTachesByJalon(j.label) } }}
+                title={`Voir les tâches du jalon « ${j.label} »`}
+                className={`relative bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-2xl p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-blue-200 dark:hover:border-blue-700 transition-all cursor-pointer overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-400`}
+              >
                 {/* Accent coloré à gauche */}
                 <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ background: col }} />
 
