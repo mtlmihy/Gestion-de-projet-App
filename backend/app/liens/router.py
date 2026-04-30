@@ -1,8 +1,8 @@
 """Endpoints pour les liens externes d'un projet (Jira, Miro, Teams, …).
 
 - Lecture : tous les membres voient uniquement les liens marqués visibles ;
-  l'admin, le Propriétaire et l'Éditeur voient tout.
-- Écriture : réservée au Propriétaire, Éditeur ou administrateur.
+  l'admin et le Propriétaire voient tout.
+- Écriture : réservée au Propriétaire du projet ou à l'administrateur.
 """
 from __future__ import annotations
 from typing import List
@@ -23,14 +23,14 @@ async def _can_edit(projet_id: str, current_user: dict, pool: Pool) -> bool:
         return True
     async with pool.acquire() as conn:
         role = await projets_svc.get_user_role(conn, projet_id, current_user["id"])
-    return role in ("Proprietaire", "Editeur")
+    return role == "Proprietaire"
 
 
 async def _check_can_edit(projet_id: str, current_user: dict, pool: Pool) -> None:
     if not await _can_edit(projet_id, current_user, pool):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Réservé au propriétaire, éditeur ou administrateur.",
+            detail="Réservé au propriétaire du projet ou à l'administrateur.",
         )
 
 

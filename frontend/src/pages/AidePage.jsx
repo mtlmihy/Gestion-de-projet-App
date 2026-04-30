@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+﻿import { useEffect, useState, useCallback } from 'react'
 import Modal from '../components/Modal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { useProject } from '../context/ProjectContext'
@@ -6,7 +6,7 @@ import {
   getLiens, createLien, updateLien, setLienVisible, deleteLien,
 } from '../api/liens'
 
-// ─── Types de liens prédéfinis ────────────────────────────────────────────────
+// â”€â”€â”€ Types de liens prÃ©dÃ©finis â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const TYPES = [
   { value: 'jira',       label: 'Jira',                color: 'text-blue-600',                       bg: 'bg-blue-50 dark:bg-blue-950/40' },
   { value: 'miro',       label: 'Miro',                color: 'text-yellow-500',                     bg: 'bg-yellow-50 dark:bg-yellow-950/40' },
@@ -29,7 +29,7 @@ const EMPTY_FORM = { libelle: '', url: '', type: 'autre', visible: true, ordre: 
 
 
 export default function AidePage() {
-  const { projet, peutEditer } = useProject()
+  const { projet, estProprietaire } = useProject()
   const projetId = projet?.id
 
   const [liens, setLiens]     = useState([])
@@ -43,7 +43,7 @@ export default function AidePage() {
 
   const [confirmDel, setConfirmDel] = useState(null)
 
-  // ── Chargement ──────────────────────────────────────────────────────────────
+  // â”€â”€ Chargement â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const refresh = useCallback(async () => {
     if (!projetId) return
     setLoading(true)
@@ -60,7 +60,7 @@ export default function AidePage() {
 
   useEffect(() => { refresh() }, [refresh])
 
-  // ── Actions ─────────────────────────────────────────────────────────────────
+  // â”€â”€ Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const openCreate = () => { setEditing(null); setForm(EMPTY_FORM); setModalOpen(true) }
   const openEdit   = (lien) => {
     setEditing(lien)
@@ -92,7 +92,7 @@ export default function AidePage() {
       await setLienVisible(projetId, lien.id, !lien.visible)
       await refresh()
     } catch (e) {
-      alert(e?.response?.data?.detail || 'Erreur de mise à jour.')
+      alert(e?.response?.data?.detail || 'Erreur de mise Ã  jour.')
     }
   }
 
@@ -107,10 +107,10 @@ export default function AidePage() {
     }
   }
 
-  // Visibilité section : toujours visible pour ceux qui peuvent éditer.
+  // VisibilitÃ© section : toujours visible pour ceux qui peuvent Ã©diter.
   // Pour les autres : seulement s'il y a au moins un lien visible.
   const visibleLiens  = liens.filter((l) => l.visible)
-  const liensAffiches = peutEditer ? liens : visibleLiens
+  const liensAffiches = estProprietaire ? liens : visibleLiens
 
   return (
     <div>
@@ -124,7 +124,7 @@ export default function AidePage() {
           <h2 className="text-sm font-semibold text-gray-900 dark:text-slate-100">
             Liens externes du projet
           </h2>
-          {peutEditer && (
+          {estProprietaire && (
             <button
               onClick={openCreate}
               className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium flex items-center gap-1"
@@ -137,14 +137,14 @@ export default function AidePage() {
           )}
         </div>
 
-        {loading && <p className="text-xs text-gray-500 dark:text-slate-400">Chargement…</p>}
+        {loading && <p className="text-xs text-gray-500 dark:text-slate-400">Chargementâ€¦</p>}
         {error   && <p className="text-xs text-red-500">{error}</p>}
 
         {!loading && !error && liensAffiches.length === 0 && (
           <p className="text-xs text-gray-500 dark:text-slate-400 italic">
-            {peutEditer
-              ? 'Aucun lien pour ce projet. Ajoutez ceux qui sont utiles à l\'équipe (Jira, Miro, Teams, …).'
-              : 'Aucun lien partagé pour ce projet.'}
+            {estProprietaire
+              ? 'Aucun lien pour ce projet. Ajoutez ceux qui sont utiles Ã  l\'Ã©quipe (Jira, Miro, Teams, â€¦).'
+              : 'Aucun lien partagÃ© pour ce projet.'}
           </p>
         )}
 
@@ -170,10 +170,10 @@ export default function AidePage() {
                       {lien.libelle}
                     </a>
                     <p className="text-xs text-gray-500 dark:text-slate-400 truncate">
-                      {meta.label} · {lien.url}
+                      {meta.label} Â· {lien.url}
                     </p>
                   </div>
-                  {peutEditer && (
+                  {estProprietaire && (
                     <div className="flex items-center gap-1 shrink-0">
                       <button
                         onClick={() => toggleVisible(lien)}
@@ -209,7 +209,7 @@ export default function AidePage() {
         )}
       </div>
 
-      {/* ─────────────── Modal Création / Édition ─────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Modal CrÃ©ation / Ã‰dition â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -218,7 +218,7 @@ export default function AidePage() {
         <form onSubmit={submit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-              Libellé <span className="text-red-500">*</span>
+              LibellÃ© <span className="text-red-500">*</span>
             </label>
             <input
               required
@@ -239,7 +239,7 @@ export default function AidePage() {
               type="url"
               value={form.url}
               onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))}
-              placeholder="https://…"
+              placeholder="https://â€¦"
               className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -285,7 +285,7 @@ export default function AidePage() {
               disabled={saving}
               className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium"
             >
-              {saving ? 'Enregistrement…' : 'Enregistrer'}
+              {saving ? 'Enregistrementâ€¦' : 'Enregistrer'}
             </button>
           </div>
         </form>
@@ -294,7 +294,7 @@ export default function AidePage() {
       <ConfirmDialog
         open={!!confirmDel}
         title="Supprimer ce lien ?"
-        message={`Le lien « ${confirmDel?.libelle ?? ''} » sera retiré du projet.`}
+        message={`Le lien Â« ${confirmDel?.libelle ?? ''} Â» sera retirÃ© du projet.`}
         onConfirm={confirmDelete}
         onCancel={() => setConfirmDel(null)}
       />
