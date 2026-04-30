@@ -6,6 +6,16 @@ import ThemeToggleButton from '../components/ThemeToggleButton'
 import { getProjets, createProjet, deleteProjet, cloturerProjet, reactiverProjet, updateStatutProjet } from '../api/projets'
 import { getMembres, addMembre, updateMembre, updateMembrePages, removeMembre, getUsersDisponibles } from '../api/users'
 
+// ── Épinglage (persistance locale par utilisateur) ───────────────────────────
+const pinKey = (userId) => `epingles:projets:${userId ?? 'guest'}`
+const loadPins = (userId) => {
+  try { return new Set(JSON.parse(localStorage.getItem(pinKey(userId)) || '[]')) }
+  catch { return new Set() }
+}
+const savePins = (userId, set) => {
+  try { localStorage.setItem(pinKey(userId), JSON.stringify([...set])) } catch { /* quota / privée */ }
+}
+
 // ── Couleur par statut ────────────────────────────────────────────────────────
 const STATUT_STYLE = {
   'En cours':    { dot: 'bg-green-400',  text: 'text-green-700',  bg: 'bg-green-50'  },
@@ -379,7 +389,7 @@ function CreateModal({ onClose, onCreated }) {
 }
 
 // ── Carte projet ─────────────────────────────────────────────────────────────
-function ProjetCard({ projet, onSelect, onDelete, onGererAcces, onCloturer, onReactiver, onStatutChange, isAdmin }) {
+function ProjetCard({ projet, onSelect, onDelete, onGererAcces, onCloturer, onReactiver, onStatutChange, isAdmin, isPinned, onTogglePin }) {
   const estProprietaire = isAdmin || projet.mon_role === 'Proprietaire'
   const peutEditerStatut = !projet.est_cloture && estProprietaire
   const peutCloturer    = !projet.est_cloture && estProprietaire
@@ -390,7 +400,9 @@ function ProjetCard({ projet, onSelect, onDelete, onGererAcces, onCloturer, onRe
       className={`group relative bg-white dark:bg-slate-800 border rounded-2xl shadow-sm hover:shadow-md transition-all cursor-pointer p-5 flex flex-col gap-3 ${
         projet.est_cloture
           ? 'border-gray-300 dark:border-slate-600 opacity-80 hover:border-gray-400 dark:hover:border-slate-500'
-          : 'border-gray-100 dark:border-slate-700 hover:border-blue-200 dark:hover:border-blue-700'
+          : isPinned
+            ? 'border-amber-300 dark:border-amber-500/60 ring-1 ring-amber-200 dark:ring-amber-500/30 hover:border-amber-400 dark:hover:border-amber-400'
+            : 'border-gray-100 dark:border-slate-700 hover:border-blue-200 dark:hover:border-blue-700'
       }`}
     >
       {/* Badge clôturé */}
@@ -406,7 +418,29 @@ function ProjetCard({ projet, onSelect, onDelete, onGererAcces, onCloturer, onRe
 
       {/* En-tête */}
       <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
+        <div className="flex items-start gap-2 flex-1 min-w-0">
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onTogglePin(projet.id) }}
+            title={isPinned ? 'Désépingler' : 'Épingler en haut de la liste'}
+            aria-label={isPinned ? 'Désépingler le projet' : 'Épingler le projet'}
+            aria-pressed={isPinned}
+            className={`shrink-0 mt-0.5 p-1 rounded-md transition-all ${
+              isPinned
+                ? 'text-amber-500 dark:text-amber-400 hover:text-amber-600 dark:hover:text-amber-300'
+                : 'text-gray-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 hover:text-amber-500 dark:hover:text-amber-400 focus:opacity-100'
+            }`}
+          >
+            {isPinned ? (
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M14 2l8 8-4 1-3 3 1 5-4-3-7 7-1-1 7-7-3-4 5 1 3-3z" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M14 2l8 8-4 1-3 3 1 5-4-3-7 7-1-1 7-7-3-4 5 1 3-3z" />
+              </svg>
+            )}
+          </button>
           <h3 className="font-bold text-gray-900 dark:text-slate-100 text-base truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
             {projet.nom}
           </h3>
@@ -496,6 +530,19 @@ export default function ProjectsPage() {
   const [accesProjet, setAccesProjet] = useState(null)
   const [error,      setError]      = useState('')
   const [filtre,     setFiltre]     = useState('tous') // 'tous' | 'actifs' | 'clotures'
+  const [pinned,     setPinned]     = useState(() => loadPins(user?.id))
+
+  useEffect(() => { setPinned(loadPins(user?.id)) }, [user?.id])
+
+  const togglePin = useCallback((projetId) => {
+    setPinned((prev) => {
+      const next = new Set(prev)
+      if (next.has(projetId)) next.delete(projetId)
+      else next.add(projetId)
+      savePins(user?.id, next)
+      return next
+    })
+  }, [user?.id])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -689,11 +736,15 @@ export default function ProjectsPage() {
             )}
           </div>
         ) : (() => {
-          const projetsFiltres = projets.filter((p) =>
-            filtre === 'actifs'   ? !p.est_cloture :
-            filtre === 'clotures' ?  p.est_cloture :
-            true
-          )
+          const projetsFiltres = projets
+            .filter((p) =>
+              filtre === 'actifs'   ? !p.est_cloture :
+              filtre === 'clotures' ?  p.est_cloture :
+              true
+            )
+            // Épinglés en tête (ordre relatif d'origine préservé sinon)
+            .slice()
+            .sort((a, b) => Number(pinned.has(b.id)) - Number(pinned.has(a.id)))
           if (projetsFiltres.length === 0) return (
             <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
               <p className="text-sm text-gray-400">
@@ -714,6 +765,8 @@ export default function ProjectsPage() {
                 onReactiver={handleReactiver}
                 onStatutChange={handleStatutChange}
                 isAdmin={isAdmin}
+                isPinned={pinned.has(p.id)}
+                onTogglePin={togglePin}
               />
             ))}
           </div>
