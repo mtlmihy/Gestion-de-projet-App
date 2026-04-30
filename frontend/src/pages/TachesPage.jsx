@@ -21,7 +21,7 @@ function Notification({ msg, type }) {
 export default function TachesPage() {
   const { projet, estLecteur } = useProject()
   const [searchParams, setSearchParams] = useSearchParams()
-  const jalonFromUrl = searchParams.get('jalon') || ''
+  const jalonFromUrl = (searchParams.get('jalon') || '').trim()
   const [taches,     setTaches]     = useState([])
   const [loading,    setLoading]    = useState(true)
   const [saving,     setSaving]     = useState(false)

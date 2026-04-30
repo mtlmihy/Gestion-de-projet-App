@@ -140,8 +140,9 @@ export default function PlanningPage() {
   const { projet } = useProject()
   const navigate = useNavigate()
   const goToTachesByJalon = useCallback((label) => {
-    if (!label) return
-    navigate(`/taches?jalon=${encodeURIComponent(label)}`)
+    const v = (label ?? '').trim()
+    if (!v) return
+    navigate(`/taches?jalon=${encodeURIComponent(v)}`)
   }, [navigate])
   const [jalons,     setJalons]     = useState([])
   const [taches,     setTaches]     = useState([])
