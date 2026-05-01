@@ -5,11 +5,11 @@ import ThemeToggleButton from './ThemeToggleButton'
 
 const LINKS = [
   { to: '/cdc',      label: 'Cahier des Charges', page: 'cdc'      },
+  { to: '/planning', label: 'Planning',            page: 'planning' },
   { to: '/risques',  label: 'Risques',             page: 'risques'  },
   { to: '/taches',   label: 'Tâches',              page: 'taches'   },
-  { to: '/planning', label: 'Planning',             page: 'planning' },
-  { to: '/equipe',   label: 'Équipe',               page: 'equipe'   },
-  { to: '/aide',     label: 'Aide',                 page: 'aide'     },
+  { to: '/equipe',   label: 'Équipe',              page: 'equipe'   },
+  { to: '/aide',     label: 'Aide',                page: 'aide'     },
 ]
 
 function UserAvatar({ user }) {
