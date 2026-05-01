@@ -560,13 +560,13 @@ export default function ProjectsPage() {
 
   const handleSelect = (projet) => {
     setProjet(projet)
-    navigate('/risques', { replace: true })
+    navigate('/cdc', { replace: true })
   }
 
   const handleCreated = (projet) => {
     setShowCreate(false)
     setProjet(projet)
-    navigate('/risques', { replace: true })
+    navigate('/cdc', { replace: true })
   }
 
   const handleDelete = async (projet) => {
