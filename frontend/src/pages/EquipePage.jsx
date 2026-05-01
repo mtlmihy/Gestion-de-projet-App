@@ -28,9 +28,18 @@ function Avatar({ name, size = 'sm' }) {
 /* ─── Org chart ──────────────────────────────────────────────── */
 
 /**
- * Construit un forêt (liste de racines) depuis la liste plate des membres.
- * Un membre est une racine si son manager n'est pas dans la liste.
+ * Construit une forêt (liste de racines) depuis la liste plate des membres.
+ * Le champ "manager" peut contenir plusieurs référents séparés par ";".
+ * Un membre est une racine si aucun de ses managers n'est dans la liste.
+ * En cas de multi-référents, le nœud apparaît sous chaque manager existant.
  */
+function parseManagers(raw) {
+  return (raw ?? '')
+    .split(';')
+    .map((s) => s.trim())
+    .filter(Boolean)
+}
+
 function buildTree(members) {
   const byName = {}
   members.forEach((m) => { byName[m.collaborateur] = { ...m, children: [] } })
@@ -38,10 +47,11 @@ function buildTree(members) {
   const roots = []
   members.forEach((m) => {
     const node = byName[m.collaborateur]
-    if (m.manager && byName[m.manager]) {
-      byName[m.manager].children.push(node)
-    } else {
+    const managers = parseManagers(m.manager).filter((mg) => byName[mg])
+    if (managers.length === 0) {
       roots.push(node)
+    } else {
+      managers.forEach((mg) => byName[mg].children.push(node))
     }
   })
   return roots
@@ -175,7 +185,7 @@ export default function EquipePage() {
     finally { setSaving(false) }
   }
 
-  const managers = [...new Set(equipe.map((m) => m.manager).filter(Boolean))]
+  const managers = [...new Set(equipe.flatMap((m) => (m.manager ?? '').split(';').map((s) => s.trim()).filter(Boolean)))]
 
   return (
     <div>

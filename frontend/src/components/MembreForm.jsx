@@ -20,18 +20,25 @@ export default function MembreForm({ initial, onSubmit, onCancel, loading }) {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    const collab  = (form.collaborateur ?? '').trim()
-    const manager = (form.manager ?? '').trim()
-    if (collab && manager && collab.toLowerCase() === manager.toLowerCase()) {
+    const collab   = (form.collaborateur ?? '').trim()
+    const managers = (form.manager ?? '')
+      .split(';')
+      .map((s) => s.trim())
+      .filter(Boolean)
+    if (collab && managers.some((m) => m.toLowerCase() === collab.toLowerCase())) {
       setError("Un membre ne peut pas être son propre manager.")
       return
     }
-    onSubmit({ ...form, collaborateur: collab, manager })
+    onSubmit({ ...form, collaborateur: collab, manager: managers.join('; ') })
   }
 
   const selfManager =
     (form.collaborateur ?? '').trim() &&
-    (form.collaborateur ?? '').trim().toLowerCase() === (form.manager ?? '').trim().toLowerCase()
+    (form.manager ?? '')
+      .split(';')
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean)
+      .includes((form.collaborateur ?? '').trim().toLowerCase())
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -45,13 +52,17 @@ export default function MembreForm({ initial, onSubmit, onCancel, loading }) {
           <input className={cls.input} value={form.poste} onChange={set('poste')} />
         </div>
         <div>
-          <label className={cls.label}>Manager</label>
+          <label className={cls.label}>Manager(s)</label>
           <input
             className={`${cls.input} ${selfManager ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
             value={form.manager}
             onChange={set('manager')}
+            placeholder="Prénom NOM ; Prénom NOM"
             aria-invalid={selfManager || undefined}
           />
+          <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
+            Séparer plusieurs référents par un point-virgule (<code>;</code>).
+          </p>
           {selfManager && (
             <p className="text-xs text-red-600 dark:text-red-400 mt-1">Un membre ne peut pas être son propre manager.</p>
           )}
