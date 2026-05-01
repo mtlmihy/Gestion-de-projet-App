@@ -39,7 +39,7 @@ export default function LoginPage() {
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-slate-100">Gestion de Projet</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-slate-100">QimProject</h1>
           <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Accès sécurisé</p>
         </div>
 

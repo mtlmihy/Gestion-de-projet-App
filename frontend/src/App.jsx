@@ -31,7 +31,7 @@ function AccessDenied() {
 }
 
 // Ordre de priorité des pages pour la redirection auto
-const PAGES_ORDRE = ['planning', 'cdc', 'risques', 'taches', 'equipe', 'aide']
+const PAGES_ORDRE = ['cdc', 'planning', 'risques', 'taches', 'equipe', 'aide']
 
 function PageGuard({ page, children }) {
   const { canAccess } = useAuth()
@@ -71,7 +71,7 @@ export default function App() {
                 </PrivateRoute>
               }
             >
-              <Route index element={<Navigate to="/planning" replace />} />
+              <Route index element={<Navigate to="/cdc" replace />} />
               <Route path="risques"  element={<PageGuard page="risques"><RisquesPage /></PageGuard>} />
               <Route path="taches"   element={<PageGuard page="taches"><TachesPage /></PageGuard>} />
               <Route path="planning" element={<PageGuard page="planning"><PlanningPage /></PageGuard>} />
