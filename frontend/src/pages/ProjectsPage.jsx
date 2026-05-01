@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useProject } from '../context/ProjectContext'
 import ThemeToggleButton from '../components/ThemeToggleButton'
+import ProjectWizard from '../components/ProjectWizard'
 import { getProjets, createProjet, deleteProjet, cloturerProjet, reactiverProjet, updateStatutProjet } from '../api/projets'
 import { getMembres, addMembre, updateMembre, updateMembrePages, removeMembre, getUsersDisponibles } from '../api/users'
 
@@ -527,6 +528,7 @@ export default function ProjectsPage() {
   const [projets,    setProjets]    = useState([])
   const [loading,    setLoading]    = useState(true)
   const [showCreate, setShowCreate] = useState(false)
+  const [showWizard, setShowWizard] = useState(false)
   const [accesProjet, setAccesProjet] = useState(null)
   const [error,      setError]      = useState('')
   const [filtre,     setFiltre]     = useState('tous') // 'tous' | 'actifs' | 'clotures'
@@ -565,6 +567,7 @@ export default function ProjectsPage() {
 
   const handleCreated = (projet) => {
     setShowCreate(false)
+    setShowWizard(false)
     setProjet(projet)
     navigate('/cdc', { replace: true })
   }
@@ -665,15 +668,23 @@ export default function ProjectsPage() {
             </p>
           </div>
           {peutCreerProjet && (
-            <button
-              onClick={() => setShowCreate(true)}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-sm transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-              Nouveau projet
-            </button>
+            <div className="flex flex-col items-end gap-1">
+              <button
+                onClick={() => setShowWizard(true)}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-sm transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Nouveau projet (assistant)
+              </button>
+              <button
+                onClick={() => setShowCreate(true)}
+                className="text-xs text-gray-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:underline transition-colors"
+              >
+                ou créer rapidement (sans assistant)
+              </button>
+            </div>
           )}
         </div>
 
@@ -728,7 +739,7 @@ export default function ProjectsPage() {
             </p>
             {peutCreerProjet && (
               <button
-                onClick={() => setShowCreate(true)}
+                onClick={() => setShowWizard(true)}
                 className="mt-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"
               >
                 Créer un projet
@@ -776,6 +787,10 @@ export default function ProjectsPage() {
 
       {showCreate && (
         <CreateModal onClose={() => setShowCreate(false)} onCreated={handleCreated} />
+      )}
+
+      {showWizard && (
+        <ProjectWizard onClose={() => setShowWizard(false)} onCreated={handleCreated} />
       )}
 
       {accesProjet && (
