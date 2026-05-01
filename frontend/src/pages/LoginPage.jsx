@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import ThemeToggleButton from '../components/ThemeToggleButton'
+import Logo from '../components/Logo'
 
 export default function LoginPage() {
   const [email,    setEmail]    = useState('')
@@ -34,10 +35,8 @@ export default function LoginPage() {
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-gray-200 dark:border-slate-700 w-full max-w-sm p-8">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mb-3">
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg>
+          <div className="mb-3">
+            <Logo className="w-12 h-12" />
           </div>
           <h1 className="text-xl font-bold text-gray-900 dark:text-slate-100">QimProject</h1>
           <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Accès sécurisé</p>

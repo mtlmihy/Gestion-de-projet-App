@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useProject } from '../context/ProjectContext'
 import ThemeToggleButton from '../components/ThemeToggleButton'
 import ProjectWizard from '../components/ProjectWizard'
+import Logo from '../components/Logo'
 import { getProjets, createProjet, deleteProjet, cloturerProjet, reactiverProjet, updateStatutProjet } from '../api/projets'
 import { getMembres, addMembre, updateMembre, updateMembrePages, removeMembre, getUsersDisponibles } from '../api/users'
 
@@ -618,10 +619,8 @@ export default function ProjectsPage() {
       <header className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 shadow-sm">
         <div className="max-w-screen-xl mx-auto px-4 h-14 flex items-center justify-between">
           <span className="flex items-center gap-2 font-bold text-blue-600 text-sm">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg>
-            Gestion Projet
+            <Logo className="w-6 h-6" />
+            QimProject
           </span>
 
           <div className="flex items-center gap-3">
