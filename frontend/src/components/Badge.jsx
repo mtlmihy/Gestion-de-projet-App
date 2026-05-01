@@ -40,7 +40,8 @@ export default function Badge({ type, value }) {
 }
 
 export function PrioriteBadge({ value }) {
-  const colors = { 1: 'bg-green-500', 2: 'bg-yellow-500', 3: 'bg-red-500' }
+  // Convention ITIL : P1 = critique (rouge), P3 = faible (vert)
+  const colors = { 1: 'bg-red-500', 2: 'bg-yellow-500', 3: 'bg-green-500' }
   const v = Number(value)
   return (
     <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-white text-sm font-bold ${colors[v] ?? 'bg-gray-400'}`}>

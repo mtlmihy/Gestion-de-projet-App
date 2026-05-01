@@ -68,7 +68,7 @@ export default function RisquesPage() {
   const ouverts   = risques.filter((r) => r.statut === 'Ouvert').length
   const enCours   = risques.filter((r) => r.statut === 'En cours').length
   const fermes    = risques.filter((r) => r.statut === 'Fermé').length
-  const critiques = risques.filter((r) => r.priorite === 3).length
+  const critiques = risques.filter((r) => r.priorite === 1).length
 
   const handleAdd = async (data) => {
     setSaving(true)
@@ -142,7 +142,7 @@ export default function RisquesPage() {
         <KpiCard label="Ouverts"       value={ouverts}   colorClass="text-red-600" />
         <KpiCard label="En cours"      value={enCours}   colorClass="text-yellow-600" />
         <KpiCard label="Fermés"        value={fermes}    colorClass="text-green-600" />
-        <KpiCard label="Critiques (P3)"value={critiques} colorClass="text-red-700" />
+        <KpiCard label="Critiques (P1)"value={critiques} colorClass="text-red-700" />
       </div>
 
       {/* Filtres */}

@@ -18,7 +18,6 @@ class RisqueBase(BaseModel):
     responsable: str        = ""
     attenuation: str        = ""
     statut:      Statut      = "Ouvert"
-    gravite:     int        = Field(1, ge=1, le=5)
 
 
 class RisqueCreate(RisqueBase):

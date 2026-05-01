@@ -23,8 +23,8 @@ async def create(conn: Connection, projet_id: str, data: dict) -> dict:
         """
         INSERT INTO risques
             (id, projet_id, nom, description, categorie,
-             probabilite, impact, priorite, responsable, attenuation, statut, gravite)
-        VALUES ($1::uuid,$2::uuid,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+             probabilite, impact, priorite, responsable, attenuation, statut)
+        VALUES ($1::uuid,$2::uuid,$3,$4,$5,$6,$7,$8,$9,$10,$11)
         RETURNING *
         """,
         str(uuid.uuid4()),
@@ -34,11 +34,10 @@ async def create(conn: Connection, projet_id: str, data: dict) -> dict:
         data.get("categorie", ""),
         data.get("probabilite", "Faible"),
         data.get("impact", "Faible"),
-        data.get("priorite", 1),
+        data.get("priorite", 3),
         data.get("responsable", ""),
         data.get("attenuation", ""),
         data.get("statut", "Ouvert"),
-        data.get("gravite", 1),
     )
     return _row(row)
 
@@ -49,7 +48,7 @@ async def update(conn: Connection, risque_id: str, data: dict) -> dict | None:
         UPDATE risques
         SET nom=$2, description=$3, categorie=$4,
             probabilite=$5, impact=$6, priorite=$7,
-            responsable=$8, attenuation=$9, statut=$10, gravite=$11
+            responsable=$8, attenuation=$9, statut=$10
         WHERE id=$1::uuid
         RETURNING *
         """,
@@ -59,11 +58,10 @@ async def update(conn: Connection, risque_id: str, data: dict) -> dict | None:
         data.get("categorie", ""),
         data.get("probabilite", "Faible"),
         data.get("impact", "Faible"),
-        data.get("priorite", 1),
+        data.get("priorite", 3),
         data.get("responsable", ""),
         data.get("attenuation", ""),
         data.get("statut", "Ouvert"),
-        data.get("gravite", 1),
     )
     return _row(row) if row else None
 
