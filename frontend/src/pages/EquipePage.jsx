@@ -30,8 +30,9 @@ function Avatar({ name, size = 'sm' }) {
 /**
  * Construit une forêt (liste de racines) depuis la liste plate des membres.
  * Le champ "manager" peut contenir plusieurs référents séparés par ";".
- * Un membre est une racine si aucun de ses managers n'est dans la liste.
- * En cas de multi-référents, le nœud apparaît sous chaque manager existant.
+ * Pour éviter la duplication dans l'organigramme, on rattache chaque membre
+ * UNIQUEMENT au premier référent existant. Les autres sont signalés par un
+ * badge "+N" sur la carte (avec tooltip énumérant les co-référents).
  */
 function parseManagers(raw) {
   return (raw ?? '')
@@ -42,7 +43,9 @@ function parseManagers(raw) {
 
 function buildTree(members) {
   const byName = {}
-  members.forEach((m) => { byName[m.collaborateur] = { ...m, children: [] } })
+  members.forEach((m) => {
+    byName[m.collaborateur] = { ...m, children: [], coManagers: [] }
+  })
 
   const roots = []
   members.forEach((m) => {
@@ -51,15 +54,26 @@ function buildTree(members) {
     if (managers.length === 0) {
       roots.push(node)
     } else {
-      managers.forEach((mg) => byName[mg].children.push(node))
+      const [primary, ...others] = managers
+      byName[primary].children.push(node)
+      node.coManagers = others
     }
   })
   return roots
 }
 
 function OrgCard({ node, onEdit, onDelete }) {
+  const coCount = node.coManagers?.length ?? 0
   return (
-    <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl shadow-sm px-3 py-3 w-40 text-center group hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md transition-all">
+    <div className="relative bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl shadow-sm px-3 py-3 w-40 text-center group hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md transition-all">
+      {coCount > 0 && (
+        <span
+          className="absolute -top-2 -right-2 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-blue-600 text-white text-[10px] font-bold shadow ring-2 ring-white dark:ring-slate-800"
+          title={`Aussi rattaché à : ${node.coManagers.join(', ')}`}
+        >
+          +{coCount}
+        </span>
+      )}
       <Avatar name={node.collaborateur} size="lg" />
       <p className="text-sm font-semibold text-gray-900 dark:text-slate-100 truncate mt-2 leading-tight">{node.collaborateur}</p>
       {node.poste && <p className="text-xs text-gray-400 dark:text-slate-500 truncate mt-0.5">{node.poste}</p>}
