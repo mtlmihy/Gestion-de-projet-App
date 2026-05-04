@@ -227,7 +227,7 @@ function closeViewer(){
 <div class="no-print" style="background:${tb.barBg};border-bottom:1px solid ${tb.barBorder};padding:9px 20px;display:flex;justify-content:space-between;align-items:center;">
   <span style="font-size:10px;color:${tb.barText};">Charte de Projet · ${escH(cdc.nom_projet || 'Sans titre')} · ${today}</span>
   <div style="display:flex;gap:8px;">
-    <button class="pbtn" style="background:${tb.closeBg};color:${tb.closeText};" onclick="closeViewer()">✕ Fermer</button>
+    // <button class="pbtn" style="background:${tb.closeBg};color:${tb.closeText};" onclick="closeViewer()">✕ Fermer</button>
     <button class="pbtn" style="background:${tb.printBg};color:${tb.printText};" onclick="window.print()">🖨 Imprimer / PDF</button>
   </div>
 </div>
