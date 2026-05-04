@@ -27,6 +27,18 @@ function Modal({ title, onClose, children }) {
 const inp = 'w-full border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition'
 const lbl = 'block text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-1'
 
+const MIN_PASSWORD_LENGTH = 12
+
+function getPasswordPolicyError(password) {
+  if (!password || typeof password !== 'string') return 'Le mot de passe est requis.'
+  if (password.length < MIN_PASSWORD_LENGTH) return `Le mot de passe doit faire au moins ${MIN_PASSWORD_LENGTH} caractères.`
+  if (!/[a-z]/.test(password)) return 'Le mot de passe doit contenir au moins une minuscule.'
+  if (!/[A-Z]/.test(password)) return 'Le mot de passe doit contenir au moins une majuscule.'
+  if (!/\d/.test(password)) return 'Le mot de passe doit contenir au moins un chiffre.'
+  if (!/[^A-Za-z0-9]/.test(password)) return 'Le mot de passe doit contenir au moins un caractère spécial.'
+  return null
+}
+
 // ── Onglet Utilisateurs ──────────────────────────────────────────────────────
 function UsersTab({ currentUser }) {
   const [users,   setUsers]   = useState([])
@@ -57,6 +69,11 @@ function UsersTab({ currentUser }) {
   const handleCreate = async (e) => {
     e.preventDefault()
     if (submitting) return
+    const passwordError = getPasswordPolicyError(form.password)
+    if (passwordError) {
+      notify(passwordError, 'error')
+      return
+    }
     setSubmitting(true)
     try {
       await createUser(form)
@@ -100,6 +117,11 @@ function UsersTab({ currentUser }) {
   const handlePwd = async (e) => {
     e.preventDefault()
     if (submitting) return
+    const passwordError = getPasswordPolicyError(newPwd)
+    if (passwordError) {
+      notify(passwordError, 'error')
+      return
+    }
     setSubmitting(true)
     try {
       await resetPassword(target.id, newPwd)
