@@ -1,5 +1,5 @@
 from __future__ import annotations
-from datetime import date, datetime
+from datetime import date, datetime, time
 from typing import Optional
 
 from pydantic import BaseModel, Field
@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 class CopilCreate(BaseModel):
     date_reunion: date
+    heure_reunion: Optional[time] = None
     titre: str = Field(..., min_length=3, max_length=200)
     participants: Optional[str] = None
     notes: Optional[str] = None
@@ -22,6 +23,7 @@ class CopilRead(BaseModel):
     id: str
     projet_id: str
     date_reunion: date
+    heure_reunion: Optional[time] = None
     titre: str
     participants: Optional[str] = None
     notes: Optional[str] = None

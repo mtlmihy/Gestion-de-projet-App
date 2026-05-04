@@ -16,7 +16,7 @@ async def get_all(conn: Connection, projet_id: str) -> list[dict]:
     rows = await conn.fetch(
         """
         SELECT id, projet_id, date_reunion, titre, participants, notes,
-               decisions, actions, createur_id, date_creation, derniere_maj
+             heure_reunion, decisions, actions, createur_id, date_creation, derniere_maj
         FROM copil_reunions
         WHERE projet_id = $1::uuid
         ORDER BY date_reunion DESC, date_creation DESC
@@ -30,14 +30,15 @@ async def create(conn: Connection, projet_id: str, data: dict, user_id: str | No
     row = await conn.fetchrow(
         """
         INSERT INTO copil_reunions
-            (projet_id, date_reunion, titre, participants, notes, decisions, actions, createur_id)
+            (projet_id, date_reunion, heure_reunion, titre, participants, notes, decisions, actions, createur_id)
         VALUES
-            ($1::uuid, $2, $3, $4, $5, $6, $7, $8::uuid)
-        RETURNING id, projet_id, date_reunion, titre, participants, notes,
+            ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9::uuid)
+        RETURNING id, projet_id, date_reunion, heure_reunion, titre, participants, notes,
                   decisions, actions, createur_id, date_creation, derniere_maj
         """,
         projet_id,
         data.get("date_reunion"),
+        data.get("heure_reunion"),
         data.get("titre"),
         data.get("participants"),
         data.get("notes"),
@@ -53,18 +54,20 @@ async def update(conn: Connection, copil_id: str, data: dict) -> dict | None:
         """
         UPDATE copil_reunions
         SET date_reunion = $2,
-            titre        = $3,
-            participants = $4,
-            notes        = $5,
-            decisions    = $6,
-            actions      = $7,
+            heure_reunion= $3,
+            titre        = $4,
+            participants = $5,
+            notes        = $6,
+            decisions    = $7,
+            actions      = $8,
             derniere_maj = NOW()
         WHERE id = $1::uuid
-        RETURNING id, projet_id, date_reunion, titre, participants, notes,
+        RETURNING id, projet_id, date_reunion, heure_reunion, titre, participants, notes,
                   decisions, actions, createur_id, date_creation, derniere_maj
         """,
         copil_id,
         data.get("date_reunion"),
+        data.get("heure_reunion"),
         data.get("titre"),
         data.get("participants"),
         data.get("notes"),

@@ -15,6 +15,7 @@ function CopilForm({ initial, onSubmit, onCancel, saving }) {
   const isCreate = !initial
   const [form, setForm] = useState(() => ({
     date_reunion: initial?.date_reunion ?? new Date().toISOString().slice(0, 10),
+    heure_reunion: initial?.heure_reunion ?? '',
     titre: initial?.titre ?? '',
     participants: initial?.participants ?? '',
     notes: initial?.notes ?? '',
@@ -53,6 +54,13 @@ function CopilForm({ initial, onSubmit, onCancel, saving }) {
           <label className={lbl}>Date de réunion *</label>
           <input type="date" className={inp} required value={form.date_reunion} onChange={setF('date_reunion')} />
         </div>
+        <div>
+          <label className={lbl}>Heure de réunion *</label>
+          <input type="time" className={inp} required value={form.heure_reunion} onChange={setF('heure_reunion')} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
           <label className={lbl}>Titre (optionnel)</label>
           <input className={inp} maxLength={200} value={form.titre} onChange={setF('titre')} placeholder="COPIL #12 - Suivi mensuel" />
@@ -118,6 +126,11 @@ export default function CopilPage() {
   useEffect(() => { load() }, [projet.id])
 
   const fmtDate = (iso) => new Date(iso).toLocaleDateString('fr-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  const fmtDateTime = (item) => {
+    const date = fmtDate(item.date_reunion)
+    if (!item.heure_reunion) return `${date} · --:--`
+    return `${date} · ${String(item.heure_reunion).slice(0, 5)}`
+  }
 
   const handleAdd = async (data) => {
     setSaving(true)
@@ -194,7 +207,7 @@ export default function CopilPage() {
             <div key={it.id} className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm p-4">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div>
-                  <p className="text-xs text-gray-400 dark:text-slate-500">{fmtDate(it.date_reunion)}</p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500">{fmtDateTime(it)}</p>
                   <h3 className="text-base font-semibold text-gray-900 dark:text-slate-100">{it.titre}</h3>
                   {it.participants && <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Participants : {it.participants}</p>}
                 </div>
