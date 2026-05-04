@@ -7,7 +7,7 @@ from app.db.pool import get_pool
 from app.projets import service as svc
 from app.projets.schemas import (
     MembreCreate, MembreRead, MembrePagesUpdate, MembreUpdate,
-    ProjetCreate, ProjetRead, ProjetStatutUpdate, ProjetUpdate,
+    ProjetCreate, ProjetPagesUpdate, ProjetRead, ProjetStatutUpdate, ProjetUpdate,
     ROLES_VALIDES,
 )
 from app.security.audit import Action, log_event
@@ -61,6 +61,22 @@ async def change_statut(
     await _check_owner_or_admin(projet_id, current_user, pool)
     async with pool.acquire() as conn:
         result = await svc.update_statut(conn, projet_id, payload.statut)
+    if not result:
+        raise HTTPException(status_code=404, detail="Projet introuvable.")
+    return result
+
+
+@router.patch("/{projet_id}/pages", response_model=ProjetRead)
+async def update_projet_pages(
+    projet_id: str,
+    payload: ProjetPagesUpdate,
+    pool: Pool = Depends(get_pool),
+    current_user: dict = Depends(get_current_user),
+):
+    """Définit les pages visibles globalement sur le projet. Réservé au Propriétaire ou admin."""
+    await _check_owner_or_admin(projet_id, current_user, pool)
+    async with pool.acquire() as conn:
+        result = await svc.update_pages_visibles(conn, projet_id, payload.pages_visibles)
     if not result:
         raise HTTPException(status_code=404, detail="Projet introuvable.")
     return result

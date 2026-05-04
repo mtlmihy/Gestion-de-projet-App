@@ -5,7 +5,7 @@ import { useProject } from '../context/ProjectContext'
 import ThemeToggleButton from '../components/ThemeToggleButton'
 import ProjectWizard from '../components/ProjectWizard'
 import Logo from '../components/Logo'
-import { getProjets, createProjet, deleteProjet, cloturerProjet, reactiverProjet, updateStatutProjet } from '../api/projets'
+import { getProjets, createProjet, deleteProjet, cloturerProjet, reactiverProjet, updateStatutProjet, updateProjetPages } from '../api/projets'
 import { getMembres, addMembre, updateMembre, updateMembrePages, removeMembre, getUsersDisponibles } from '../api/users'
 
 // ── Épinglage (persistance locale par utilisateur) ───────────────────────────
@@ -76,7 +76,7 @@ const PAGES_DISPONIBLES = [
 ]
 
 // ── Modal gestion des accès ───────────────────────────────────────────────────
-function GestionAccesModal({ projet, onClose, isAdmin }) {
+function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated }) {
   const rolesDisponibles = isAdmin ? ROLES : ROLES_SANS_PROPRIO
   const [membres,    setMembres]  = useState([])
   const [users,      setUsers]    = useState([])
@@ -84,6 +84,7 @@ function GestionAccesModal({ projet, onClose, isAdmin }) {
   const [showAdd,    setShowAdd]  = useState(false)
   const [addForm,    setAddForm]  = useState({ user_id: '', role: isAdmin ? 'Proprietaire' : 'Lecteur' })
   const [notif,      setNotif]    = useState({ msg: '', type: 'success' })
+  const [pagesProjet, setPagesProjet] = useState(projet?.pages_visibles ?? null)
 
   const notify = (msg, type = 'success') => {
     setNotif({ msg, type })
@@ -99,7 +100,8 @@ function GestionAccesModal({ projet, onClose, isAdmin }) {
     getUsersDisponibles()
       .then(({ data }) => setUsers(data))
       .catch(() => {}) // non bloquant : impact uniquement le formulaire d'ajout
-  }, [projet.id])
+    setPagesProjet(projet?.pages_visibles ?? null)
+  }, [projet.id, projet?.pages_visibles])
 
   const membresIds      = new Set(membres.map((m) => m.user_id))
   const usersDisponibles = users.filter((u) => !membresIds.has(u.id))
@@ -153,6 +155,22 @@ function GestionAccesModal({ projet, onClose, isAdmin }) {
     } catch (err) { notify(err?.response?.data?.detail ?? 'Erreur.', 'error') }
   }
 
+  const handleProjectPagesChange = async (page, checked) => {
+    const current = pagesProjet ?? PAGES_DISPONIBLES.map((p) => p.key)
+    const next = checked
+      ? [...new Set([...current, page])]
+      : current.filter((p) => p !== page)
+    const payload = next.length === PAGES_DISPONIBLES.length ? null : next
+    try {
+      const { data } = await updateProjetPages(projet.id, payload)
+      setPagesProjet(data.pages_visibles ?? null)
+      onProjetUpdated?.(data)
+      notify('Pages visibles du projet mises à jour.')
+    } catch (err) {
+      notify(err?.response?.data?.detail ?? 'Erreur lors de la mise à jour des paramètres projet.', 'error')
+    }
+  }
+
   return (
     <div className="fixed inset-0 bg-black/40 dark:bg-black/60 z-50 flex items-center justify-center p-4">
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl p-6 max-h-[90vh] flex flex-col border border-gray-100 dark:border-slate-700">
@@ -173,6 +191,48 @@ function GestionAccesModal({ projet, onClose, isAdmin }) {
               : 'text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800'
           }`}>{notif.msg}</div>
         )}
+
+        {/* Paramètres projet — visible propriétaires/admins uniquement */}
+        {(isAdmin || projet.mon_role === 'Proprietaire') && <div className="mb-3 flex-shrink-0 p-3 rounded-xl border border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/70">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-2">Pages visibles dans ce projet</p>
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300 cursor-pointer font-medium">
+              <input
+                type="checkbox"
+                className="accent-blue-600 w-4 h-4"
+                checked={pagesProjet == null}
+                onChange={(e) => {
+                  const payload = e.target.checked ? null : PAGES_DISPONIBLES.map((p) => p.key)
+                  updateProjetPages(projet.id, payload)
+                    .then(({ data }) => {
+                      setPagesProjet(data.pages_visibles ?? null)
+                      onProjetUpdated?.(data)
+                    })
+                    .catch((err) => notify(err?.response?.data?.detail ?? 'Erreur lors de la mise à jour des paramètres projet.', 'error'))
+                }}
+              />
+              Toutes les pages (aucune restriction)
+            </label>
+            <div className="ml-1 grid grid-cols-2 sm:grid-cols-3 gap-1 pt-0.5">
+              {PAGES_DISPONIBLES.map((p) => {
+                const allPages = pagesProjet == null
+                const hasAccess = allPages || pagesProjet.includes(p.key)
+                return (
+                  <label key={p.key} className={`flex items-center gap-2 text-sm cursor-pointer px-2 py-1 rounded-lg transition-colors ${allPages ? 'text-gray-300 dark:text-slate-600' : 'text-gray-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}>
+                    <input
+                      type="checkbox"
+                      className="accent-blue-600 w-3.5 h-3.5"
+                      disabled={allPages}
+                      checked={hasAccess}
+                      onChange={(e) => handleProjectPagesChange(p.key, e.target.checked)}
+                    />
+                    {p.label}
+                  </label>
+                )
+              })}
+            </div>
+          </div>
+        </div>}
 
         {/* Actions */}
         <div className="flex items-center justify-between mb-3 flex-shrink-0">
@@ -611,6 +671,11 @@ export default function ProjectsPage() {
       setError(err?.response?.data?.detail ?? 'Erreur lors du changement de statut.')
     }
   }
+
+  const handleProjetUpdated = (updatedProjet) => {
+    setProjets((list) => list.map((p) => (p.id === updatedProjet.id ? { ...p, ...updatedProjet } : p)))
+    setAccesProjet((current) => (current?.id === updatedProjet.id ? { ...current, ...updatedProjet } : current))
+  }
   const initiales = (user?.nom ?? user?.email ?? '?')
     .split(' ').map((p) => p[0]?.toUpperCase()).slice(0, 2).join('')
 
@@ -802,7 +867,12 @@ export default function ProjectsPage() {
       )}
 
       {accesProjet && (
-        <GestionAccesModal projet={accesProjet} onClose={() => setAccesProjet(null)} isAdmin={isAdmin} />
+        <GestionAccesModal
+          projet={accesProjet}
+          onClose={() => setAccesProjet(null)}
+          isAdmin={isAdmin}
+          onProjetUpdated={handleProjetUpdated}
+        />
       )}
     </div>
   )

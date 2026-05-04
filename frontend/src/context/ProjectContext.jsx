@@ -30,9 +30,12 @@ export function ProjectProvider({ children }) {
   const estProprietaire = isAdmin || projet?.mon_role === 'Proprietaire'
 
   // Vérifie l'accès à une page pour l'utilisateur courant dans ce projet.
-  // Admin / Proprietaire / Editeur / Lecteur → toutes les pages.
-  // Client_Limite → uniquement les pages listées dans mes_pages (null = toutes).
+  // 1) Filtre global du projet (pages_visibles)
+  // 2) Filtre membre Client_Limite (mes_pages)
   const canAccessPage = (page) => {
+    const pagesProjet = projet?.pages_visibles
+    if (pagesProjet != null && !pagesProjet.includes(page)) return false
+
     if (isAdmin) return true
     if (projet?.mon_role !== 'Client_Limite') return true
     if (projet?.mes_pages == null) return true
