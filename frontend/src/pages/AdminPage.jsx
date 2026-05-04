@@ -187,7 +187,11 @@ function UsersTab({ currentUser }) {
             <div><label className={lbl}>E-mail *</label><input className={inp} type="email" required value={form.email} onChange={setF('email')} placeholder="prenom.nom@domaine.fr" /></div>
             <div><label className={lbl}>Nom</label><input className={inp} value={form.nom} onChange={setF('nom')} placeholder="Prénom Nom" /></div>
             <div><label className={lbl}>Poste</label><input className={inp} value={form.poste} onChange={setF('poste')} placeholder="Chef de projet…" /></div>
-            <div><label className={lbl}>Mot de passe *</label><input className={inp} type="password" required minLength={6} value={form.password} onChange={setF('password')} /></div>
+            <div>
+              <label className={lbl}>Mot de passe *</label>
+              <input className={inp} type="password" required minLength={12} value={form.password} onChange={setF('password')} autoComplete="new-password" />
+              <p className="mt-1 text-[11px] text-gray-400 dark:text-slate-500">Min. 12 car. — 1 maj, 1 min, 1 chiffre, 1 spécial.</p>
+            </div>
             <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300 cursor-pointer">
               <input type="checkbox" className="accent-red-600" checked={form.is_admin} onChange={setF('is_admin')} />
               Administrateur (accès total)
@@ -238,7 +242,11 @@ function UsersTab({ currentUser }) {
       {modal === 'pwd' && target && (
         <Modal title={`Réinitialiser le mot de passe — ${target.email}`} onClose={() => setModal(null)}>
           <form onSubmit={handlePwd} className="space-y-3">
-            <div><label className={lbl}>Nouveau mot de passe *</label><input className={inp} type="password" required minLength={6} value={newPwd} onChange={(e) => setNewPwd(e.target.value)} /></div>
+            <div>
+              <label className={lbl}>Nouveau mot de passe *</label>
+              <input className={inp} type="password" required minLength={12} value={newPwd} onChange={(e) => setNewPwd(e.target.value)} autoComplete="new-password" />
+              <p className="mt-1 text-[11px] text-gray-400 dark:text-slate-500">Min. 12 car. — 1 maj, 1 min, 1 chiffre, 1 spécial.</p>
+            </div>
             <div className="flex gap-2 pt-2">
               <button type="button" onClick={() => setModal(null)} className="flex-1 border border-gray-200 dark:border-slate-600 rounded-xl py-2 text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">Annuler</button>
               <button type="submit" disabled={submitting} className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-xl py-2 text-sm font-semibold transition-colors">{submitting ? 'Réinitialisation…' : 'Réinitialiser'}</button>

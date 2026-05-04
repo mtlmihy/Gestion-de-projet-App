@@ -16,5 +16,9 @@ bcrypt>=4.1.0                  # hashing des mots de passe (utilisé directement
 # ── Sécurité ──────────────────────────────────────────────────────────────────
 slowapi>=0.1.9                 # rate limiting (anti brute-force /auth/login)
 
+# ── Observabilité (optionnel) ─────────────────────────────────────────────────
+# Activé seulement si SENTRY_DSN est défini (cf. app/main.py).
+sentry-sdk[fastapi]>=2.0.0     # capture des erreurs Python + alerting
+
 # ── Utilitaires ───────────────────────────────────────────────────────────────
 python-multipart>=0.0.9        # nécessaire pour Form() dans FastAPI

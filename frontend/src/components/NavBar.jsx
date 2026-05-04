@@ -1,7 +1,9 @@
 import { NavLink, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useProject } from '../context/ProjectContext'
 import ThemeToggleButton from './ThemeToggleButton'
+import ChangePasswordModal from './ChangePasswordModal'
 import Logo from './Logo'
 
 const LINKS = [
@@ -28,8 +30,17 @@ export default function NavBar() {
   const { logout, user, isAdmin, canAccess } = useAuth()
   const { projet, clearProjet, canAccessPage } = useProject()
   const navigate = useNavigate()
+  const [showChangePwd, setShowChangePwd] = useState(false)
 
   const handleLogout = async () => {
+    clearProjet()
+    await logout()
+    navigate('/login', { replace: true })
+  }
+
+  const handlePasswordChanged = async () => {
+    // Le backend a invalidé la session ; on déconnecte proprement.
+    setShowChangePwd(false)
     clearProjet()
     await logout()
     navigate('/login', { replace: true })
@@ -95,13 +106,17 @@ export default function NavBar() {
                     : 'text-gray-600 dark:text-slate-400 hover:bg-gray-800 dark:hover:bg-slate-700 hover:text-white'
                 }`
               }
+            >button
+              onClick={() => setShowChangePwd(true)}
+              className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg px-2 py-1 transition-colors"
+              title="Changer mon mot de passe"
             >
-              Administration
-            </NavLink>
-          )}
-        </nav>
-
-        {/* Utilisateur connecté + Déconnexion */}
+              <UserAvatar user={user} />
+              <span className="hidden md:block font-medium">{user.nom ?? user.email}</span>
+              {isAdmin && (
+                <span className="hidden md:block bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 text-xs font-bold px-1.5 py-0.5 rounded">Admin</span>
+              )}
+            </buttonsateur connecté + Déconnexion */}
         <div className="shrink-0 flex items-center gap-2">
           {user && (
             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-400">
@@ -123,6 +138,13 @@ export default function NavBar() {
               <polyline points="16 17 21 12 16 7" />
               <line x1="21" y1="12" x2="9" y2="12" />
             </svg>
+
+      {showChangePwd && (
+        <ChangePasswordModal
+          onClose={() => setShowChangePwd(false)}
+          onSuccess={handlePasswordChanged}
+        />
+      )}
             <span className="hidden sm:block">Déconnexion</span>
           </button>
         </div>

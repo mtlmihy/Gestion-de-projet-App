@@ -9,6 +9,25 @@ from slowapi.util import get_remote_address
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.config import settings
+
+
+# ── Sentry (optionnel) ────────────────────────────────────────────────────────
+# Activé uniquement si SENTRY_DSN est défini en env. Doit être initialisé
+# AVANT la création de l'app FastAPI pour capturer les erreurs de démarrage.
+if settings.sentry_dsn:
+    import sentry_sdk
+    from sentry_sdk.integrations.fastapi import FastApiIntegration
+    from sentry_sdk.integrations.starlette import StarletteIntegration
+
+    sentry_sdk.init(
+        dsn=settings.sentry_dsn,
+        environment=settings.env,
+        traces_sample_rate=settings.sentry_traces_sample_rate,
+        send_default_pii=False,           # ne pas envoyer cookies, IP, etc. par défaut
+        integrations=[FastApiIntegration(), StarletteIntegration()],
+    )
+
+
 from app.db.pool import init_pool, close_pool
 from app.auth.csrf import CSRFMiddleware
 from app.auth.router import router as auth_router

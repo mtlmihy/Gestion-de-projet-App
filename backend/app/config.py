@@ -53,6 +53,12 @@ class Settings(BaseSettings):
     # Limite appliquée à /auth/login (anti brute-force).
     login_rate_limit: str = "5/minute"
 
+    # ── Observabilité ─────────────────────────────────────────────────────────
+    # Si défini, active Sentry (capture d'erreurs + alerting).
+    sentry_dsn: Optional[str] = None
+    # 0.0 = désactivé, 1.0 = 100% des transactions tracées.
+    sentry_traces_sample_rate: float = 0.0
+
 
 settings = Settings()
 

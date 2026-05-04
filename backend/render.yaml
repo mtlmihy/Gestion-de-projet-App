@@ -36,5 +36,11 @@ services:
         value: "none"           # cross-site (Vercel ↔ Render)
       - key: LOGIN_RATE_LIMIT
         value: "5/minute"       # anti brute-force
+      # ── Observabilité (optionnel) ──
+      # Renseigner SENTRY_DSN dans le dashboard Render pour activer.
+      - key: SENTRY_DSN
+        sync: false
+      - key: SENTRY_TRACES_SAMPLE_RATE
+        value: "0.0"
       - key: PYTHON_VERSION
         value: "3.12.7"

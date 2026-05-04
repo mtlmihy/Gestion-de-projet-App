@@ -2,6 +2,8 @@ from __future__ import annotations
 from typing import Optional
 from pydantic import BaseModel, EmailStr, field_validator
 
+from app.security.passwords import validate_password_policy
+
 
 class UserCreate(BaseModel):
     email: str
@@ -14,10 +16,8 @@ class UserCreate(BaseModel):
 
     @field_validator("password")
     @classmethod
-    def password_min_length(cls, v: str) -> str:
-        if len(v) < 6:
-            raise ValueError("Le mot de passe doit faire au moins 6 caractères.")
-        return v
+    def _password_policy(cls, v: str) -> str:
+        return validate_password_policy(v)
 
 
 class UserUpdate(BaseModel):
@@ -55,7 +55,5 @@ class ResetPasswordRequest(BaseModel):
 
     @field_validator("password")
     @classmethod
-    def password_min_length(cls, v: str) -> str:
-        if len(v) < 6:
-            raise ValueError("Le mot de passe doit faire au moins 6 caractères.")
-        return v
+    def _password_policy(cls, v: str) -> str:
+        return validate_password_policy(v)

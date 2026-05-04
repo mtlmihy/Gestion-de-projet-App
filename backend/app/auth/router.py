@@ -1,9 +1,11 @@
 """
 Endpoints d'authentification.
 
-POST /auth/login  → vérifie email + mot de passe, émet un JWT dans un cookie HttpOnly
-GET  /auth/me     → retourne les infos de l'utilisateur connecté
-POST /auth/logout → supprime le cookie côté client
+POST /auth/login            → vérifie email + mdp, émet un JWT en cookie HttpOnly
+POST /auth/logout           → supprime les cookies de session côté client
+POST /auth/logout-all       → révoque toutes les sessions de l'utilisateur
+POST /auth/change-password  → change son propre mot de passe
+GET  /auth/me               → retourne les infos de l'utilisateur connecté
 """
 from asyncpg import Pool
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
@@ -13,9 +15,10 @@ from slowapi.util import get_remote_address
 from app.auth import service as auth_service
 from app.auth.csrf import CSRF_COOKIE_NAME, generate_csrf_token
 from app.auth.dependencies import get_current_user
-from app.auth.schemas import LoginRequest, MeResponse, TokenResponse
+from app.auth.schemas import ChangePasswordRequest, LoginRequest, MeResponse, TokenResponse
 from app.config import settings
 from app.db.pool import get_pool
+from app.security.audit import Action, log_event
 
 router = APIRouter()
 
@@ -78,6 +81,12 @@ async def login(
         user = await auth_service.authenticate_user(conn, payload.email, payload.password)
 
     if not user:
+        await log_event(
+            pool,
+            action=Action.LOGIN_FAILURE,
+            user_email=payload.email,
+            request=request,
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="E-mail ou mot de passe incorrect.",
@@ -97,6 +106,13 @@ async def login(
         path="/",
     )
     _set_csrf_cookie(response)
+    await log_event(
+        pool,
+        action=Action.LOGIN_SUCCESS,
+        user_id=user["id"],
+        user_email=user["email"],
+        request=request,
+    )
     return TokenResponse(access_token=token)
 
 
@@ -107,13 +123,36 @@ async def me(current_user: dict = Depends(get_current_user)):
 
 
 @router.post("/logout", status_code=204)
-async def logout(response: Response):
+async def logout(
+    request: Request,
+    response: Response,
+    pool: Pool = Depends(get_pool),
+):
     """Invalide la session côté client en supprimant les cookies."""
     _clear_session_cookies(response)
+    # Best-effort : si on a un access_token, on tente d'identifier l'utilisateur
+    # pour tracer le logout. Sans token valide, on log quand même l'événement.
+    user_id = None
+    user_email = None
+    token = request.cookies.get("access_token")
+    if token:
+        try:
+            payload = auth_service.decode_access_token(token)
+            user_id = payload.get("sub")
+        except HTTPException:
+            pass
+    await log_event(
+        pool,
+        action=Action.LOGOUT,
+        user_id=user_id,
+        user_email=user_email,
+        request=request,
+    )
 
 
 @router.post("/logout-all", status_code=204)
 async def logout_all(
+    request: Request,
     response: Response,
     current_user: dict = Depends(get_current_user),
     pool: Pool = Depends(get_pool),
@@ -129,3 +168,58 @@ async def logout_all(
             current_user["id"],
         )
     _clear_session_cookies(response)
+    await log_event(
+        pool,
+        action=Action.LOGOUT_ALL,
+        user_id=current_user["id"],
+        user_email=current_user.get("email"),
+        request=request,
+    )
+
+
+@router.post("/change-password", status_code=204)
+async def change_password(
+    request: Request,
+    payload: ChangePasswordRequest,
+    response: Response,
+    current_user: dict = Depends(get_current_user),
+    pool: Pool = Depends(get_pool),
+):
+    """
+    Permet à l'utilisateur de changer son propre mot de passe.
+    Vérifie l'ancien mot de passe, applique la politique sur le nouveau,
+    incrémente token_version (révoque les autres sessions) et purge les
+    cookies de la session courante (force la reconnexion).
+    """
+    if payload.current_password == payload.new_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Le nouveau mot de passe doit être différent de l'ancien.",
+        )
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "SELECT mot_de_passe FROM utilisateurs WHERE id=$1::uuid",
+            current_user["id"],
+        )
+        if not row or not auth_service.verify_password(
+            payload.current_password, row["mot_de_passe"]
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Mot de passe actuel incorrect.",
+            )
+        new_hash = auth_service.hash_password(payload.new_password)
+        await conn.execute(
+            "UPDATE utilisateurs "
+            "SET mot_de_passe=$2, token_version = token_version + 1 "
+            "WHERE id=$1::uuid",
+            current_user["id"], new_hash,
+        )
+    _clear_session_cookies(response)
+    await log_event(
+        pool,
+        action=Action.PASSWORD_CHANGE,
+        user_id=current_user["id"],
+        user_email=current_user.get("email"),
+        request=request,
+    )

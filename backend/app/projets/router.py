@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import List
 from asyncpg import Pool
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from app.auth.dependencies import get_current_user
 from app.db.pool import get_pool
 from app.projets import service as svc
@@ -10,6 +10,7 @@ from app.projets.schemas import (
     ProjetCreate, ProjetRead, ProjetStatutUpdate, ProjetUpdate,
     ROLES_VALIDES,
 )
+from app.security.audit import Action, log_event
 
 router = APIRouter(dependencies=[Depends(get_current_user)])
 
@@ -66,16 +67,31 @@ async def change_statut(
 
 
 @router.delete("/{projet_id}", status_code=204)
-async def delete_projet(projet_id: str, pool: Pool = Depends(get_pool)):
+async def delete_projet(
+    projet_id: str,
+    request: Request,
+    pool: Pool = Depends(get_pool),
+    current_user: dict = Depends(get_current_user),
+):
     async with pool.acquire() as conn:
         deleted = await svc.delete(conn, projet_id)
     if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Projet introuvable.")
+    await log_event(
+        pool,
+        action=Action.PROJET_DELETE,
+        user_id=current_user["id"],
+        user_email=current_user.get("email"),
+        target_type="projet",
+        target_id=projet_id,
+        request=request,
+    )
 
 
 @router.post("/{projet_id}/cloturer", response_model=ProjetRead)
 async def cloturer_projet(
     projet_id: str,
+    request: Request,
     pool: Pool = Depends(get_pool),
     current_user: dict = Depends(get_current_user),
 ):
@@ -85,6 +101,15 @@ async def cloturer_projet(
         result = await svc.cloturer(conn, projet_id)
     if not result:
         raise HTTPException(status_code=404, detail="Projet introuvable.")
+    await log_event(
+        pool,
+        action=Action.PROJET_CLOTURE,
+        user_id=current_user["id"],
+        user_email=current_user.get("email"),
+        target_type="projet",
+        target_id=projet_id,
+        request=request,
+    )
     return result
 
 
