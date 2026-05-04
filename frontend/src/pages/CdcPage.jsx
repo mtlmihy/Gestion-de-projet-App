@@ -208,11 +208,21 @@ body{background:${tb.bodyBg};color:#1e293b;font-size:11px;line-height:1.5;}
   tr,td,th{page-break-inside:avoid;break-inside:avoid;}
 }
 </style>
+<script>
+function closeViewer(){
+  try { window.close(); } catch (e) {}
+  // Fallbacks for browsers that block close() on this tab/window.
+  try { window.open('', '_self'); window.close(); } catch (e) {}
+  setTimeout(function(){
+    try { window.location.replace('about:blank'); } catch (e) {}
+  }, 50);
+}
+</script>
 </head><body>
 <div class="no-print" style="background:${tb.barBg};border-bottom:1px solid ${tb.barBorder};padding:9px 20px;display:flex;justify-content:space-between;align-items:center;">
   <span style="font-size:10px;color:${tb.barText};">Charte de Projet · ${escH(cdc.nom_projet || 'Sans titre')} · ${today}</span>
   <div style="display:flex;gap:8px;">
-    <button class="pbtn" style="background:${tb.closeBg};color:${tb.closeText};" onclick="window.close()">✕ Fermer</button>
+    <button class="pbtn" style="background:${tb.closeBg};color:${tb.closeText};" onclick="closeViewer()">✕ Fermer</button>
     <button class="pbtn" style="background:${tb.printBg};color:${tb.printText};" onclick="window.print()">🖨 Imprimer / PDF</button>
   </div>
 </div>
@@ -465,12 +475,22 @@ body{background:${tb.bodyBg};color:#1e293b;}
   .cdc-row{page-break-inside:auto;}
 }
 </style>
+<script>
+function closeViewer(){
+  try { window.close(); } catch (e) {}
+  // Fallbacks for browsers that block close() on this tab/window.
+  try { window.open('', '_self'); window.close(); } catch (e) {}
+  setTimeout(function(){
+    try { window.location.replace('about:blank'); } catch (e) {}
+  }, 50);
+}
+</script>
 </head>
 <body>
 <div class="no-print" style="background:${tb.barBg};border-bottom:1px solid ${tb.barBorder};padding:9px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;">
   <span style="font-size:10px;color:${tb.barText};">Cahier des Charges · ${escH(cdc.nom_projet || 'Sans titre')} · ${today}</span>
   <div style="display:flex;gap:8px;">
-    <button class="pbtn" style="background:${tb.closeBg};color:${tb.closeText};" onclick="window.close()">✕ Fermer</button>
+    <button class="pbtn" style="background:${tb.closeBg};color:${tb.closeText};" onclick="closeViewer()">✕ Fermer</button>
     <button class="pbtn" style="background:${tb.printBg};color:${tb.printText};" onclick="window.print()">🖨 Imprimer / PDF</button>
   </div>
 </div>
