@@ -11,6 +11,7 @@ import ProjectsPage from './pages/ProjectsPage'
 import RisquesPage from './pages/RisquesPage'
 import TachesPage from './pages/TachesPage'
 import PlanningPage from './pages/PlanningPage'
+import CopilPage from './pages/CopilPage'
 import CdcPage from './pages/CdcPage'
 import EquipePage from './pages/EquipePage'
 import AidePage from './pages/AidePage'
@@ -31,7 +32,7 @@ function AccessDenied() {
 }
 
 // Ordre de priorité des pages pour la redirection auto
-const PAGES_ORDRE = ['cdc', 'planning', 'risques', 'taches', 'equipe', 'aide']
+const PAGES_ORDRE = ['cdc', 'planning', 'copil', 'risques', 'taches', 'equipe', 'aide']
 
 function PageGuard({ page, children }) {
   const { canAccess } = useAuth()
@@ -75,6 +76,7 @@ export default function App() {
               <Route path="risques"  element={<PageGuard page="risques"><RisquesPage /></PageGuard>} />
               <Route path="taches"   element={<PageGuard page="taches"><TachesPage /></PageGuard>} />
               <Route path="planning" element={<PageGuard page="planning"><PlanningPage /></PageGuard>} />
+              <Route path="copil"    element={<PageGuard page="copil"><CopilPage /></PageGuard>} />
               <Route path="cdc"      element={<PageGuard page="cdc"><CdcPage /></PageGuard>} />
               <Route path="equipe"   element={<PageGuard page="equipe"><EquipePage /></PageGuard>} />
               <Route path="aide"     element={<PageGuard page="aide"><AidePage /></PageGuard>} />

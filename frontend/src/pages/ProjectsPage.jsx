@@ -70,6 +70,7 @@ const PAGES_DISPONIBLES = [
   { key: 'risques',  label: "Risques" },
   { key: 'taches',   label: "Tâches" },
   { key: 'planning', label: "Planning" },
+  { key: 'copil',    label: "COPIL" },
   { key: 'equipe',   label: "Équipe" },
   { key: 'aide',     label: "Aide" },
 ]

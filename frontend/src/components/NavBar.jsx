@@ -9,6 +9,7 @@ import Logo from './Logo'
 const LINKS = [
   { to: '/cdc',      label: 'Cahier des Charges', page: 'cdc'      },
   { to: '/planning', label: 'Planning',            page: 'planning' },
+  { to: '/copil',    label: 'COPIL',               page: 'copil'    },
   { to: '/risques',  label: 'Risques',             page: 'risques'  },
   { to: '/taches',   label: 'Tâches',              page: 'taches'   },
   { to: '/equipe',   label: 'Équipe',              page: 'equipe'   },

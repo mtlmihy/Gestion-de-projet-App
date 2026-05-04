@@ -36,6 +36,7 @@ from app.users.router import router as users_router, _public_router as users_pub
 from app.projets.router import router as projets_router
 from app.risques.router import router as risques_router
 from app.taches.router import router as taches_router
+from app.copils.router import router as copils_router
 from app.equipe.router import router as equipe_router
 from app.cdc.router import router as cdc_router
 from app.liens.router import router as liens_router
@@ -186,6 +187,7 @@ app.include_router(users_router,        prefix="/users",   tags=["Utilisateurs"]
 app.include_router(projets_router, prefix="/projets", tags=["Projets"])
 app.include_router(risques_router, prefix="/risques", tags=["Risques"])
 app.include_router(taches_router,  prefix="/taches",  tags=["Tâches"])
+app.include_router(copils_router,  prefix="/copils",  tags=["COPIL"])
 app.include_router(equipe_router,  prefix="/equipe",  tags=["Équipe"])
 app.include_router(cdc_router,     prefix="/cdc",     tags=["Cahier des Charges"])
 app.include_router(liens_router,                      tags=["Liens externes"])
