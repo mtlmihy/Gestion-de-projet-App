@@ -517,26 +517,11 @@ function closeViewer(){
 <div class="shell">${inner}</div>
 </body>
 </html>`
-    const w = window.open('', '_blank')
+    const blob = new Blob([html], { type: 'text/html; charset=utf-8' })
+    const blobUrl = URL.createObjectURL(blob)
+    const w = window.open(blobUrl, '_blank')
     if (!w) { alert('Autorisez les popups pour générer le PDF.'); return }
     attachViewerCloseBridge(w)
-    w.document.write(html)
-    w.document.close()
-    // Attacher les event listeners APRÈS document.close()
-    setTimeout(() => {
-      try {
-        const btns = w.document.querySelectorAll('button.pbtn')
-        btns.forEach(btn => {
-          if (btn.innerHTML.includes('Fermer')) {
-            btn.onclick = () => w.window.closeViewer()
-          } else if (btn.innerHTML.includes('Imprimer')) {
-            btn.onclick = () => w.window.print()
-          }
-        })
-      } catch (e) {
-        console.warn('Impossible d\'attacher les listeners aux boutons:', e)
-      }
-    }, 50)
   }
 
   // Génération de la Charte Projet dans une nouvelle fenêtre
@@ -549,26 +534,11 @@ function closeViewer(){
         }
       : { ...cdc, budget: '', budget_titre: 'Budget' }
     const html = buildCharterHtml(cdcForExport, dark, isProjetClient)
-    const w = window.open('', '_blank')
+    const blob = new Blob([html], { type: 'text/html; charset=utf-8' })
+    const blobUrl = URL.createObjectURL(blob)
+    const w = window.open(blobUrl, '_blank')
     if (!w) { alert('Autorisez les popups pour générer la charte.'); return }
     attachViewerCloseBridge(w)
-    w.document.write(html)
-    w.document.close()
-    // Attacher les event listeners APRÈS document.close()
-    setTimeout(() => {
-      try {
-        const btns = w.document.querySelectorAll('button.pbtn')
-        btns.forEach(btn => {
-          if (btn.innerHTML.includes('Fermer')) {
-            btn.onclick = () => w.window.closeViewer()
-          } else if (btn.innerHTML.includes('Imprimer')) {
-            btn.onclick = () => w.window.print()
-          }
-        })
-      } catch (e) {
-        console.warn('Impossible d\'attacher les listeners aux boutons:', e)
-      }
-    }, 50)
   }
 
   if (loading) return (
