@@ -36,7 +36,7 @@ function pvTextBlock(text) {
   return `<div style="font-size:10px;color:${color};line-height:1.65;padding:10px 14px;background:#f8fafc;border-left:3px solid ${bLeft};border-radius:0 6px 6px 0;-webkit-print-color-adjust:exact;print-color-adjust:exact;">${content}</div>`
 }
 
-function buildPrintViewHtml(cdc) {
+function buildPrintViewHtml(cdc, includeBudget = true) {
   const dv   = s => s || '—'
   const today = new Date().toLocaleDateString('fr-FR')
   const thS  = 'background:#f1f5f9;font-size:7.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;padding:7px 10px;border:1px solid #e2e8f0;-webkit-print-color-adjust:exact;print-color-adjust:exact;'
@@ -118,7 +118,7 @@ function buildPrintViewHtml(cdc) {
           <th style="${thS}">Description / Livrable</th>
         </tr></thead><tbody>${jalonRows}</tbody></table>
       </div>
-      <div class="cdc-block" style="margin-bottom:18px;">${shdr('8', 'Budget')}${pvTextBlock(cdc.budget)}</div>
+      ${includeBudget ? `<div class="cdc-block" style="margin-bottom:18px;">${shdr('8', 'Budget')}${pvTextBlock(cdc.budget)}</div>` : ''}
       <div class="cdc-block" style="margin-top:24px;padding-top:10px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:8px;color:#94a3b8;">
         <span>Cahier des Charges · ${escH(dv(cdc.nom_projet))} · ${escH(dv(cdc.service))}</span>
         <span>Généré le ${today} · Document confidentiel</span>
@@ -127,7 +127,7 @@ function buildPrintViewHtml(cdc) {
   </div>`
 }
 
-function buildCharterHtml(cdc, dark = false) {
+function buildCharterHtml(cdc, dark = false, includeBudget = true) {
   const dv    = s => escH(s || '—')
   const today = new Date().toLocaleDateString('fr-FR')
   const tb = dark
@@ -239,9 +239,9 @@ body{background:${tb.bodyBg};color:#1e293b;font-size:11px;line-height:1.5;}
     <div class="avoid-break">${secTitle('Risques identifiés')}${box(numbered(cdc.risques))}</div>
     <div class="avoid-break">${secTitle('Contraintes techniques')}${box(numbered(cdc.technique))}</div>
   </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
+  <div style="display:grid;grid-template-columns:${includeBudget ? '1fr 1fr' : '1fr'};gap:14px;margin-bottom:18px;">
     <div class="avoid-break">${secTitle('Ressources')}${box(bullets(cdc.ressources))}</div>
-    <div class="avoid-break">${secTitle('Budget')}${box(bullets(cdc.budget))}</div>
+    ${includeBudget ? `<div class="avoid-break">${secTitle('Budget')}${box(bullets(cdc.budget))}</div>` : ''}
   </div>
   <div class="avoid-break" style="margin-bottom:18px;">${secTitle('Jalons &amp; Planning')}
     <table style="width:100%;border-collapse:collapse;font-size:10.5px;">
@@ -322,6 +322,8 @@ function Notification({ msg, type }) {
 export default function CdcPage() {
   const { projet, estLecteur } = useProject()
   const { dark } = useTheme()
+  const isProjetClient = projet?.type_projet === 'Client'
+  const budgetProjet = projet?.budget_prevu == null ? '' : String(projet.budget_prevu)
   const [cdc,      setCdc]     = useState(EMPTY)
   const [loading,  setLoading] = useState(true)
   const [saving,   setSaving]  = useState(false)
@@ -333,6 +335,18 @@ export default function CdcPage() {
     setTimeout(() => setNotif({ msg: '', type: 'ok' }), 3500)
   }
 
+  const applyBudgetRules = (base) => {
+    const next = { ...EMPTY, ...base }
+    if (!isProjetClient) {
+      next.budget = ''
+      return next
+    }
+    if (!String(next.budget ?? '').trim() && budgetProjet) {
+      next.budget = budgetProjet
+    }
+    return next
+  }
+
   // Chargement initial
   useEffect(() => {
     getCdc(projet.id)
@@ -340,17 +354,21 @@ export default function CdcPage() {
         setLastSaved(data.derniere_maj ? new Date(data.derniere_maj) : null)
         try {
           const parsed = JSON.parse(data.contenu)
-          setCdc({ ...EMPTY, ...parsed })
+          setCdc(applyBudgetRules(parsed))
         } catch {
           // Le contenu n'est pas du JSON → on le met dans contexte
-          setCdc({ ...EMPTY, contexte: data.contenu ?? '' })
+          setCdc(applyBudgetRules({ contexte: data.contenu ?? '' }))
         }
       })
       .catch((err) => {
-        if (err?.response?.status !== 404) notify('Erreur lors du chargement.', 'error')
+        if (err?.response?.status === 404) {
+          setCdc(applyBudgetRules({ nom_projet: projet?.nom ?? '' }))
+        } else {
+          notify('Erreur lors du chargement.', 'error')
+        }
       })
       .finally(() => setLoading(false))
-  }, [])
+  }, [projet.id, projet?.nom, isProjetClient, budgetProjet])
 
   // Modificateurs
   const set = (field) => (e) => setCdc((c) => ({ ...c, [field]: e.target.value }))
@@ -369,8 +387,12 @@ export default function CdcPage() {
   const handleSave = async () => {
     setSaving(true)
     try {
-      const { data } = await updateCdc(projet.id, JSON.stringify(cdc))
+      const payload = isProjetClient ? cdc : { ...cdc, budget: '' }
+      const { data } = await updateCdc(projet.id, JSON.stringify(payload))
       setLastSaved(data.derniere_maj ? new Date(data.derniere_maj) : null)
+      if (!isProjetClient && String(cdc.budget ?? '').trim()) {
+        setCdc((prev) => ({ ...prev, budget: '' }))
+      }
       notify('Cahier des charges sauvegardé.')
     } catch {
       notify('Erreur lors de la sauvegarde.', 'error')
@@ -392,7 +414,8 @@ export default function CdcPage() {
   // Export PDF : ouvre une fenêtre de visualisation (comme la Charte) avec
   // boutons Fermer / Imprimer-PDF, plutôt que d'imprimer directement.
   const handleExportPDF = () => {
-    const inner = buildPrintViewHtml(cdc)
+    const cdcForExport = isProjetClient ? cdc : { ...cdc, budget: '' }
+    const inner = buildPrintViewHtml(cdcForExport, isProjetClient)
     const today = new Date().toLocaleDateString('fr-FR')
     const title = `Cahier des Charges — ${cdc.nom_projet || 'Sans titre'}`
     // Thème appliqué à la barre d'outils + au fond de la fenêtre (le document reste blanc)
@@ -446,7 +469,8 @@ body{background:${tb.bodyBg};color:#1e293b;}
 
   // Génération de la Charte Projet dans une nouvelle fenêtre
   const handleOpenCharter = () => {
-    const html = buildCharterHtml(cdc, dark)
+    const cdcForExport = isProjetClient ? cdc : { ...cdc, budget: '' }
+    const html = buildCharterHtml(cdcForExport, dark, isProjetClient)
     const w = window.open('', '_blank')
     if (!w) { alert('Autorisez les popups pour générer la charte.'); return }
     w.document.write(html)
@@ -640,12 +664,14 @@ body{background:${tb.bodyBg};color:#1e293b;}
         </div>
       </Card>
 
-      {/* ── Budget ─────────────────────────────────────────────────────── */}
-      <Card>
-        <SectionHeader n="8" title="Budget" />
-        <p className={help}>Montant des investissements, prestataires, hébergement, coût des ressources, maintenance, licences, éléments techniques, etc.</p>
-        <textarea className={ta} value={cdc.budget ?? ''} onChange={set('budget')} placeholder="Décrivez le budget du projet…" disabled={estLecteur} />
-      </Card>
+      {/* ── Budget (projets clients uniquement) ────────────────────────── */}
+      {isProjetClient && (
+        <Card>
+          <SectionHeader n="8" title="Budget" />
+          <p className={help}>Valeur initiale reprise depuis la création du projet. Vous pouvez ensuite la compléter ou la détailler.</p>
+          <textarea className={ta} value={cdc.budget ?? ''} onChange={set('budget')} placeholder="Décrivez le budget du projet…" disabled={estLecteur} />
+        </Card>
+      )}
 
       {/* ── Barre d'actions collante ────────────────────────────────────── */}
       <div className="sticky bottom-2 sm:bottom-4 bg-white/95 dark:bg-slate-800/95 backdrop-blur border border-gray-100 dark:border-slate-700 rounded-2xl px-3 sm:px-6 py-2.5 sm:py-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3 shadow-lg dark:shadow-black/40 z-10">
