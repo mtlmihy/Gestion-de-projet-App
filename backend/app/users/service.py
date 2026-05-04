@@ -12,7 +12,8 @@ def hash_password(password: str) -> str:
 
 async def get_all(conn: Connection) -> list[dict]:
     rows = await conn.fetch(
-        "SELECT id::text, email, nom, poste, is_admin, is_active, peut_creer_projet, pages_autorisees "
+        "SELECT id::text, email, nom, poste, is_admin, is_active, peut_creer_projet, "
+        "pages_autorisees, derniere_connexion "
         "FROM utilisateurs ORDER BY nom NULLS LAST"
     )
     return [dict(r) for r in rows]
@@ -20,7 +21,8 @@ async def get_all(conn: Connection) -> list[dict]:
 
 async def get_by_id(conn: Connection, user_id: str) -> dict | None:
     row = await conn.fetchrow(
-        "SELECT id::text, email, nom, poste, is_admin, is_active, peut_creer_projet, pages_autorisees "
+        "SELECT id::text, email, nom, poste, is_admin, is_active, peut_creer_projet, "
+        "pages_autorisees, derniere_connexion "
         "FROM utilisateurs WHERE id=$1::uuid",
         user_id,
     )
@@ -86,3 +88,35 @@ async def delete(conn: Connection, user_id: str) -> bool:
         "DELETE FROM utilisateurs WHERE id=$1::uuid", user_id
     )
     return result == "DELETE 1"
+
+
+async def force_logout(conn: Connection, user_id: str) -> bool:
+    """Révoque toutes les sessions actives d'un utilisateur en bumpant
+    son token_version. Tous les JWT précédemment émis sont invalidés."""
+    result = await conn.execute(
+        "UPDATE utilisateurs SET token_version = token_version + 1 "
+        "WHERE id=$1::uuid",
+        user_id,
+    )
+    return result == "UPDATE 1"
+
+
+async def remove_from_all_projects(conn: Connection, user_id: str) -> int:
+    """Retire l'utilisateur de tous ses projets (offboarding).
+    Retourne le nombre de projets desquels il a été retiré."""
+    result = await conn.execute(
+        "DELETE FROM projet_membres WHERE utilisateur_id=$1::uuid",
+        user_id,
+    )
+    # result = "DELETE n"
+    try:
+        return int(result.split()[-1])
+    except (ValueError, IndexError):
+        return 0
+
+
+async def update_last_login(conn: Connection, user_id: str) -> None:
+    await conn.execute(
+        "UPDATE utilisateurs SET derniere_connexion = NOW() WHERE id=$1::uuid",
+        user_id,
+    )

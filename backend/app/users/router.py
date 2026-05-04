@@ -167,3 +167,56 @@ async def reset_password(
         target_id=user_id,
         request=request,
     )
+
+
+@router.post("/{user_id}/force-logout", status_code=204)
+async def force_logout(
+    user_id: str,
+    request: Request,
+    pool: Pool = Depends(get_pool),
+    current_user: dict = Depends(get_current_user),
+):
+    """Admin : révoque toutes les sessions actives d'un utilisateur."""
+    async with pool.acquire() as conn:
+        ok = await svc.force_logout(conn, user_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Utilisateur introuvable.")
+    await log_event(
+        pool,
+        action=Action.LOGOUT_ALL,
+        user_id=current_user["id"],
+        user_email=current_user.get("email"),
+        target_type="user",
+        target_id=user_id,
+        request=request,
+        metadata={"forced_by_admin": True},
+    )
+
+
+@router.delete("/{user_id}/projets", status_code=200)
+async def remove_user_from_all_projects(
+    user_id: str,
+    request: Request,
+    pool: Pool = Depends(get_pool),
+    current_user: dict = Depends(get_current_user),
+):
+    """Admin : retire l'utilisateur de tous ses projets (offboarding)."""
+    async with pool.acquire() as conn:
+        # Vérifie que l'utilisateur existe
+        exists = await conn.fetchval(
+            "SELECT 1 FROM utilisateurs WHERE id=$1::uuid", user_id
+        )
+        if not exists:
+            raise HTTPException(status_code=404, detail="Utilisateur introuvable.")
+        nb = await svc.remove_from_all_projects(conn, user_id)
+    await log_event(
+        pool,
+        action=Action.USER_UPDATE,
+        user_id=current_user["id"],
+        user_email=current_user.get("email"),
+        target_type="user",
+        target_id=user_id,
+        request=request,
+        metadata={"removed_from_projets": nb},
+    )
+    return {"removed": nb}

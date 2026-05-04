@@ -96,6 +96,14 @@ async def login(
         data={"sub": user["id"], "tv": user["token_version"]},
     )
 
+    # Met à jour la dernière connexion (best-effort, ne bloque pas le login).
+    try:
+        async with pool.acquire() as conn:
+            from app.users.service import update_last_login
+            await update_last_login(conn, user["id"])
+    except Exception:
+        pass
+
     response.set_cookie(
         key="access_token",
         value=token,

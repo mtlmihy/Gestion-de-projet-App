@@ -24,13 +24,28 @@ class Settings(BaseSettings):
     password_hash: Optional[str] = None
 
     # ── CORS ──────────────────────────────────────────────────────────────────
-    # Stocké en str pour éviter le parsing JSON de pydantic-settings v2.
-    # Valeur : URL simple ou liste séparée par virgules.
+    # Stocké en str pour éviter le parsing JSON automatique de pydantic-settings v2.
+    # Accepte :
+    #   - une URL simple : "https://app.example.com"
+    #   - plusieurs séparées par virgules : "https://a.com,https://b.com"
+    #   - une liste JSON : '["https://a.com","https://b.com"]'
     cors_origins: str = "http://localhost:5173,http://localhost:3000"
 
     @property
     def cors_origins_list(self) -> List[str]:
-        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+        raw = (self.cors_origins or "").strip()
+        if not raw:
+            return []
+        # Tolère le format JSON-list au cas où qqn met ["url1","url2"] en env.
+        if raw.startswith("["):
+            import json
+            try:
+                parsed = json.loads(raw)
+                if isinstance(parsed, list):
+                    return [str(o).strip() for o in parsed if str(o).strip()]
+            except json.JSONDecodeError:
+                pass
+        return [o.strip() for o in raw.split(",") if o.strip()]
 
     # ── Cookies (auth) ────────────────────────────────────────────────────────
     # En prod cross-site (frontend Vercel ↔ backend Render) :
