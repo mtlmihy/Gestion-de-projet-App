@@ -210,6 +210,11 @@ body{background:${tb.bodyBg};color:#1e293b;font-size:11px;line-height:1.5;}
 </style>
 <script>
 function closeViewer(){
+  try {
+    if (window.opener && !window.opener.closed) {
+      window.opener.postMessage({ type: 'CDC_VIEWER_CLOSE' }, '*');
+    }
+  } catch (e) {}
   try { window.close(); } catch (e) {}
   // Fallbacks for browsers that block close() on this tab/window.
   try { window.open('', '_self'); window.close(); } catch (e) {}
@@ -431,6 +436,16 @@ export default function CdcPage() {
     return () => window.removeEventListener('afterprint', cleanup)
   }, [])
 
+  const attachViewerCloseBridge = (viewerWindow) => {
+    const onMessage = (event) => {
+      if (event.source !== viewerWindow) return
+      if (event?.data?.type !== 'CDC_VIEWER_CLOSE') return
+      try { viewerWindow.close() } catch { /* ignore */ }
+      window.removeEventListener('message', onMessage)
+    }
+    window.addEventListener('message', onMessage)
+  }
+
   // Export PDF : ouvre une fenêtre de visualisation (comme la Charte) avec
   // boutons Fermer / Imprimer-PDF, plutôt que d'imprimer directement.
   const handleExportPDF = () => {
@@ -477,6 +492,11 @@ body{background:${tb.bodyBg};color:#1e293b;}
 </style>
 <script>
 function closeViewer(){
+  try {
+    if (window.opener && !window.opener.closed) {
+      window.opener.postMessage({ type: 'CDC_VIEWER_CLOSE' }, '*');
+    }
+  } catch (e) {}
   try { window.close(); } catch (e) {}
   // Fallbacks for browsers that block close() on this tab/window.
   try { window.open('', '_self'); window.close(); } catch (e) {}
@@ -499,6 +519,7 @@ function closeViewer(){
 </html>`
     const w = window.open('', '_blank')
     if (!w) { alert('Autorisez les popups pour générer le PDF.'); return }
+    attachViewerCloseBridge(w)
     w.document.write(html)
     w.document.close()
   }
@@ -515,6 +536,7 @@ function closeViewer(){
     const html = buildCharterHtml(cdcForExport, dark, isProjetClient)
     const w = window.open('', '_blank')
     if (!w) { alert('Autorisez les popups pour générer la charte.'); return }
+    attachViewerCloseBridge(w)
     w.document.write(html)
     w.document.close()
   }
