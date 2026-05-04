@@ -544,7 +544,7 @@ body{background:${tb.bodyBg};color:#1e293b;}
             Ajouter
           </button>
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto scrollbar-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 dark:border-slate-700">
@@ -615,7 +615,7 @@ body{background:${tb.bodyBg};color:#1e293b;}
           </button>
         </div>
         <p className={`${help} ml-0 mb-3`}>Renseignez chaque phase/jalon avec sa date cible et une description.</p>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto scrollbar-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 dark:border-slate-700">

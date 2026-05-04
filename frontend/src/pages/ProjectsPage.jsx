@@ -189,7 +189,7 @@ function GestionAccesModal({ projet, onClose, isAdmin }) {
         </div>
 
         {/* Tableau */}
-        <div className="overflow-y-auto flex-1 rounded-xl border border-gray-100 dark:border-slate-700">
+        <div className="overflow-y-auto scrollbar-hidden flex-1 rounded-xl border border-gray-100 dark:border-slate-700">
           {loading ? (
             <div className="text-center py-12 text-gray-400 dark:text-slate-500 text-sm">Chargement…</div>
           ) : (

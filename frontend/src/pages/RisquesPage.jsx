@@ -211,7 +211,7 @@ export default function RisquesPage() {
             {risques.length === 0 ? 'Aucun risque enregistré.' : 'Aucun risque ne correspond aux filtres.'}
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto scrollbar-hidden">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-slate-700 border-b border-gray-200 dark:border-slate-600">
                 <tr>

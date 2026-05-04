@@ -140,7 +140,7 @@ function OrgChart({ equipe, onEdit, onDelete }) {
     )
   }
   return (
-    <div className="overflow-auto py-8 px-6">
+    <div className="overflow-auto scrollbar-hidden py-8 px-6">
       <div className="flex gap-12 justify-center min-w-fit">
         {roots.map((root) => (
           <OrgNode key={root.id} node={root} onEdit={onEdit} onDelete={onDelete} />

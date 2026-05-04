@@ -239,7 +239,7 @@ export default function TachesPage() {
         ) : filtered.length === 0 ? (
           <div className="flex items-center justify-center h-32 text-gray-400 dark:text-slate-500 text-sm">Aucune tâche.</div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto scrollbar-hidden">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-slate-700 border-b border-gray-200 dark:border-slate-600">
                 <tr>

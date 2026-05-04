@@ -165,7 +165,7 @@ function UsersTab({ currentUser }) {
       {loading ? (
         <div className="text-center py-12 text-gray-400 text-sm">Chargement…</div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-slate-700">
+        <div className="overflow-x-auto scrollbar-hidden rounded-xl border border-gray-100 dark:border-slate-700">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-slate-700">
               <tr>
@@ -581,7 +581,7 @@ function PermissionsTab() {
         {projets.length === 0 ? (
           <p className="text-xs text-gray-500 dark:text-slate-400 py-6 text-center">Aucun projet enregistré.</p>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-slate-700">
+          <div className="overflow-x-auto scrollbar-hidden rounded-xl border border-gray-100 dark:border-slate-700">
             <table className="w-full text-sm border-collapse">
               <thead className="bg-gray-50 dark:bg-slate-700">
                 <tr>
@@ -912,7 +912,7 @@ function _MembresTab_UNUSED({ currentUser }) {
       {loading ? (
         <div className="text-center py-12 text-gray-400 text-sm">Chargement…</div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-gray-100">
+        <div className="overflow-x-auto scrollbar-hidden rounded-xl border border-gray-100">
           <table className="w-full text-sm">
             <thead className="bg-gray-50">
               <tr>

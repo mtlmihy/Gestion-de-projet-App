@@ -178,7 +178,7 @@ export default function ProjectWizard({ onClose, onCreated }) {
         </div>
 
         {/* Body — défilant */}
-        <div className="flex-1 overflow-y-auto px-6 py-5">
+        <div className="flex-1 overflow-y-auto scrollbar-hidden px-6 py-5">
           {error && (
             <div className="mb-4 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 px-3 py-2 rounded-xl">
               {error}

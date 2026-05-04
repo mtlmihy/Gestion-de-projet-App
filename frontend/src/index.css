@@ -102,3 +102,13 @@ html, body {
   height: 24px;
   flex-shrink: 0;
 }
+
+/* ── Scrollbars harmonisées (style top menu) ───────────────────────────────── */
+.scrollbar-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}

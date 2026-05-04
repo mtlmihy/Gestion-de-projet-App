@@ -18,7 +18,7 @@ export default function Modal({ open, title, onClose, children, size = 'md' }) {
         className={`relative bg-white dark:bg-slate-800 shadow-2xl w-full ${sizes[size]}
           rounded-t-2xl sm:rounded-2xl
           max-h-[92dvh] sm:max-h-[80vh]
-          overflow-y-auto`}
+            overflow-y-auto scrollbar-hidden`}
       >
         <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-slate-700 sticky top-0 bg-white dark:bg-slate-800 z-10">
           <h2 className="text-base font-semibold text-gray-900 dark:text-slate-100">{title}</h2>
