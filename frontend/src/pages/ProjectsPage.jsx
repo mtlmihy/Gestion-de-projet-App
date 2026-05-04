@@ -5,7 +5,7 @@ import { useProject } from '../context/ProjectContext'
 import ThemeToggleButton from '../components/ThemeToggleButton'
 import ProjectWizard from '../components/ProjectWizard'
 import Logo from '../components/Logo'
-import { getProjets, createProjet, deleteProjet, cloturerProjet, reactiverProjet, updateStatutProjet, updateProjetPages } from '../api/projets'
+import { getProjets, createProjet, deleteProjet, cloturerProjet, reactiverProjet, updateStatutProjet, updateProjetPages, updateProjetSettings } from '../api/projets'
 import { getMembres, addMembre, updateMembre, updateMembrePages, removeMembre, getUsersDisponibles } from '../api/users'
 
 // ── Épinglage (persistance locale par utilisateur) ───────────────────────────
@@ -85,6 +85,11 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
   const [addForm,    setAddForm]  = useState({ user_id: '', role: isAdmin ? 'Proprietaire' : 'Lecteur' })
   const [notif,      setNotif]    = useState({ msg: '', type: 'success' })
   const [pagesProjet, setPagesProjet] = useState(projet?.pages_visibles ?? null)
+  const [settingsForm, setSettingsForm] = useState({
+    type_projet: projet?.type_projet ?? 'Interne',
+    budget_prevu: projet?.budget_prevu == null ? '' : String(projet.budget_prevu),
+  })
+  const [savingSettings, setSavingSettings] = useState(false)
   const [expandedClientId, setExpandedClientId] = useState(null)
   const estProprietaire = isAdmin || projet.mon_role === 'Proprietaire'
 
@@ -103,7 +108,11 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
       .then(({ data }) => setUsers(data))
       .catch(() => {}) // non bloquant : impact uniquement le formulaire d'ajout
     setPagesProjet(projet?.pages_visibles ?? null)
-  }, [projet.id, projet?.pages_visibles])
+    setSettingsForm({
+      type_projet: projet?.type_projet ?? 'Interne',
+      budget_prevu: projet?.budget_prevu == null ? '' : String(projet.budget_prevu),
+    })
+  }, [projet.id, projet?.pages_visibles, projet?.type_projet, projet?.budget_prevu])
 
   const membresIds      = new Set(membres.map((m) => m.user_id))
   const usersDisponibles = users.filter((u) => !membresIds.has(u.id))
@@ -216,6 +225,43 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
     }
   }
 
+  const handleProjectSettingsSave = async () => {
+    if (savingSettings) return
+    const typeProjet = settingsForm.type_projet
+    const rawBudget = settingsForm.budget_prevu.trim().replace(',', '.')
+
+    let payload
+    if (typeProjet === 'Interne') {
+      payload = { type_projet: 'Interne', budget_prevu: null }
+    } else {
+      if (!rawBudget) {
+        notify('Le budget est requis pour un projet client.', 'error')
+        return
+      }
+      const parsed = Number(rawBudget)
+      if (Number.isNaN(parsed) || parsed < 0) {
+        notify('Le budget doit être un nombre supérieur ou égal à 0.', 'error')
+        return
+      }
+      payload = { type_projet: 'Client', budget_prevu: parsed }
+    }
+
+    setSavingSettings(true)
+    try {
+      const { data } = await updateProjetSettings(projet.id, payload)
+      setSettingsForm({
+        type_projet: data.type_projet ?? 'Interne',
+        budget_prevu: data.budget_prevu == null ? '' : String(data.budget_prevu),
+      })
+      onProjetUpdated?.(data)
+      notify('Paramètres du projet mis à jour.')
+    } catch (err) {
+      notify(err?.response?.data?.detail ?? 'Erreur lors de la mise à jour des paramètres projet.', 'error')
+    } finally {
+      setSavingSettings(false)
+    }
+  }
+
   return (
     <div className="fixed inset-0 bg-black/40 dark:bg-black/60 z-50 flex items-center justify-center p-4">
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl p-6 max-h-[90vh] flex flex-col border border-gray-100 dark:border-slate-700">
@@ -240,6 +286,41 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
         {/* Paramètres projet — visible propriétaires/admins uniquement */}
         {estProprietaire && <div className="mb-3 flex-shrink-0 p-3 rounded-xl border border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/70">
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-2">Paramètres du projet</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
+            <select
+              value={settingsForm.type_projet}
+              onChange={(e) => {
+                const nextType = e.target.value
+                setSettingsForm((prev) => ({
+                  ...prev,
+                  type_projet: nextType,
+                  budget_prevu: nextType === 'Interne' ? '' : prev.budget_prevu,
+                }))
+              }}
+              className="text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="Interne">Projet interne (sans budget)</option>
+              <option value="Client">Projet client (avec budget)</option>
+            </select>
+            {settingsForm.type_projet === 'Client' && (
+              <input
+                type="text"
+                inputMode="decimal"
+                placeholder="Budget prévu"
+                value={settingsForm.budget_prevu}
+                onChange={(e) => setSettingsForm((prev) => ({ ...prev, budget_prevu: e.target.value }))}
+                className="text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            )}
+            <button
+              onClick={handleProjectSettingsSave}
+              disabled={savingSettings}
+              className="text-xs sm:text-sm bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold px-3 py-2 rounded-lg transition-colors"
+            >
+              {savingSettings ? 'Enregistrement…' : 'Enregistrer'}
+            </button>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
             {!projet.est_cloture && (
               <select

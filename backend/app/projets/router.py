@@ -7,7 +7,7 @@ from app.db.pool import get_pool
 from app.projets import service as svc
 from app.projets.schemas import (
     MembreCreate, MembreRead, MembrePagesUpdate, MembreUpdate,
-    ProjetCreate, ProjetPagesUpdate, ProjetRead, ProjetStatutUpdate, ProjetUpdate,
+    ProjetCreate, ProjetPagesUpdate, ProjetRead, ProjetSettingsUpdate, ProjetStatutUpdate, ProjetUpdate,
     ROLES_VALIDES,
 )
 from app.security.audit import Action, log_event
@@ -37,14 +37,22 @@ async def create_projet(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Seuls les administrateurs et chefs de projet peuvent créer un projet.",
         )
+    type_projet, budget_prevu = _normalize_type_budget(payload.type_projet, payload.budget_prevu)
+    body = payload.model_dump()
+    body["type_projet"] = type_projet
+    body["budget_prevu"] = budget_prevu
     async with pool.acquire() as conn:
-        return await svc.create(conn, payload.model_dump(), createur_id=current_user["id"])
+        return await svc.create(conn, body, createur_id=current_user["id"])
 
 
 @router.put("/{projet_id}", response_model=ProjetRead)
 async def update_projet(projet_id: str, payload: ProjetUpdate, pool: Pool = Depends(get_pool)):
+    type_projet, budget_prevu = _normalize_type_budget(payload.type_projet, payload.budget_prevu)
+    body = payload.model_dump()
+    body["type_projet"] = type_projet
+    body["budget_prevu"] = budget_prevu
     async with pool.acquire() as conn:
-        result = await svc.update(conn, projet_id, payload.model_dump())
+        result = await svc.update(conn, projet_id, body)
     if result is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Projet introuvable.")
     return result
@@ -61,6 +69,39 @@ async def change_statut(
     await _check_owner_or_admin(projet_id, current_user, pool)
     async with pool.acquire() as conn:
         result = await svc.update_statut(conn, projet_id, payload.statut)
+    if not result:
+        raise HTTPException(status_code=404, detail="Projet introuvable.")
+    return result
+
+
+def _normalize_type_budget(type_projet: str, budget_prevu: float | None) -> tuple[str, float | None]:
+    projet_type = (type_projet or "").strip()
+    if projet_type not in ("Interne", "Client"):
+        raise HTTPException(status_code=422, detail="Données invalides.")
+
+    if projet_type == "Interne":
+        return projet_type, None
+
+    if budget_prevu is None or budget_prevu < 0:
+        raise HTTPException(
+            status_code=422,
+            detail="Un budget prévu (>= 0) est requis pour un projet client.",
+        )
+    return projet_type, budget_prevu
+
+
+@router.patch("/{projet_id}/settings", response_model=ProjetRead)
+async def update_projet_settings(
+    projet_id: str,
+    payload: ProjetSettingsUpdate,
+    pool: Pool = Depends(get_pool),
+    current_user: dict = Depends(get_current_user),
+):
+    """Met à jour le type de projet et le budget prévu. Réservé au Propriétaire ou admin."""
+    await _check_owner_or_admin(projet_id, current_user, pool)
+    type_projet, budget_prevu = _normalize_type_budget(payload.type_projet, payload.budget_prevu)
+    async with pool.acquire() as conn:
+        result = await svc.update_settings(conn, projet_id, type_projet, budget_prevu)
     if not result:
         raise HTTPException(status_code=404, detail="Projet introuvable.")
     return result

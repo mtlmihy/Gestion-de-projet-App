@@ -5,7 +5,7 @@ from asyncpg import Connection
 
 async def get_all(conn: Connection) -> list[dict]:
     rows = await conn.fetch(
-        "SELECT id::text, nom, description, statut::text, pages_visibles FROM projets ORDER BY date_creation"
+        "SELECT id::text, nom, description, statut::text, type_projet, budget_prevu, pages_visibles FROM projets ORDER BY date_creation"
     )
     return [dict(r) for r in rows]
 
@@ -15,7 +15,8 @@ async def get_accessible(conn: Connection, user_id: str, is_admin: bool) -> list
     if is_admin:
         rows = await conn.fetch(
             """
-            SELECT p.id::text, p.nom, p.description, p.statut::text, p.est_cloture,
+                 SELECT p.id::text, p.nom, p.description, p.statut::text,
+                     p.type_projet, p.budget_prevu, p.est_cloture,
                    p.pages_visibles,
                    pm.role::text AS mon_role, pm.pages_autorisees AS mes_pages
             FROM projets p
@@ -27,7 +28,8 @@ async def get_accessible(conn: Connection, user_id: str, is_admin: bool) -> list
     else:
         rows = await conn.fetch(
             """
-            SELECT p.id::text, p.nom, p.description, p.statut::text, p.est_cloture,
+                 SELECT p.id::text, p.nom, p.description, p.statut::text,
+                     p.type_projet, p.budget_prevu, p.est_cloture,
                    p.pages_visibles,
                    pm.role::text AS mon_role, pm.pages_autorisees AS mes_pages
             FROM projets p
@@ -41,7 +43,7 @@ async def get_accessible(conn: Connection, user_id: str, is_admin: bool) -> list
 
 async def get_by_id(conn: Connection, projet_id: str) -> dict | None:
     row = await conn.fetchrow(
-        "SELECT id::text, nom, description, statut::text, pages_visibles FROM projets WHERE id=$1::uuid",
+        "SELECT id::text, nom, description, statut::text, type_projet, budget_prevu, pages_visibles FROM projets WHERE id=$1::uuid",
         projet_id,
     )
     return dict(row) if row else None
@@ -51,14 +53,16 @@ async def create(conn: Connection, data: dict, createur_id: str | None = None) -
     new_id = str(uuid.uuid4())
     row = await conn.fetchrow(
         """
-        INSERT INTO projets (id, nom, description, statut, createur_id)
-        VALUES ($1::uuid, $2, $3, $4::projet_statut, $5::uuid)
-        RETURNING id::text, nom, description, statut::text, pages_visibles
+        INSERT INTO projets (id, nom, description, statut, type_projet, budget_prevu, createur_id)
+        VALUES ($1::uuid, $2, $3, $4::projet_statut, $5, $6, $7::uuid)
+        RETURNING id::text, nom, description, statut::text, type_projet, budget_prevu, pages_visibles
         """,
         new_id,
         data["nom"],
         data.get("description", ""),
         data.get("statut", "Brouillon"),
+        data.get("type_projet", "Interne"),
+        data.get("budget_prevu"),
         createur_id,
     )
     projet = dict(row)
@@ -80,14 +84,17 @@ async def update(conn: Connection, projet_id: str, data: dict) -> dict | None:
     row = await conn.fetchrow(
         """
         UPDATE projets
-        SET nom=$2, description=$3, statut=$4::projet_statut
+        SET nom=$2, description=$3, statut=$4::projet_statut,
+            type_projet=$5, budget_prevu=$6
         WHERE id=$1::uuid
-        RETURNING id::text, nom, description, statut::text, pages_visibles
+        RETURNING id::text, nom, description, statut::text, type_projet, budget_prevu, pages_visibles
         """,
         projet_id,
         data["nom"],
         data.get("description", ""),
         data.get("statut", "Brouillon"),
+        data.get("type_projet", "Interne"),
+        data.get("budget_prevu"),
     )
     return dict(row) if row else None
 
@@ -96,7 +103,7 @@ async def update_statut(conn: Connection, projet_id: str, statut: str) -> dict |
     row = await conn.fetchrow(
         """
         UPDATE projets SET statut=$2::projet_statut WHERE id=$1::uuid
-        RETURNING id::text, nom, description, statut::text, pages_visibles, est_cloture
+        RETURNING id::text, nom, description, statut::text, type_projet, budget_prevu, pages_visibles, est_cloture
         """,
         projet_id, statut,
     )
@@ -109,10 +116,26 @@ async def update_pages_visibles(conn: Connection, projet_id: str, pages: list | 
         UPDATE projets
         SET pages_visibles = $2
         WHERE id = $1::uuid
-        RETURNING id::text, nom, description, statut::text, pages_visibles, est_cloture
+        RETURNING id::text, nom, description, statut::text, type_projet, budget_prevu, pages_visibles, est_cloture
         """,
         projet_id,
         pages,
+    )
+    return dict(row) if row else None
+
+
+async def update_settings(conn: Connection, projet_id: str, type_projet: str, budget_prevu: float | None) -> dict | None:
+    row = await conn.fetchrow(
+        """
+        UPDATE projets
+        SET type_projet = $2,
+            budget_prevu = $3
+        WHERE id = $1::uuid
+        RETURNING id::text, nom, description, statut::text, type_projet, budget_prevu, pages_visibles, est_cloture
+        """,
+        projet_id,
+        type_projet,
+        budget_prevu,
     )
     return dict(row) if row else None
 
@@ -128,7 +151,7 @@ async def cloturer(conn: Connection, projet_id: str) -> dict | None:
         UPDATE projets
         SET est_cloture = TRUE, date_cloture = NOW()
         WHERE id = $1::uuid
-        RETURNING id::text, nom, description, statut::text, pages_visibles, est_cloture
+        RETURNING id::text, nom, description, statut::text, type_projet, budget_prevu, pages_visibles, est_cloture
         """,
         projet_id,
     )
@@ -141,7 +164,7 @@ async def reactiver(conn: Connection, projet_id: str) -> dict | None:
         UPDATE projets
         SET est_cloture = FALSE, date_cloture = NULL
         WHERE id = $1::uuid
-        RETURNING id::text, nom, description, statut::text, pages_visibles, est_cloture
+        RETURNING id::text, nom, description, statut::text, type_projet, budget_prevu, pages_visibles, est_cloture
         """,
         projet_id,
     )

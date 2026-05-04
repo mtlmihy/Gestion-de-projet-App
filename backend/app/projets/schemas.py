@@ -7,6 +7,8 @@ class ProjetBase(BaseModel):
     nom: str = Field(..., min_length=1)
     description: str = ""
     statut: str = "Brouillon"
+    type_projet: str = "Interne"
+    budget_prevu: Optional[float] = None
 
 
 class ProjetCreate(ProjetBase):
@@ -32,6 +34,11 @@ class ProjetRead(ProjetBase):
 
 class ProjetPagesUpdate(BaseModel):
     pages_visibles: Optional[List[str]] = None
+
+
+class ProjetSettingsUpdate(BaseModel):
+    type_projet: str
+    budget_prevu: Optional[float] = None
 
 
 # ── Membres du projet ─────────────────────────────────────────────────────────
