@@ -248,13 +248,13 @@ export default function CopilPage() {
       )}
 
       {addOpen && (
-        <Modal title="Nouvelle réunion COPIL" onClose={() => setAddOpen(false)}>
+        <Modal open={addOpen} title="Nouvelle réunion COPIL" onClose={() => setAddOpen(false)}>
           <CopilForm initial={null} onSubmit={handleAdd} onCancel={() => setAddOpen(false)} saving={saving} />
         </Modal>
       )}
 
       {editItem && (
-        <Modal title="Modifier la réunion COPIL" onClose={() => setEditItem(null)}>
+        <Modal open={!!editItem} title="Modifier la réunion COPIL" onClose={() => setEditItem(null)}>
           <CopilForm initial={editItem} onSubmit={handleEdit} onCancel={() => setEditItem(null)} saving={saving} />
         </Modal>
       )}
