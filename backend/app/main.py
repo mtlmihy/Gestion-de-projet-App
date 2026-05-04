@@ -30,6 +30,7 @@ if settings.sentry_dsn:
 
 from app.db.pool import init_pool, close_pool
 from app.auth.csrf import CSRFMiddleware
+from app.security.tarpit import TarpitMiddleware
 from app.auth.router import router as auth_router
 from app.users.router import router as users_router, _public_router as users_public_router
 from app.projets.router import router as projets_router
@@ -113,6 +114,12 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(CSRFMiddleware)
+# Tarpit en *dernier* dans add_middleware = *premier* dans la chaîne de
+# traitement (Starlette empile dans l'ordre inverse). Il voit donc le
+# status code final de la réponse, y compris ceux posés par CSRF/exception
+# handlers, et peut appliquer son délai avant qu'aucun travail coûteux ne
+# soit fait sur la prochaine requête.
+app.add_middleware(TarpitMiddleware)
 
 
 # ── Handler global 500 — réponse opaque ───────────────────────────────────────
@@ -190,3 +197,17 @@ async def health_check():
     # Render/Azure n'ont besoin que d'un 2xx pour le healthcheck.
     from fastapi import Response as _Resp
     return _Resp(status_code=204)
+
+
+# ── Catch-all 404 ──────────────────────────────────────────────────────────────
+# Toute requête sur un chemin inconnu (fuzzing, scan de routes /admin,
+# /.env, /wp-login.php, etc.) renvoie le même 404 générique que les vraies
+# routes inexistantes → indistinguable. Cumulé au tarpit, fuzzer devient
+# très lent et improductif.
+@app.api_route(
+    "/{full_path:path}",
+    methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
+    include_in_schema=False,
+)
+async def _catch_all(full_path: str):
+    return JSONResponse(status_code=404, content={"detail": "Ressource introuvable."})
