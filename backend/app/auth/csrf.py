@@ -17,11 +17,15 @@ elles sont déjà rate-limitées et n'ont rien à protéger côté CSRF.
 """
 from __future__ import annotations
 
+import logging
 import secrets
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
+
+
+_logger = logging.getLogger("app.csrf")
 
 
 CSRF_COOKIE_NAME = "csrf_token"
@@ -60,6 +64,15 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             or not header_token
             or not secrets.compare_digest(cookie_token, header_token)
         ):
+            # Log côté serveur uniquement (utile pour debug post-déploiement
+            # quand un client a un cookie csrf_token périmé). Aucun détail
+            # n'est renvoyé au client.
+            _logger.warning(
+                "CSRF rejected on %s %s — cookie=%s header=%s",
+                request.method, path,
+                "present" if cookie_token else "missing",
+                "present" if header_token else "missing",
+            )
             # Message générique : ne mentionne pas "CSRF" → ne révèle pas la défense.
             return JSONResponse(
                 status_code=403,
