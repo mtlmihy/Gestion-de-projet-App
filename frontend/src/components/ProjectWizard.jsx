@@ -12,6 +12,8 @@ const help = 'text-xs text-gray-400 dark:text-slate-500 italic mt-1'
 const EMPTY_FORM = {
   // Étape 1 — Identité
   nom: '',
+  type_projet: 'Interne',
+  budget_prevu: '',
   reference: '',
   chef_projet: '',
   service: '',
@@ -45,6 +47,11 @@ export default function ProjectWizard({ onClose, onCreated }) {
     if (step === 1) {
       if (!form.nom.trim())        return 'Le nom du projet est requis.'
       if (!form.date_debut)        return 'La date de début est requise.'
+      if (form.type_projet === 'Client') {
+        const budget = Number((form.budget_prevu || '').toString().replace(',', '.'))
+        if (!form.budget_prevu?.toString().trim()) return 'Le budget est requis pour un projet client.'
+        if (Number.isNaN(budget) || budget < 0) return 'Le budget doit être un nombre supérieur ou égal à 0.'
+      }
     }
     if (step === 2) {
       if (!form.contexte.trim())   return 'Le contexte est requis.'
@@ -80,10 +87,15 @@ export default function ProjectWizard({ onClose, onCreated }) {
     try {
       // 1. Créer le projet (description = courte synthèse depuis objectifs)
       const shortDesc = (form.objectifs || form.contexte).split('\n')[0].slice(0, 200)
+      const budgetClient = form.type_projet === 'Client'
+        ? Number((form.budget_prevu || '').toString().replace(',', '.'))
+        : null
       const { data: projet } = await createProjet({
         nom: form.nom.trim(),
         description: shortDesc,
         statut: 'En cours',
+        type_projet: form.type_projet,
+        budget_prevu: budgetClient,
       })
 
       // 2. Construire le contenu CDC structuré
@@ -95,6 +107,8 @@ export default function ProjectWizard({ onClose, onCreated }) {
         service:    form.service.trim(),
         sponsor:    form.sponsor.trim(),
         date_debut: form.date_debut,
+        type_projet: form.type_projet,
+        budget: form.type_projet === 'Client' ? String(form.budget_prevu ?? '') : '',
         contexte:   form.contexte.trim(),
         objectifs:  form.objectifs.trim(),
         perimetre:  form.perimetre.trim(),
@@ -193,6 +207,27 @@ export default function ProjectWizard({ onClose, onCreated }) {
               <div>
                 <label className={lbl}>Nom du projet *</label>
                 <input className={inp} required value={form.nom} onChange={setField('nom')} placeholder="Ex. Refonte du portail client" autoFocus />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className={lbl}>Type de projet *</label>
+                  <select className={inp} value={form.type_projet} onChange={setField('type_projet')}>
+                    <option value="Interne">Interne (sans budget)</option>
+                    <option value="Client">Client (avec budget)</option>
+                  </select>
+                </div>
+                {form.type_projet === 'Client' && (
+                  <div>
+                    <label className={lbl}>Budget prévu *</label>
+                    <input
+                      className={inp}
+                      value={form.budget_prevu}
+                      onChange={setField('budget_prevu')}
+                      placeholder="Ex. 25000"
+                      inputMode="decimal"
+                    />
+                  </div>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -334,6 +369,8 @@ export default function ProjectWizard({ onClose, onCreated }) {
 
               <RecapSection title="Identité">
                 <RecapRow k="Nom"          v={form.nom} />
+                <RecapRow k="Type"         v={form.type_projet} />
+                {form.type_projet === 'Client' && <RecapRow k="Budget prévu" v={form.budget_prevu} />}
                 <RecapRow k="Référence"    v={form.reference} />
                 <RecapRow k="Chef de projet" v={form.chef_projet} />
                 <RecapRow k="Service"      v={form.service} />

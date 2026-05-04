@@ -562,7 +562,7 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
 }
 
 function CreateModal({ onClose, onCreated }) {
-  const [form, setForm] = useState({ nom: '', description: '', statut: 'En cours' })
+  const [form, setForm] = useState({ nom: '', description: '', statut: 'En cours', type_projet: 'Interne', budget_prevu: '' })
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -572,8 +572,31 @@ function CreateModal({ onClose, onCreated }) {
     e.preventDefault()
     setSaving(true)
     setError('')
+    if (form.type_projet === 'Client') {
+      const budget = Number((form.budget_prevu || '').toString().replace(',', '.'))
+      if (!form.budget_prevu?.toString().trim()) {
+        setError('Le budget est requis pour un projet client.')
+        setSaving(false)
+        return
+      }
+      if (Number.isNaN(budget) || budget < 0) {
+        setError('Le budget doit être un nombre supérieur ou égal à 0.')
+        setSaving(false)
+        return
+      }
+    }
+
+    const payload = {
+      nom: form.nom,
+      description: form.description,
+      statut: form.statut,
+      type_projet: form.type_projet,
+      budget_prevu: form.type_projet === 'Client'
+        ? Number((form.budget_prevu || '').toString().replace(',', '.'))
+        : null,
+    }
     try {
-      const { data } = await createProjet(form)
+      const { data } = await createProjet(payload)
       onCreated(data)
     } catch (err) {
       setError(err?.response?.data?.detail ?? 'Erreur lors de la création.')
@@ -611,6 +634,27 @@ function CreateModal({ onClose, onCreated }) {
             <select className={inp} value={form.statut} onChange={setF('statut')}>
               {STATUTS.map((s) => <option key={s}>{s}</option>)}
             </select>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className={lbl}>Type de projet</label>
+              <select className={inp} value={form.type_projet} onChange={setF('type_projet')}>
+                <option value="Interne">Interne (sans budget)</option>
+                <option value="Client">Client (avec budget)</option>
+              </select>
+            </div>
+            {form.type_projet === 'Client' && (
+              <div>
+                <label className={lbl}>Budget prévu *</label>
+                <input
+                  className={inp}
+                  value={form.budget_prevu}
+                  onChange={setF('budget_prevu')}
+                  placeholder="Ex. 25000"
+                  inputMode="decimal"
+                />
+              </div>
+            )}
           </div>
           <div className="flex gap-2 pt-2">
             <button type="button" onClick={onClose} className="flex-1 border border-gray-200 dark:border-slate-600 rounded-xl py-2 text-sm font-medium text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
