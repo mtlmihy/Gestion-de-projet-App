@@ -106,7 +106,16 @@ export default function NavBar() {
                     : 'text-gray-600 dark:text-slate-400 hover:bg-gray-800 dark:hover:bg-slate-700 hover:text-white'
                 }`
               }
-            >button
+            >
+              Administration
+            </NavLink>
+          )}
+        </nav>
+
+        {/* Utilisateur connecté + Déconnexion */}
+        <div className="shrink-0 flex items-center gap-2">
+          {user && (
+            <button
               onClick={() => setShowChangePwd(true)}
               className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg px-2 py-1 transition-colors"
               title="Changer mon mot de passe"
@@ -116,16 +125,7 @@ export default function NavBar() {
               {isAdmin && (
                 <span className="hidden md:block bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 text-xs font-bold px-1.5 py-0.5 rounded">Admin</span>
               )}
-            </buttonsateur connecté + Déconnexion */}
-        <div className="shrink-0 flex items-center gap-2">
-          {user && (
-            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-400">
-              <UserAvatar user={user} />
-              <span className="hidden md:block font-medium">{user.nom ?? user.email}</span>
-              {isAdmin && (
-                <span className="hidden md:block bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 text-xs font-bold px-1.5 py-0.5 rounded">Admin</span>
-              )}
-            </div>
+            </button>
           )}
           {/* Bouton jour / nuit */}
           <ThemeToggleButton />
@@ -138,6 +138,10 @@ export default function NavBar() {
               <polyline points="16 17 21 12 16 7" />
               <line x1="21" y1="12" x2="9" y2="12" />
             </svg>
+            <span className="hidden sm:block">Déconnexion</span>
+          </button>
+        </div>
+      </div>
 
       {showChangePwd && (
         <ChangePasswordModal
@@ -145,10 +149,6 @@ export default function NavBar() {
           onSuccess={handlePasswordChanged}
         />
       )}
-            <span className="hidden sm:block">Déconnexion</span>
-          </button>
-        </div>
-      </div>
     </header>
   )
 }
