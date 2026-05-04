@@ -540,7 +540,7 @@ function ProjetCard({ projet, onSelect, onDelete, onGererAcces, onCloturer, onRe
           {estProprietaire && (
             <button
               onClick={(e) => { e.stopPropagation(); onGererAcces(projet) }}
-              className="text-blue-500 hover:text-blue-700 p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+              className="text-blue-500 hover:text-blue-700 p-1.5 rounded-lg transition-colors"
               title="Paramètres du projet"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">
@@ -552,7 +552,7 @@ function ProjetCard({ projet, onSelect, onDelete, onGererAcces, onCloturer, onRe
           {peutCloturer && (
             <button
               onClick={(e) => { e.stopPropagation(); onCloturer(projet) }}
-              className="text-xs text-orange-500 hover:text-orange-700 font-medium px-2 py-1 rounded-lg hover:bg-orange-50"
+              className="text-xs text-orange-500 hover:text-orange-700 font-medium px-2 py-1 rounded-lg"
               title="Clôturer le projet"
             >
               Clôturer
@@ -561,7 +561,7 @@ function ProjetCard({ projet, onSelect, onDelete, onGererAcces, onCloturer, onRe
           {peutReactiver && (
             <button
               onClick={(e) => { e.stopPropagation(); onReactiver(projet) }}
-              className="text-xs text-green-600 hover:text-green-800 font-medium px-2 py-1 rounded-lg hover:bg-green-50"
+              className="text-xs text-green-600 hover:text-green-800 font-medium px-2 py-1 rounded-lg"
               title="Réactiver le projet"
             >
               Réactiver
@@ -570,7 +570,7 @@ function ProjetCard({ projet, onSelect, onDelete, onGererAcces, onCloturer, onRe
           {isAdmin && (
             <button
               onClick={(e) => { e.stopPropagation(); onDelete(projet) }}
-              className="text-xs text-red-400 hover:text-red-600 font-medium px-2 py-1 rounded-lg hover:bg-red-50"
+              className="text-xs text-red-400 hover:text-red-600 font-medium px-2 py-1 rounded-lg"
             >
               Supprimer
             </button>
