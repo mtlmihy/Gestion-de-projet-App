@@ -13,6 +13,7 @@ function Notification({ msg, type }) {
 }
 
 function CopilForm({ initial, onSubmit, onCancel, saving }) {
+  const isCreate = !initial
   const [form, setForm] = useState(() => ({
     date_reunion: initial?.date_reunion ?? new Date().toISOString().slice(0, 10),
     titre: initial?.titre ?? '',
@@ -24,9 +25,23 @@ function CopilForm({ initial, onSubmit, onCancel, saving }) {
 
   const setF = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
 
+  const buildDefaultTitle = (isoDate) => {
+    if (!isoDate) return 'Réunion COPIL'
+    const d = new Date(`${isoDate}T00:00:00`)
+    const fmt = Number.isNaN(d.getTime())
+      ? isoDate
+      : d.toLocaleDateString('fr-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    return `Réunion COPIL - ${fmt}`
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
-    onSubmit(form)
+    const normalized = {
+      ...form,
+      titre: (form.titre ?? '').trim() || buildDefaultTitle(form.date_reunion),
+      notes: (form.notes ?? '').trim(),
+    }
+    onSubmit(normalized)
   }
 
   const inp = 'w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-base sm:text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400'
@@ -40,8 +55,9 @@ function CopilForm({ initial, onSubmit, onCancel, saving }) {
           <input type="date" className={inp} required value={form.date_reunion} onChange={setF('date_reunion')} />
         </div>
         <div>
-          <label className={lbl}>Titre *</label>
-          <input className={inp} required minLength={3} maxLength={200} value={form.titre} onChange={setF('titre')} placeholder="COPIL #12 - Suivi mensuel" />
+          <label className={lbl}>Titre (optionnel)</label>
+          <input className={inp} maxLength={200} value={form.titre} onChange={setF('titre')} placeholder="COPIL #12 - Suivi mensuel" />
+          <p className="mt-1 text-[11px] text-gray-400 dark:text-slate-500">Si vide, un titre sera généré automatiquement à partir de la date.</p>
         </div>
       </div>
 
@@ -51,8 +67,8 @@ function CopilForm({ initial, onSubmit, onCancel, saving }) {
       </div>
 
       <div>
-        <label className={lbl}>Notes de réunion</label>
-        <textarea className={`${inp} min-h-24`} value={form.notes} onChange={setF('notes')} placeholder="Contexte, points clés, blocages..." />
+        <label className={lbl}>Notes de réunion {isCreate ? '*' : ''}</label>
+        <textarea className={`${inp} min-h-24`} required={isCreate} value={form.notes} onChange={setF('notes')} placeholder="Contexte, points clés, blocages..." />
       </div>
 
       <div>
