@@ -5,12 +5,13 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   // Sécurité : pas de source maps en prod (interdit le reverse engineering du JS).
+  // Vite 6 + Rolldown utilise oxc (pas esbuild) pour la minification.
   build: {
     sourcemap: false,
-    minify: 'esbuild',
+    minify: 'oxc',
   },
   // En prod, supprime tous les console.* et debugger du bundle.
-  esbuild: {
+  oxc: {
     drop: ['console', 'debugger'],
   },
   server: {
