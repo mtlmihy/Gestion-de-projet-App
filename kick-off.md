@@ -84,3 +84,7 @@ Validation que tout le monde est aligné sur la vision V1 et les priorités.
 ---
 
 Veux-tu que je l'enregistre dans un fichier (`docs/kickoff.md` par ex.) ou que je l'ajoute en bas de `help suivi.txt` ?
+
+
+
+

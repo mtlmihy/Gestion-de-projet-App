@@ -465,7 +465,7 @@ function ProjetCard({ projet, onSelect, onDelete, onGererAcces, onCloturer, onRe
           ? 'border-gray-300 dark:border-slate-600 opacity-80 hover:border-gray-400 dark:hover:border-slate-500'
           : isPinned
             ? 'border-amber-300 dark:border-amber-500/60 ring-1 ring-amber-200 dark:ring-amber-500/30 hover:border-amber-400 dark:hover:border-amber-400'
-            : 'border-gray-100 dark:border-slate-700'
+            : 'border-gray-100 dark:border-slate-700 hover:border-blue-200 dark:hover:border-blue-700'
       }`}
     >
       {/* Badge clôturé */}
@@ -578,8 +578,6 @@ function ProjetCard({ projet, onSelect, onDelete, onGererAcces, onCloturer, onRe
         </div>
       </div>
 
-      {/* Indicateur hover */}
-      <div className="absolute inset-x-0 bottom-0 h-0.5 bg-blue-500 rounded-b-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
     </div>
   )
 }
