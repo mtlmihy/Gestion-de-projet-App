@@ -77,12 +77,15 @@ def decode_access_token(token: str) -> dict:
 
 async def authenticate_user(
     conn: Connection, email: str, password: str
-) -> dict | None:
+) -> tuple[dict | None, str | None]:
     """
     Cherche l'utilisateur par e-mail, vérifie le mot de passe bcrypt.
     ⚠️ Constant-time : exécute toujours un bcrypt (même si l'email n'existe
     pas) pour égaliser les temps de réponse → bloque l'énumération des comptes.
-    Retourne le dict utilisateur (incl. token_version) ou None si KO.
+        Retourne:
+            - (user, None) si OK
+            - (None, "invalid_credentials") si email/mdp incorrect
+            - (None, "account_disabled") si mdp correct mais compte inactif
     """
     row = await conn.fetchrow(
         "SELECT id::text, email, nom, poste, mot_de_passe, is_admin, is_active, token_version "
@@ -92,6 +95,8 @@ async def authenticate_user(
     # Toujours hasher pour ne pas révéler l'absence de l'utilisateur via timing.
     stored_hash = row["mot_de_passe"] if row else _DUMMY_HASH
     password_ok = verify_password(password, stored_hash)
-    if not row or not password_ok or not row["is_active"]:
-        return None
-    return dict(row)
+    if not row or not password_ok:
+        return None, "invalid_credentials"
+    if not row["is_active"]:
+        return None, "account_disabled"
+    return dict(row), None

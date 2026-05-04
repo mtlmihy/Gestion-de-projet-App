@@ -78,9 +78,16 @@ async def login(
     _clear_session_cookies(response)
 
     async with pool.acquire() as conn:
-        user = await auth_service.authenticate_user(conn, payload.email, payload.password)
+        user, auth_error = await auth_service.authenticate_user(
+            conn, payload.email, payload.password
+        )
 
     if not user:
+        detail = (
+            "Compte désactivé. Contactez un administrateur."
+            if auth_error == "account_disabled"
+            else "Identifiants invalides."
+        )
         await log_event(
             pool,
             action=Action.LOGIN_FAILURE,
@@ -89,7 +96,7 @@ async def login(
         )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Identifiants invalides.",
+            detail=detail,
         )
 
     token = auth_service.create_access_token(
