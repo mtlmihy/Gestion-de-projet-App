@@ -620,19 +620,25 @@ export default function ProjectsPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors">
       {/* Header */}
       <header className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 shadow-sm">
-        <div className="max-w-screen-xl mx-auto px-4 h-14 flex items-center justify-between">
-          <span className="flex items-center gap-2 font-bold text-blue-600 text-sm">
+        <div className="max-w-screen-xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
+          <span className="flex items-center gap-2 font-bold text-blue-600 text-sm min-w-0">
             <Logo className="w-6 h-6" />
-            QimProject
+            <span className="truncate max-w-[110px] sm:max-w-none">QimProject</span>
           </span>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {isAdmin && (
               <button
                 onClick={() => navigate('/admin')}
-                className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-800 hover:text-white hover:border-gray-800 transition-colors"
+                className="inline-flex items-center gap-1 text-xs font-medium px-2 sm:px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-800 hover:text-white hover:border-gray-800 transition-colors"
+                title="Administration"
               >
-                Administration
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M12 3l7 4v10l-7 4-7-4V7l7-4z" />
+                  <path d="M12 8v8" />
+                  <path d="M8 12h8" />
+                </svg>
+                <span className="hidden sm:inline">Administration</span>
               </button>
             )}
             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-400">
@@ -640,7 +646,7 @@ export default function ProjectsPage() {
                 {initiales}
               </span>
               <span className="hidden md:block font-medium">{user?.nom ?? user?.email}</span>
-              {isAdmin && <span className="bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 text-xs font-bold px-1.5 py-0.5 rounded">Admin</span>}
+              {isAdmin && <span className="hidden sm:inline-flex bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 text-xs font-bold px-1.5 py-0.5 rounded">Admin</span>}
             </div>
             <button
               onClick={logout}
