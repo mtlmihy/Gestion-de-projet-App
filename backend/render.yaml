@@ -11,8 +11,8 @@ services:
     region: frankfurt          # même région AWS que ta DB Supabase (eu-central-1)
     rootDir: backend
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
-    healthCheckPath: /docs
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 2 --proxy-headers
+    healthCheckPath: /health
     envVars:
       # ── À renseigner manuellement dans le dashboard Render ──
       - key: DATABASE_URL
@@ -22,6 +22,8 @@ services:
       - key: CORS_ORIGINS
         sync: false             # ex: ["https://mon-app.vercel.app"]
       # ── Valeurs fixes ──
+      - key: ENV
+        value: production       # désactive /docs, active HSTS
       - key: ALGORITHM
         value: HS256
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
@@ -32,5 +34,7 @@ services:
         value: "true"           # HTTPS obligatoire en prod
       - key: COOKIE_SAMESITE
         value: "none"           # cross-site (Vercel ↔ Render)
+      - key: LOGIN_RATE_LIMIT
+        value: "5/minute"       # anti brute-force
       - key: PYTHON_VERSION
         value: "3.12.7"

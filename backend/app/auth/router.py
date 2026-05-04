@@ -6,9 +6,12 @@ GET  /auth/me     → retourne les infos de l'utilisateur connecté
 POST /auth/logout → supprime le cookie côté client
 """
 from asyncpg import Pool
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app.auth import service as auth_service
+from app.auth.csrf import CSRF_COOKIE_NAME, generate_csrf_token
 from app.auth.dependencies import get_current_user
 from app.auth.schemas import LoginRequest, MeResponse, TokenResponse
 from app.config import settings
@@ -16,14 +19,38 @@ from app.db.pool import get_pool
 
 router = APIRouter()
 
+# Limiter dédié au router auth (réutilise la même clé IP que dans main.py).
+# slowapi récupère le limiter via request.app.state.limiter, donc le décorateur
+# fonctionne tant que main.py a bien initialisé app.state.limiter.
+_limiter = Limiter(key_func=get_remote_address)
+
 _COOKIE_MAX_AGE = settings.access_token_expire_minutes * 60
 
 
+def _set_csrf_cookie(response: Response) -> None:
+    """Pose le cookie CSRF lisible par JS (double-submit pattern)."""
+    response.set_cookie(
+        key=CSRF_COOKIE_NAME,
+        value=generate_csrf_token(),
+        httponly=False,           # le frontend doit pouvoir le lire
+        secure=settings.cookie_secure,
+        samesite=settings.cookie_samesite,
+        max_age=_COOKIE_MAX_AGE,
+    )
+
+
 @router.post("/login", response_model=TokenResponse)
-async def login(payload: LoginRequest, response: Response, pool: Pool = Depends(get_pool)):
+@_limiter.limit(settings.login_rate_limit)
+async def login(
+    request: Request,
+    payload: LoginRequest,
+    response: Response,
+    pool: Pool = Depends(get_pool),
+):
     """
     Authentifie l'utilisateur (email + mot de passe bcrypt).
-    En cas de succès : émet un cookie HttpOnly 'access_token' contenant le JWT.
+    En cas de succès : émet un cookie HttpOnly 'access_token' contenant le JWT
+    et un cookie 'csrf_token' (non HttpOnly) pour la protection CSRF.
     """
     async with pool.acquire() as conn:
         user = await auth_service.authenticate_user(conn, payload.email, payload.password)
@@ -34,7 +61,9 @@ async def login(payload: LoginRequest, response: Response, pool: Pool = Depends(
             detail="E-mail ou mot de passe incorrect.",
         )
 
-    token = auth_service.create_access_token(data={"sub": user["id"]})
+    token = auth_service.create_access_token(
+        data={"sub": user["id"], "tv": user["token_version"]},
+    )
 
     response.set_cookie(
         key="access_token",
@@ -44,6 +73,7 @@ async def login(payload: LoginRequest, response: Response, pool: Pool = Depends(
         samesite=settings.cookie_samesite,
         max_age=_COOKIE_MAX_AGE,
     )
+    _set_csrf_cookie(response)
     return TokenResponse(access_token=token)
 
 
@@ -55,10 +85,46 @@ async def me(current_user: dict = Depends(get_current_user)):
 
 @router.post("/logout", status_code=204)
 async def logout(response: Response):
-    """Invalide la session côté client en supprimant le cookie 'access_token'."""
+    """Invalide la session côté client en supprimant les cookies."""
     response.delete_cookie(
         key="access_token",
         httponly=True,
+        secure=settings.cookie_secure,
+        samesite=settings.cookie_samesite,
+    )
+    response.delete_cookie(
+        key=CSRF_COOKIE_NAME,
+        httponly=False,
+        secure=settings.cookie_secure,
+        samesite=settings.cookie_samesite,
+    )
+
+
+@router.post("/logout-all", status_code=204)
+async def logout_all(
+    response: Response,
+    current_user: dict = Depends(get_current_user),
+    pool: Pool = Depends(get_pool),
+):
+    """
+    Révoque TOUTES les sessions de l'utilisateur (tous appareils).
+    Incrémente token_version → tous les JWT précédemment émis sont rejetés.
+    """
+    async with pool.acquire() as conn:
+        await conn.execute(
+            "UPDATE utilisateurs SET token_version = token_version + 1 "
+            "WHERE id = $1::uuid",
+            current_user["id"],
+        )
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        secure=settings.cookie_secure,
+        samesite=settings.cookie_samesite,
+    )
+    response.delete_cookie(
+        key=CSRF_COOKIE_NAME,
+        httponly=False,
         secure=settings.cookie_secure,
         samesite=settings.cookie_samesite,
     )

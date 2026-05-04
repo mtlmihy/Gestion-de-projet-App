@@ -41,6 +41,18 @@ class Settings(BaseSettings):
     # ── SSL DB (Supabase nécessite SSL) ───────────────────────────────────────
     db_ssl: bool = False
 
+    # ── Environnement ─────────────────────────────────────────────────────────
+    # "development" | "production" — contrôle l'exposition de /docs, /redoc, etc.
+    env: str = "development"
+
+    @property
+    def is_production(self) -> bool:
+        return self.env.lower() == "production"
+
+    # ── Rate limiting ─────────────────────────────────────────────────────────
+    # Limite appliquée à /auth/login (anti brute-force).
+    login_rate_limit: str = "5/minute"
+
 
 settings = Settings()
 

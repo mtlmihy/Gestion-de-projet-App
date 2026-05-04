@@ -47,10 +47,14 @@ async def create(conn: Connection, data: dict) -> dict:
 
 
 async def update(conn: Connection, user_id: str, data: dict) -> dict | None:
+    # Si on désactive le compte ou retire des droits sensibles, on incrémente
+    # token_version pour révoquer les sessions actives de l'utilisateur.
+    bump_tv = not data.get("is_active", True)
     row = await conn.fetchrow(
-        """
+        f"""
         UPDATE utilisateurs
         SET nom=$2, poste=$3, is_admin=$4, is_active=$5, peut_creer_projet=$6, pages_autorisees=$7
+            {", token_version = token_version + 1" if bump_tv else ""}
         WHERE id=$1::uuid
         RETURNING id::text, email, nom, poste, is_admin, is_active, peut_creer_projet, pages_autorisees
         """,
@@ -67,8 +71,11 @@ async def update(conn: Connection, user_id: str, data: dict) -> dict | None:
 
 async def reset_password(conn: Connection, user_id: str, password: str) -> bool:
     hashed = hash_password(password)
+    # Reset mot de passe ⇒ on révoque toutes les sessions existantes.
     result = await conn.execute(
-        "UPDATE utilisateurs SET mot_de_passe=$2 WHERE id=$1::uuid",
+        "UPDATE utilisateurs "
+        "SET mot_de_passe=$2, token_version = token_version + 1 "
+        "WHERE id=$1::uuid",
         user_id, hashed,
     )
     return result == "UPDATE 1"

@@ -1,10 +1,16 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.config import settings
 from app.db.pool import init_pool, close_pool
+from app.auth.csrf import CSRFMiddleware
 from app.auth.router import router as auth_router
 from app.users.router import router as users_router, _public_router as users_public_router
 from app.projets.router import router as projets_router
@@ -23,22 +29,71 @@ async def lifespan(app: FastAPI):
     await close_pool()
 
 
+# ── Rate limiter (anti brute-force) ───────────────────────────────────────────
+# Identifie l'appelant par IP. Derrière un proxy (Render), X-Forwarded-For est
+# géré automatiquement par get_remote_address si Uvicorn est lancé avec
+# --proxy-headers (cas par défaut).
+limiter = Limiter(key_func=get_remote_address, default_limits=[])
+
+
+# ── Application ───────────────────────────────────────────────────────────────
+# En production : on désactive Swagger / ReDoc / openapi.json pour ne pas
+# exposer le schéma complet de l'API à un attaquant.
+_docs_kwargs = (
+    {"docs_url": None, "redoc_url": None, "openapi_url": None}
+    if settings.is_production
+    else {}
+)
+
 app = FastAPI(
     title="Gestion de Projet — API",
     description="Backend FastAPI pour l'application de gestion de projet.",
     version="1.0.0",
     lifespan=lifespan,
+    **_docs_kwargs,
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
+# ── Headers de sécurité HTTP ──────────────────────────────────────────────────
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """
+    Ajoute les en-têtes HTTP de sécurité recommandés par OWASP.
+    HSTS n'est ajouté qu'en production (sinon casse le dev sur http://).
+    """
+
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = (
+            "geolocation=(), microphone=(), camera=()"
+        )
+        if settings.is_production:
+            response.headers["Strict-Transport-Security"] = (
+                "max-age=63072000; includeSubDomains; preload"
+            )
+        return response
+
+
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(CSRFMiddleware)
+
 
 # ── CORS ──────────────────────────────────────────────────────────────────────
 # allow_credentials=True est requis pour que les cookies HttpOnly (JWT) soient
-# transmis entre le frontend Vue (localhost:5173) et l'API (localhost:8000).
+# transmis entre le frontend (Vercel) et l'API (Render).
+# On liste explicitement les méthodes et headers attendus (durcissement).
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "X-Requested-With", "X-CSRF-Token"],
+    max_age=600,
 )
 
 # ── Routers ───────────────────────────────────────────────────────────────────

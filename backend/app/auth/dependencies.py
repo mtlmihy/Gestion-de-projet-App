@@ -32,10 +32,12 @@ async def get_current_user(
         )
     payload  = auth_service.decode_access_token(access_token)
     user_id  = payload.get("sub")
+    token_v  = payload.get("tv")
 
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
-            "SELECT id::text, email, nom, poste, is_admin, is_active, peut_creer_projet, pages_autorisees "
+            "SELECT id::text, email, nom, poste, is_admin, is_active, peut_creer_projet, "
+            "pages_autorisees, token_version "
             "FROM utilisateurs WHERE id=$1::uuid",
             user_id,
         )
@@ -45,7 +47,18 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Utilisateur introuvable ou désactivé.",
         )
-    return dict(row)
+
+    # Révocation : si le token a été émis avant un changement
+    # (logout global, reset mot de passe, désactivation), on refuse.
+    if token_v is None or token_v != row["token_version"]:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Session révoquée. Veuillez vous reconnecter.",
+        )
+
+    user = dict(row)
+    user.pop("token_version", None)
+    return user
 
 
 async def require_admin(

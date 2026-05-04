@@ -2,7 +2,7 @@
 Service d'authentification.
 
 Authentification par e-mail + mot de passe (bcrypt) stocké en base.
-JWT HttpOnly cookie — sub = UUID de l'utilisateur.
+JWT HttpOnly cookie — sub = UUID de l'utilisateur, tv = token_version.
 """
 from __future__ import annotations
 
@@ -11,7 +11,8 @@ from typing import Optional
 
 from asyncpg import Connection
 from fastapi import HTTPException, status
-from jose import JWTError, jwt
+import jwt
+from jwt import PyJWTError
 import bcrypt as _bcrypt
 
 from app.config import settings
@@ -40,6 +41,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     """
     Génère un JWT signé avec SECRET_KEY (HS256).
     data["sub"] doit contenir l'UUID de l'utilisateur (str).
+    data["tv"] doit contenir le token_version courant de l'utilisateur (int).
     """
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + (
@@ -61,7 +63,7 @@ def decode_access_token(token: str) -> dict:
         if payload.get("sub") is None:
             raise _CREDENTIALS_EXCEPTION
         return payload
-    except JWTError:
+    except PyJWTError:
         raise _CREDENTIALS_EXCEPTION
 
 
@@ -72,10 +74,10 @@ async def authenticate_user(
 ) -> dict | None:
     """
     Cherche l'utilisateur par e-mail, vérifie le mot de passe bcrypt.
-    Retourne le dict utilisateur ou None si les identifiants sont invalides.
+    Retourne le dict utilisateur (incl. token_version) ou None si KO.
     """
     row = await conn.fetchrow(
-        "SELECT id::text, email, nom, poste, mot_de_passe, is_admin, is_active "
+        "SELECT id::text, email, nom, poste, mot_de_passe, is_admin, is_active, token_version "
         "FROM utilisateurs WHERE email=$1",
         email.lower().strip(),
     )

@@ -10,8 +10,11 @@ pydantic>=2.7.0
 pydantic-settings>=2.2.0       # lecture du .env via BaseSettings
 
 # ── Authentification JWT ──────────────────────────────────────────────────────
-python-jose[cryptography]>=3.3.0   # création et validation des JWT
-passlib[bcrypt]>=1.7.4             # hashing (compatible avec SHA-256 existant)
+PyJWT>=2.8.0                   # création et validation des JWT (remplace python-jose)
+bcrypt>=4.1.0                  # hashing des mots de passe (utilisé directement)
+
+# ── Sécurité ──────────────────────────────────────────────────────────────────
+slowapi>=0.1.9                 # rate limiting (anti brute-force /auth/login)
 
 # ── Utilitaires ───────────────────────────────────────────────────────────────
 python-multipart>=0.0.9        # nécessaire pour Form() dans FastAPI
