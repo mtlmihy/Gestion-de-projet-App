@@ -7,6 +7,14 @@ function loadUser() {
   try { return JSON.parse(localStorage.getItem('user') || 'null') } catch { return null }
 }
 
+// Filet de sécurité : efface côté JS le cookie csrf_token (non HttpOnly)
+// au cas où la suppression cross-site (SameSite=None) côté serveur échoue.
+// access_token est HttpOnly, donc inaccessible — seul le serveur peut le purger.
+function clearCsrfCookieClientSide() {
+  document.cookie = 'csrf_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=None; Secure'
+  document.cookie = 'csrf_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(loadUser)
 
@@ -19,6 +27,7 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(async () => {
     try { await apiLogout() } catch { /* ignore */ }
+    clearCsrfCookieClientSide()
     localStorage.removeItem('user')
     setUser(null)
   }, [])

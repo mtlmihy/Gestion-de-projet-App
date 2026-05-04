@@ -27,6 +27,22 @@ _limiter = Limiter(key_func=get_remote_address)
 _COOKIE_MAX_AGE = settings.access_token_expire_minutes * 60
 
 
+def _clear_session_cookies(response: Response) -> None:
+    """Supprime systématiquement access_token + csrf_token côté client.
+    Utile pour garantir un état propre avant un nouveau login ou à la
+    déconnexion (les delete_cookie cross-site SameSite=None peuvent être
+    capricieux selon les navigateurs si on ne réutilise pas exactement les
+    mêmes attributs)."""
+    for key, http_only in (("access_token", True), (CSRF_COOKIE_NAME, False)):
+        response.delete_cookie(
+            key=key,
+            httponly=http_only,
+            secure=settings.cookie_secure,
+            samesite=settings.cookie_samesite,
+            path="/",
+        )
+
+
 def _set_csrf_cookie(response: Response) -> None:
     """Pose le cookie CSRF lisible par JS (double-submit pattern)."""
     response.set_cookie(
@@ -36,6 +52,7 @@ def _set_csrf_cookie(response: Response) -> None:
         secure=settings.cookie_secure,
         samesite=settings.cookie_samesite,
         max_age=_COOKIE_MAX_AGE,
+        path="/",
     )
 
 
@@ -51,7 +68,12 @@ async def login(
     Authentifie l'utilisateur (email + mot de passe bcrypt).
     En cas de succès : émet un cookie HttpOnly 'access_token' contenant le JWT
     et un cookie 'csrf_token' (non HttpOnly) pour la protection CSRF.
+    Toujours commencer par effacer toute session précédente pour éviter
+    qu'un cookie périmé bloque la nouvelle connexion.
     """
+    # 1. Reset de l'état côté client (cookies périmés éventuels).
+    _clear_session_cookies(response)
+
     async with pool.acquire() as conn:
         user = await auth_service.authenticate_user(conn, payload.email, payload.password)
 
@@ -72,6 +94,7 @@ async def login(
         secure=settings.cookie_secure,
         samesite=settings.cookie_samesite,
         max_age=_COOKIE_MAX_AGE,
+        path="/",
     )
     _set_csrf_cookie(response)
     return TokenResponse(access_token=token)
@@ -86,18 +109,7 @@ async def me(current_user: dict = Depends(get_current_user)):
 @router.post("/logout", status_code=204)
 async def logout(response: Response):
     """Invalide la session côté client en supprimant les cookies."""
-    response.delete_cookie(
-        key="access_token",
-        httponly=True,
-        secure=settings.cookie_secure,
-        samesite=settings.cookie_samesite,
-    )
-    response.delete_cookie(
-        key=CSRF_COOKIE_NAME,
-        httponly=False,
-        secure=settings.cookie_secure,
-        samesite=settings.cookie_samesite,
-    )
+    _clear_session_cookies(response)
 
 
 @router.post("/logout-all", status_code=204)
@@ -116,15 +128,4 @@ async def logout_all(
             "WHERE id = $1::uuid",
             current_user["id"],
         )
-    response.delete_cookie(
-        key="access_token",
-        httponly=True,
-        secure=settings.cookie_secure,
-        samesite=settings.cookie_samesite,
-    )
-    response.delete_cookie(
-        key=CSRF_COOKIE_NAME,
-        httponly=False,
-        secure=settings.cookie_secure,
-        samesite=settings.cookie_samesite,
-    )
+    _clear_session_cookies(response)

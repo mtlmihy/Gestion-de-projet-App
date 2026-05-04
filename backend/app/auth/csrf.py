@@ -28,6 +28,14 @@ CSRF_COOKIE_NAME = "csrf_token"
 CSRF_HEADER_NAME = "X-CSRF-Token"
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 
+# Préfixes exemptés de la vérification CSRF.
+# Toutes les routes /auth/* sont exemptes :
+#   - /auth/login & /auth/logout  → pas de session valide à protéger ;
+#     déjà couverts par le rate-limiter (anti brute-force).
+#   - /auth/me, /auth/logout-all  → protégés par Depends(get_current_user)
+#     qui vérifie la signature JWT + token_version (JWT non forgeable).
+CSRF_EXEMPT_PREFIXES = ("/auth/",)
+
 
 def generate_csrf_token() -> str:
     """Token URL-safe imprévisible (32 octets ≈ 256 bits)."""
@@ -36,10 +44,10 @@ def generate_csrf_token() -> str:
 
 class CSRFMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        # Pas de session → rien à protéger (login, endpoints publics, healthcheck).
-        # On laisse aussi passer les méthodes sûres.
+        path = request.url.path
         if (
             request.method in SAFE_METHODS
+            or any(path.startswith(p) for p in CSRF_EXEMPT_PREFIXES)
             or request.cookies.get("access_token") is None
         ):
             return await call_next(request)
