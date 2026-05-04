@@ -9,6 +9,7 @@ class ProjetBase(BaseModel):
     statut: str = "Brouillon"
     type_projet: str = "Interne"
     budget_prevu: Optional[float] = None
+    devise: str = "CHF"
 
 
 class ProjetCreate(ProjetBase):
@@ -39,6 +40,7 @@ class ProjetPagesUpdate(BaseModel):
 class ProjetSettingsUpdate(BaseModel):
     type_projet: str
     budget_prevu: Optional[float] = None
+    devise: str = "CHF"
 
 
 # ── Membres du projet ─────────────────────────────────────────────────────────

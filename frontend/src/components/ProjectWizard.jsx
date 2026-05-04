@@ -14,6 +14,7 @@ const EMPTY_FORM = {
   nom: '',
   type_projet: 'Interne',
   budget_prevu: '',
+  devise: 'CHF',
   reference: '',
   chef_projet: '',
   service: '',
@@ -95,6 +96,7 @@ export default function ProjectWizard({ onClose, onCreated }) {
         description: shortDesc,
         statut: 'En cours',
         type_projet: form.type_projet,
+        devise: form.devise,
         budget_prevu: budgetClient,
       })
 
@@ -108,7 +110,10 @@ export default function ProjectWizard({ onClose, onCreated }) {
         sponsor:    form.sponsor.trim(),
         date_debut: form.date_debut,
         type_projet: form.type_projet,
-        budget: form.type_projet === 'Client' ? String(form.budget_prevu ?? '') : '',
+        devise: form.devise,
+        budget: form.type_projet === 'Client'
+          ? `${String(form.budget_prevu ?? '').trim()} ${form.devise === 'EUR' ? '€' : 'CHF'}`
+          : '',
         contexte:   form.contexte.trim(),
         objectifs:  form.objectifs.trim(),
         perimetre:  form.perimetre.trim(),
@@ -217,16 +222,25 @@ export default function ProjectWizard({ onClose, onCreated }) {
                   </select>
                 </div>
                 {form.type_projet === 'Client' && (
-                  <div>
-                    <label className={lbl}>Budget prévu *</label>
-                    <input
-                      className={inp}
-                      value={form.budget_prevu}
-                      onChange={setField('budget_prevu')}
-                      placeholder="Ex. 25000"
-                      inputMode="decimal"
-                    />
-                  </div>
+                  <>
+                    <div>
+                      <label className={lbl}>Budget prévu *</label>
+                      <input
+                        className={inp}
+                        value={form.budget_prevu}
+                        onChange={setField('budget_prevu')}
+                        placeholder="Ex. 25000"
+                        inputMode="decimal"
+                      />
+                    </div>
+                    <div>
+                      <label className={lbl}>Devise</label>
+                      <select className={inp} value={form.devise} onChange={setField('devise')}>
+                        <option value="CHF">CHF (CHF)</option>
+                        <option value="EUR">EUR (€)</option>
+                      </select>
+                    </div>
+                  </>
                 )}
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -370,7 +384,7 @@ export default function ProjectWizard({ onClose, onCreated }) {
               <RecapSection title="Identité">
                 <RecapRow k="Nom"          v={form.nom} />
                 <RecapRow k="Type"         v={form.type_projet} />
-                {form.type_projet === 'Client' && <RecapRow k="Budget prévu" v={form.budget_prevu} />}
+                {form.type_projet === 'Client' && <RecapRow k="Budget prévu" v={`${form.budget_prevu} ${form.devise === 'EUR' ? '€' : 'CHF'}`} />}
                 <RecapRow k="Référence"    v={form.reference} />
                 <RecapRow k="Chef de projet" v={form.chef_projet} />
                 <RecapRow k="Service"      v={form.service} />

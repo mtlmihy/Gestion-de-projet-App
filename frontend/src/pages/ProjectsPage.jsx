@@ -88,6 +88,7 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
   const [settingsForm, setSettingsForm] = useState({
     type_projet: projet?.type_projet ?? 'Interne',
     budget_prevu: projet?.budget_prevu == null ? '' : String(projet.budget_prevu),
+    devise: projet?.devise ?? 'CHF',
   })
   const [savingSettings, setSavingSettings] = useState(false)
   const [expandedClientId, setExpandedClientId] = useState(null)
@@ -111,8 +112,9 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
     setSettingsForm({
       type_projet: projet?.type_projet ?? 'Interne',
       budget_prevu: projet?.budget_prevu == null ? '' : String(projet.budget_prevu),
+      devise: projet?.devise ?? 'CHF',
     })
-  }, [projet.id, projet?.pages_visibles, projet?.type_projet, projet?.budget_prevu])
+  }, [projet.id, projet?.pages_visibles, projet?.type_projet, projet?.budget_prevu, projet?.devise])
 
   const membresIds      = new Set(membres.map((m) => m.user_id))
   const usersDisponibles = users.filter((u) => !membresIds.has(u.id))
@@ -229,10 +231,11 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
     if (savingSettings) return
     const typeProjet = settingsForm.type_projet
     const rawBudget = settingsForm.budget_prevu.trim().replace(',', '.')
+    const devise = settingsForm.devise
 
     let payload
     if (typeProjet === 'Interne') {
-      payload = { type_projet: 'Interne', budget_prevu: null }
+      payload = { type_projet: 'Interne', budget_prevu: null, devise }
     } else {
       if (!rawBudget) {
         notify('Le budget est requis pour un projet client.', 'error')
@@ -243,7 +246,7 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
         notify('Le budget doit être un nombre supérieur ou égal à 0.', 'error')
         return
       }
-      payload = { type_projet: 'Client', budget_prevu: parsed }
+      payload = { type_projet: 'Client', budget_prevu: parsed, devise }
     }
 
     setSavingSettings(true)
@@ -252,6 +255,7 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
       setSettingsForm({
         type_projet: data.type_projet ?? 'Interne',
         budget_prevu: data.budget_prevu == null ? '' : String(data.budget_prevu),
+        devise: data.devise ?? 'CHF',
       })
       onProjetUpdated?.(data)
       notify('Paramètres du projet mis à jour.')
@@ -286,7 +290,7 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
         {/* Paramètres projet — visible propriétaires/admins uniquement */}
         {estProprietaire && <div className="mb-3 flex-shrink-0 p-3 rounded-xl border border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/70">
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-2">Paramètres du projet</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-3">
             <select
               value={settingsForm.type_projet}
               onChange={(e) => {
@@ -303,14 +307,24 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
               <option value="Client">Projet client (avec budget)</option>
             </select>
             {settingsForm.type_projet === 'Client' && (
-              <input
-                type="text"
-                inputMode="decimal"
-                placeholder="Budget prévu"
-                value={settingsForm.budget_prevu}
-                onChange={(e) => setSettingsForm((prev) => ({ ...prev, budget_prevu: e.target.value }))}
-                className="text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              <>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Budget prévu"
+                  value={settingsForm.budget_prevu}
+                  onChange={(e) => setSettingsForm((prev) => ({ ...prev, budget_prevu: e.target.value }))}
+                  className="text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <select
+                  value={settingsForm.devise}
+                  onChange={(e) => setSettingsForm((prev) => ({ ...prev, devise: e.target.value }))}
+                  className="text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="CHF">CHF (CHF)</option>
+                  <option value="EUR">EUR (€)</option>
+                </select>
+              </>
             )}
             <button
               onClick={handleProjectSettingsSave}
@@ -562,7 +576,7 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
 }
 
 function CreateModal({ onClose, onCreated }) {
-  const [form, setForm] = useState({ nom: '', description: '', statut: 'En cours', type_projet: 'Interne', budget_prevu: '' })
+  const [form, setForm] = useState({ nom: '', description: '', statut: 'En cours', type_projet: 'Interne', budget_prevu: '', devise: 'CHF' })
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -591,6 +605,7 @@ function CreateModal({ onClose, onCreated }) {
       description: form.description,
       statut: form.statut,
       type_projet: form.type_projet,
+      devise: form.devise,
       budget_prevu: form.type_projet === 'Client'
         ? Number((form.budget_prevu || '').toString().replace(',', '.'))
         : null,
@@ -644,16 +659,25 @@ function CreateModal({ onClose, onCreated }) {
               </select>
             </div>
             {form.type_projet === 'Client' && (
-              <div>
-                <label className={lbl}>Budget prévu *</label>
-                <input
-                  className={inp}
-                  value={form.budget_prevu}
-                  onChange={setF('budget_prevu')}
-                  placeholder="Ex. 25000"
-                  inputMode="decimal"
-                />
-              </div>
+              <>
+                <div>
+                  <label className={lbl}>Budget prévu *</label>
+                  <input
+                    className={inp}
+                    value={form.budget_prevu}
+                    onChange={setF('budget_prevu')}
+                    placeholder="Ex. 25000"
+                    inputMode="decimal"
+                  />
+                </div>
+                <div>
+                  <label className={lbl}>Devise</label>
+                  <select className={inp} value={form.devise} onChange={setF('devise')}>
+                    <option value="CHF">CHF (CHF)</option>
+                    <option value="EUR">EUR (€)</option>
+                  </select>
+                </div>
+              </>
             )}
           </div>
           <div className="flex gap-2 pt-2">

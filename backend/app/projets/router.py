@@ -37,20 +37,22 @@ async def create_projet(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Seuls les administrateurs et chefs de projet peuvent créer un projet.",
         )
-    type_projet, budget_prevu = _normalize_type_budget(payload.type_projet, payload.budget_prevu)
+    type_projet, budget_prevu, devise = _normalize_type_budget(payload.type_projet, payload.budget_prevu, payload.devise)
     body = payload.model_dump()
     body["type_projet"] = type_projet
     body["budget_prevu"] = budget_prevu
+    body["devise"] = devise
     async with pool.acquire() as conn:
         return await svc.create(conn, body, createur_id=current_user["id"])
 
 
 @router.put("/{projet_id}", response_model=ProjetRead)
 async def update_projet(projet_id: str, payload: ProjetUpdate, pool: Pool = Depends(get_pool)):
-    type_projet, budget_prevu = _normalize_type_budget(payload.type_projet, payload.budget_prevu)
+    type_projet, budget_prevu, devise = _normalize_type_budget(payload.type_projet, payload.budget_prevu, payload.devise)
     body = payload.model_dump()
     body["type_projet"] = type_projet
     body["budget_prevu"] = budget_prevu
+    body["devise"] = devise
     async with pool.acquire() as conn:
         result = await svc.update(conn, projet_id, body)
     if result is None:
@@ -74,20 +76,28 @@ async def change_statut(
     return result
 
 
-def _normalize_type_budget(type_projet: str, budget_prevu: float | None) -> tuple[str, float | None]:
+def _normalize_type_budget(
+    type_projet: str,
+    budget_prevu: float | None,
+    devise: str,
+) -> tuple[str, float | None, str]:
     projet_type = (type_projet or "").strip()
     if projet_type not in ("Interne", "Client"):
         raise HTTPException(status_code=422, detail="Données invalides.")
 
+    currency = (devise or "").strip().upper()
+    if currency not in ("CHF", "EUR"):
+        raise HTTPException(status_code=422, detail="Devise invalide. Valeurs: CHF, EUR.")
+
     if projet_type == "Interne":
-        return projet_type, None
+        return projet_type, None, currency
 
     if budget_prevu is None or budget_prevu < 0:
         raise HTTPException(
             status_code=422,
             detail="Un budget prévu (>= 0) est requis pour un projet client.",
         )
-    return projet_type, budget_prevu
+    return projet_type, budget_prevu, currency
 
 
 @router.patch("/{projet_id}/settings", response_model=ProjetRead)
@@ -99,9 +109,9 @@ async def update_projet_settings(
 ):
     """Met à jour le type de projet et le budget prévu. Réservé au Propriétaire ou admin."""
     await _check_owner_or_admin(projet_id, current_user, pool)
-    type_projet, budget_prevu = _normalize_type_budget(payload.type_projet, payload.budget_prevu)
+    type_projet, budget_prevu, devise = _normalize_type_budget(payload.type_projet, payload.budget_prevu, payload.devise)
     async with pool.acquire() as conn:
-        result = await svc.update_settings(conn, projet_id, type_projet, budget_prevu)
+        result = await svc.update_settings(conn, projet_id, type_projet, budget_prevu, devise)
     if not result:
         raise HTTPException(status_code=404, detail="Projet introuvable.")
     return result

@@ -118,7 +118,7 @@ function buildPrintViewHtml(cdc, includeBudget = true) {
           <th style="${thS}">Description / Livrable</th>
         </tr></thead><tbody>${jalonRows}</tbody></table>
       </div>
-      ${includeBudget ? `<div class="cdc-block" style="margin-bottom:18px;">${shdr('8', 'Budget')}${pvTextBlock(cdc.budget)}</div>` : ''}
+      ${includeBudget ? `<div class="cdc-block" style="margin-bottom:18px;">${shdr('8', cdc.budget_titre || 'Budget')}${pvTextBlock(cdc.budget)}</div>` : ''}
       <div class="cdc-block" style="margin-top:24px;padding-top:10px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:8px;color:#94a3b8;">
         <span>Cahier des Charges · ${escH(dv(cdc.nom_projet))} · ${escH(dv(cdc.service))}</span>
         <span>Généré le ${today} · Document confidentiel</span>
@@ -241,7 +241,7 @@ body{background:${tb.bodyBg};color:#1e293b;font-size:11px;line-height:1.5;}
   </div>
   <div style="display:grid;grid-template-columns:${includeBudget ? '1fr 1fr' : '1fr'};gap:14px;margin-bottom:18px;">
     <div class="avoid-break">${secTitle('Ressources')}${box(bullets(cdc.ressources))}</div>
-    ${includeBudget ? `<div class="avoid-break">${secTitle('Budget')}${box(bullets(cdc.budget))}</div>` : ''}
+    ${includeBudget ? `<div class="avoid-break">${secTitle(cdc.budget_titre || 'Budget')}${box(bullets(cdc.budget))}</div>` : ''}
   </div>
   <div class="avoid-break" style="margin-bottom:18px;">${secTitle('Jalons &amp; Planning')}
     <table style="width:100%;border-collapse:collapse;font-size:10.5px;">
@@ -324,6 +324,9 @@ export default function CdcPage() {
   const { dark } = useTheme()
   const isProjetClient = projet?.type_projet === 'Client'
   const budgetProjet = projet?.budget_prevu == null ? '' : String(projet.budget_prevu)
+  const deviseProjet = (projet?.devise ?? 'CHF').toUpperCase()
+  const deviseSymbole = deviseProjet === 'EUR' ? '€' : 'CHF'
+  const budgetProjetFormatte = budgetProjet ? `${budgetProjet} ${deviseSymbole}` : ''
   const [cdc,      setCdc]     = useState(EMPTY)
   const [loading,  setLoading] = useState(true)
   const [saving,   setSaving]  = useState(false)
@@ -341,10 +344,17 @@ export default function CdcPage() {
       next.budget = ''
       return next
     }
-    if (!String(next.budget ?? '').trim() && budgetProjet) {
-      next.budget = budgetProjet
+    if (!String(next.budget ?? '').trim() && budgetProjetFormatte) {
+      next.budget = budgetProjetFormatte
     }
     return next
+  }
+
+  const normalizeBudgetWithCurrency = (value) => {
+    const raw = String(value ?? '').trim()
+    if (!raw) return budgetProjetFormatte
+    if (/\bCHF\b|€|\bEUR\b/i.test(raw)) return raw
+    return `${raw} ${deviseSymbole}`
   }
 
   // Chargement initial
@@ -368,7 +378,7 @@ export default function CdcPage() {
         }
       })
       .finally(() => setLoading(false))
-  }, [projet.id, projet?.nom, isProjetClient, budgetProjet])
+  }, [projet.id, projet?.nom, isProjetClient, budgetProjetFormatte])
 
   // Modificateurs
   const set = (field) => (e) => setCdc((c) => ({ ...c, [field]: e.target.value }))
@@ -414,7 +424,13 @@ export default function CdcPage() {
   // Export PDF : ouvre une fenêtre de visualisation (comme la Charte) avec
   // boutons Fermer / Imprimer-PDF, plutôt que d'imprimer directement.
   const handleExportPDF = () => {
-    const cdcForExport = isProjetClient ? cdc : { ...cdc, budget: '' }
+    const cdcForExport = isProjetClient
+      ? {
+          ...cdc,
+          budget: normalizeBudgetWithCurrency(cdc.budget),
+          budget_titre: `Budget (${deviseSymbole})`,
+        }
+      : { ...cdc, budget: '', budget_titre: 'Budget' }
     const inner = buildPrintViewHtml(cdcForExport, isProjetClient)
     const today = new Date().toLocaleDateString('fr-FR')
     const title = `Cahier des Charges — ${cdc.nom_projet || 'Sans titre'}`
@@ -469,7 +485,13 @@ body{background:${tb.bodyBg};color:#1e293b;}
 
   // Génération de la Charte Projet dans une nouvelle fenêtre
   const handleOpenCharter = () => {
-    const cdcForExport = isProjetClient ? cdc : { ...cdc, budget: '' }
+    const cdcForExport = isProjetClient
+      ? {
+          ...cdc,
+          budget: normalizeBudgetWithCurrency(cdc.budget),
+          budget_titre: `Budget (${deviseSymbole})`,
+        }
+      : { ...cdc, budget: '', budget_titre: 'Budget' }
     const html = buildCharterHtml(cdcForExport, dark, isProjetClient)
     const w = window.open('', '_blank')
     if (!w) { alert('Autorisez les popups pour générer la charte.'); return }
@@ -667,9 +689,9 @@ body{background:${tb.bodyBg};color:#1e293b;}
       {/* ── Budget (projets clients uniquement) ────────────────────────── */}
       {isProjetClient && (
         <Card>
-          <SectionHeader n="8" title="Budget" />
-          <p className={help}>Valeur initiale reprise depuis la création du projet. Vous pouvez ensuite la compléter ou la détailler.</p>
-          <textarea className={ta} value={cdc.budget ?? ''} onChange={set('budget')} placeholder="Décrivez le budget du projet…" disabled={estLecteur} />
+          <SectionHeader n="8" title={`Budget (${deviseSymbole})`} />
+          <p className={help}>Valeur initiale reprise depuis la création du projet. Vous pouvez ensuite la compléter ou la détailler. Symbole utilisé: {deviseSymbole}</p>
+          <textarea className={ta} value={cdc.budget ?? ''} onChange={set('budget')} placeholder={`Décrivez le budget du projet… (ex: 25000 ${deviseSymbole})`} disabled={estLecteur} />
         </Card>
       )}
 
