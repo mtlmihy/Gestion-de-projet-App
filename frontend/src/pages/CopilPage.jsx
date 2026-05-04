@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import ConfirmDialog from '../components/ConfirmDialog'
-import KpiCard from '../components/KpiCard'
 import Modal from '../components/Modal'
 import { useProject } from '../context/ProjectContext'
 import { createCopil, deleteCopil, getCopils, updateCopil } from '../api/copils'
@@ -118,20 +117,6 @@ export default function CopilPage() {
 
   useEffect(() => { load() }, [projet.id])
 
-  const kpis = useMemo(() => {
-    const total = items.length
-    const now = new Date()
-    const y = now.getFullYear()
-    const m = now.getMonth()
-    const ceMois = items.filter((i) => {
-      const d = new Date(i.date_reunion)
-      return d.getFullYear() === y && d.getMonth() === m
-    }).length
-    const decisions = items.filter((i) => (i.decisions ?? '').trim().length > 0).length
-    const actions = items.filter((i) => (i.actions ?? '').trim().length > 0).length
-    return { total, ceMois, decisions, actions }
-  }, [items])
-
   const fmtDate = (iso) => new Date(iso).toLocaleDateString('fr-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
   const handleAdd = async (data) => {
@@ -196,13 +181,6 @@ export default function CopilPage() {
       </div>
 
       <Notification {...notif} />
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        <KpiCard label="Réunions" value={kpis.total} />
-        <KpiCard label="Ce mois" value={kpis.ceMois} colorClass="text-blue-600" />
-        <KpiCard label="Décisions" value={kpis.decisions} colorClass="text-purple-600" />
-        <KpiCard label="Actions" value={kpis.actions} colorClass="text-orange-600" />
-      </div>
 
       {loading ? (
         <div className="text-center py-14 text-sm text-gray-400">Chargement...</div>
