@@ -227,7 +227,7 @@ function closeViewer(){
 <div class="no-print" style="background:${tb.barBg};border-bottom:1px solid ${tb.barBorder};padding:9px 20px;display:flex;justify-content:space-between;align-items:center;">
   <span style="font-size:10px;color:${tb.barText};">Charte de Projet · ${escH(cdc.nom_projet || 'Sans titre')} · ${today}</span>
   <div style="display:flex;gap:8px;">
-    // <button class="pbtn" style="background:${tb.closeBg};color:${tb.closeText};" onclick="closeViewer()">✕ Fermer</button>
+    <button class="pbtn" style="background:${tb.closeBg};color:${tb.closeText};" onclick="closeViewer()">✕ Fermer</button>
     <button class="pbtn" style="background:${tb.printBg};color:${tb.printText};" onclick="window.print()">🖨 Imprimer / PDF</button>
   </div>
 </div>
@@ -522,6 +522,21 @@ function closeViewer(){
     attachViewerCloseBridge(w)
     w.document.write(html)
     w.document.close()
+    // Attacher les event listeners APRÈS document.close()
+    setTimeout(() => {
+      try {
+        const btns = w.document.querySelectorAll('button.pbtn')
+        btns.forEach(btn => {
+          if (btn.innerHTML.includes('Fermer')) {
+            btn.onclick = () => w.window.closeViewer()
+          } else if (btn.innerHTML.includes('Imprimer')) {
+            btn.onclick = () => w.window.print()
+          }
+        })
+      } catch (e) {
+        console.warn('Impossible d\'attacher les listeners aux boutons:', e)
+      }
+    }, 50)
   }
 
   // Génération de la Charte Projet dans une nouvelle fenêtre
@@ -539,6 +554,21 @@ function closeViewer(){
     attachViewerCloseBridge(w)
     w.document.write(html)
     w.document.close()
+    // Attacher les event listeners APRÈS document.close()
+    setTimeout(() => {
+      try {
+        const btns = w.document.querySelectorAll('button.pbtn')
+        btns.forEach(btn => {
+          if (btn.innerHTML.includes('Fermer')) {
+            btn.onclick = () => w.window.closeViewer()
+          } else if (btn.innerHTML.includes('Imprimer')) {
+            btn.onclick = () => w.window.print()
+          }
+        })
+      } catch (e) {
+        console.warn('Impossible d\'attacher les listeners aux boutons:', e)
+      }
+    }, 50)
   }
 
   if (loading) return (
