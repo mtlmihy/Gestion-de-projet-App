@@ -613,6 +613,8 @@ export default function ProjectsPage() {
   const initiales = (user?.nom ?? user?.email ?? '?')
     .split(' ').map((p) => p[0]?.toUpperCase()).slice(0, 2).join('')
 
+  const isProjetEnCours = (p) => !p.est_cloture && p.statut === 'En cours'
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors">
       {/* Header */}
@@ -693,7 +695,7 @@ export default function ProjectsPage() {
 
         {/* Filtres */}
         {!loading && projets.length > 0 && (() => {
-          const nbActifs   = projets.filter((p) => !p.est_cloture).length
+          const nbActifs   = projets.filter((p) => isProjetEnCours(p)).length
           const nbClotures = projets.filter((p) =>  p.est_cloture).length
           return (
             <div className="flex items-center gap-2 mb-6">
@@ -748,7 +750,7 @@ export default function ProjectsPage() {
         ) : (() => {
           const projetsFiltres = projets
             .filter((p) =>
-              filtre === 'actifs'   ? !p.est_cloture :
+              filtre === 'actifs'   ? isProjetEnCours(p) :
               filtre === 'clotures' ?  p.est_cloture :
               true
             )
