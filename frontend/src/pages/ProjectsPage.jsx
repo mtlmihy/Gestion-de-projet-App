@@ -76,7 +76,7 @@ const PAGES_DISPONIBLES = [
 ]
 
 // ── Modal gestion des accès ───────────────────────────────────────────────────
-function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated }) {
+function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDeleteProjet, onCloturerProjet, onReactiverProjet, onStatutProjetChange }) {
   const rolesDisponibles = isAdmin ? ROLES : ROLES_SANS_PROPRIO
   const [membres,    setMembres]  = useState([])
   const [users,      setUsers]    = useState([])
@@ -85,6 +85,8 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated }) {
   const [addForm,    setAddForm]  = useState({ user_id: '', role: isAdmin ? 'Proprietaire' : 'Lecteur' })
   const [notif,      setNotif]    = useState({ msg: '', type: 'success' })
   const [pagesProjet, setPagesProjet] = useState(projet?.pages_visibles ?? null)
+  const [expandedClientId, setExpandedClientId] = useState(null)
+  const estProprietaire = isAdmin || projet.mon_role === 'Proprietaire'
 
   const notify = (msg, type = 'success') => {
     setNotif({ msg, type })
@@ -122,9 +124,52 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated }) {
     try {
       await updateMembre(projet.id, userId, role)
       setMembres((m) => m.map((mb) => mb.user_id === userId ? { ...mb, role } : mb))
+      if (role !== 'Client_Limite') {
+        setExpandedClientId((current) => (current === userId ? null : current))
+      }
       notify('Rôle mis à jour.')
     } catch (err) {
       notify(err?.response?.data?.detail ?? 'Erreur lors de la modification du rôle.', 'error')
+    }
+  }
+
+  const handleProjetDelete = async () => {
+    if (!onDeleteProjet) return
+    try {
+      const result = await onDeleteProjet(projet)
+      if (result?.deleted) onClose()
+    } catch {
+      // Les erreurs sont déjà traitées au niveau parent.
+    }
+  }
+
+  const handleProjetCloture = async () => {
+    if (!onCloturerProjet) return
+    try {
+      const updated = await onCloturerProjet(projet)
+      if (updated) onProjetUpdated?.(updated)
+    } catch {
+      // Les erreurs sont déjà traitées au niveau parent.
+    }
+  }
+
+  const handleProjetReactivation = async () => {
+    if (!onReactiverProjet) return
+    try {
+      const updated = await onReactiverProjet(projet)
+      if (updated) onProjetUpdated?.(updated)
+    } catch {
+      // Les erreurs sont déjà traitées au niveau parent.
+    }
+  }
+
+  const handleProjetStatut = async (newStatut) => {
+    if (!onStatutProjetChange) return
+    try {
+      const updated = await onStatutProjetChange(projet, newStatut)
+      if (updated) onProjetUpdated?.(updated)
+    } catch {
+      // Les erreurs sont déjà traitées au niveau parent.
     }
   }
 
@@ -193,7 +238,49 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated }) {
         )}
 
         {/* Paramètres projet — visible propriétaires/admins uniquement */}
-        {(isAdmin || projet.mon_role === 'Proprietaire') && <div className="mb-3 flex-shrink-0 p-3 rounded-xl border border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/70">
+        {estProprietaire && <div className="mb-3 flex-shrink-0 p-3 rounded-xl border border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/70">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-2">Paramètres du projet</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+            {!projet.est_cloture && (
+              <select
+                value={projet.statut}
+                onChange={(e) => handleProjetStatut(e.target.value)}
+                className="text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {STATUTS.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            )}
+            <div className="flex items-center gap-2 sm:justify-end">
+              {!projet.est_cloture && (
+                <button
+                  onClick={handleProjetCloture}
+                  className="text-xs text-orange-700 bg-orange-50 border border-orange-200 hover:bg-orange-100 font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                  title="Clôturer le projet"
+                >
+                  Clôturer
+                </button>
+              )}
+              {projet.est_cloture && isAdmin && (
+                <button
+                  onClick={handleProjetReactivation}
+                  className="text-xs text-green-700 bg-green-50 border border-green-200 hover:bg-green-100 font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                  title="Réactiver le projet"
+                >
+                  Réactiver
+                </button>
+              )}
+              {isAdmin && (
+                <button
+                  onClick={handleProjetDelete}
+                  className="text-xs text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                  title="Supprimer le projet"
+                >
+                  Supprimer
+                </button>
+              )}
+            </div>
+          </div>
+
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-2">Pages visibles dans ce projet</p>
           <div className="space-y-1.5">
             <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300 cursor-pointer font-medium">
@@ -267,7 +354,13 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated }) {
                 )}
                 {membres.map((m) => (
                   <Fragment key={m.user_id}>
-                  <tr className="hover:bg-gray-50 dark:hover:bg-slate-800/60 transition-colors">
+                  <tr
+                    className={`hover:bg-gray-50 dark:hover:bg-slate-800/60 transition-colors ${m.role === 'Client_Limite' ? 'cursor-pointer' : ''}`}
+                    onClick={() => {
+                      if (m.role !== 'Client_Limite') return
+                      setExpandedClientId((current) => (current === m.user_id ? null : m.user_id))
+                    }}
+                  >
                     <td className="px-4 py-3 font-medium text-gray-900 dark:text-slate-100">{m.nom ?? '—'}</td>
                     <td className="px-4 py-3 text-gray-500 dark:text-slate-400 text-xs">{m.email}</td>
                     <td className="px-4 py-3">
@@ -276,6 +369,7 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated }) {
                       ) : (
                         <select
                           value={m.role}
+                          onClick={(e) => e.stopPropagation()}
                           onChange={(e) => handleRoleChange(m.user_id, e.target.value)}
                           className="text-xs border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         >
@@ -285,14 +379,14 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated }) {
                     </td>
                     <td className="px-4 py-3">
                       <button
-                        onClick={() => handleRemove(m.user_id, m.email)}
+                        onClick={(e) => { e.stopPropagation(); handleRemove(m.user_id, m.email) }}
                         className="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-1 rounded-lg hover:bg-red-50 transition-colors"
                       >
                         Retirer
                       </button>
                     </td>
                   </tr>
-                  {m.role === 'Client_Limite' && (
+                  {m.role === 'Client_Limite' && expandedClientId === m.user_id && (
                     <tr className="bg-orange-50/60 dark:bg-orange-900/10">
                       <td colSpan="4" className="px-6 pb-4 pt-2">
                         <p className="text-xs font-semibold text-orange-700 dark:text-orange-400 mb-2">Pages accessibles pour ce membre :</p>
@@ -452,11 +546,8 @@ function CreateModal({ onClose, onCreated }) {
 }
 
 // ── Carte projet ─────────────────────────────────────────────────────────────
-function ProjetCard({ projet, onSelect, onDelete, onGererAcces, onCloturer, onReactiver, onStatutChange, isAdmin, isPinned, onTogglePin }) {
+function ProjetCard({ projet, onSelect, onGererAcces, isAdmin, isPinned, onTogglePin }) {
   const estProprietaire = isAdmin || projet.mon_role === 'Proprietaire'
-  const peutEditerStatut = !projet.est_cloture && estProprietaire
-  const peutCloturer    = !projet.est_cloture && estProprietaire
-  const peutReactiver   = projet.est_cloture && isAdmin
   return (
     <div
       onClick={() => onSelect(projet)}
@@ -508,24 +599,7 @@ function ProjetCard({ projet, onSelect, onDelete, onGererAcces, onCloturer, onRe
             {projet.nom}
           </h3>
         </div>
-        {!projet.est_cloture && (
-          peutEditerStatut ? (
-            <select
-              value={projet.statut}
-              onClick={(e) => e.stopPropagation()}
-              onChange={(e) => { e.stopPropagation(); onStatutChange(projet, e.target.value) }}
-              className={`text-xs font-semibold px-2.5 py-1 rounded-full border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400 ${
-                (STATUT_STYLE[projet.statut] ?? STATUT_STYLE['Brouillon']).bg
-              } ${
-                (STATUT_STYLE[projet.statut] ?? STATUT_STYLE['Brouillon']).text
-              }`}
-            >
-              {STATUTS.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
-          ) : (
-            <StatutBadge statut={projet.statut} />
-          )
-        )}
+        {!projet.est_cloture && <StatutBadge statut={projet.statut} />}
       </div>
 
       {/* Description */}
@@ -547,32 +621,6 @@ function ProjetCard({ projet, onSelect, onDelete, onGererAcces, onCloturer, onRe
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
               </svg>
-            </button>
-          )}
-          {peutCloturer && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onCloturer(projet) }}
-              className="text-xs text-orange-500 hover:text-orange-700 font-medium px-2 py-1 rounded-lg"
-              title="Clôturer le projet"
-            >
-              Clôturer
-            </button>
-          )}
-          {peutReactiver && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onReactiver(projet) }}
-              className="text-xs text-green-600 hover:text-green-800 font-medium px-2 py-1 rounded-lg"
-              title="Réactiver le projet"
-            >
-              Réactiver
-            </button>
-          )}
-          {isAdmin && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onDelete(projet) }}
-              className="text-xs text-red-400 hover:text-red-600 font-medium px-2 py-1 rounded-lg"
-            >
-              Supprimer
             </button>
           )}
         </div>
@@ -640,36 +688,51 @@ export default function ProjectsPage() {
     try {
       await deleteProjet(projet.id)
       setProjets((p) => p.filter((x) => x.id !== projet.id))
+      setAccesProjet((current) => (current?.id === projet.id ? null : current))
+      return { id: projet.id, deleted: true }
     } catch (err) {
       setError(err?.response?.data?.detail ?? 'Erreur lors de la suppression.')
+      throw err
     }
   }
   const handleCloturer = async (projet) => {
     if (!confirm(`Clôturer « ${projet.nom} » ? Le projet passera en lecture seule.`)) return
     try {
-      await cloturerProjet(projet.id)
-      setProjets((p) => p.map((x) => x.id === projet.id ? { ...x, est_cloture: true } : x))
+      const { data } = await cloturerProjet(projet.id)
+      const updated = data ?? { ...projet, est_cloture: true }
+      setProjets((p) => p.map((x) => x.id === projet.id ? { ...x, ...updated } : x))
+      setAccesProjet((current) => (current?.id === projet.id ? { ...current, ...updated } : current))
+      return updated
     } catch (err) {
       setError(err?.response?.data?.detail ?? 'Erreur lors de la clôture.')
+      throw err
     }
   }
 
   const handleReactiver = async (projet) => {
     if (!confirm(`Réactiver « ${projet.nom} » ?`)) return
     try {
-      await reactiverProjet(projet.id)
-      setProjets((p) => p.map((x) => x.id === projet.id ? { ...x, est_cloture: false } : x))
+      const { data } = await reactiverProjet(projet.id)
+      const updated = data ?? { ...projet, est_cloture: false }
+      setProjets((p) => p.map((x) => x.id === projet.id ? { ...x, ...updated } : x))
+      setAccesProjet((current) => (current?.id === projet.id ? { ...current, ...updated } : current))
+      return updated
     } catch (err) {
       setError(err?.response?.data?.detail ?? 'Erreur lors de la réactivation.')
+      throw err
     }
   }
 
   const handleStatutChange = async (projet, newStatut) => {
     try {
       const { data } = await updateStatutProjet(projet.id, newStatut)
-      setProjets((p) => p.map((x) => x.id === projet.id ? { ...x, statut: data.statut } : x))
+      const updated = data ?? { ...projet, statut: newStatut }
+      setProjets((p) => p.map((x) => x.id === projet.id ? { ...x, ...updated } : x))
+      setAccesProjet((current) => (current?.id === projet.id ? { ...current, ...updated } : current))
+      return updated
     } catch (err) {
       setError(err?.response?.data?.detail ?? 'Erreur lors du changement de statut.')
+      throw err
     }
   }
 
@@ -844,11 +907,7 @@ export default function ProjectsPage() {
                 key={p.id}
                 projet={p}
                 onSelect={handleSelect}
-                onDelete={handleDelete}
                 onGererAcces={(p) => setAccesProjet(p)}
-                onCloturer={handleCloturer}
-                onReactiver={handleReactiver}
-                onStatutChange={handleStatutChange}
                 isAdmin={isAdmin}
                 isPinned={pinned.has(p.id)}
                 onTogglePin={togglePin}
@@ -873,6 +932,10 @@ export default function ProjectsPage() {
           onClose={() => setAccesProjet(null)}
           isAdmin={isAdmin}
           onProjetUpdated={handleProjetUpdated}
+          onDeleteProjet={handleDelete}
+          onCloturerProjet={handleCloturer}
+          onReactiverProjet={handleReactiver}
+          onStatutProjetChange={handleStatutChange}
         />
       )}
     </div>
