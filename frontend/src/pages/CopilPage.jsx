@@ -207,17 +207,17 @@ export default function CopilPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                <section className="rounded-lg border border-gray-100 dark:border-slate-700 p-3">
+                <section className="rounded-lg border border-gray-100 dark:border-slate-700 p-3 min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-1">Notes</p>
-                  <p className="text-gray-700 dark:text-slate-300 whitespace-pre-wrap">{it.notes || '—'}</p>
+                  <p className="text-gray-700 dark:text-slate-300 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{it.notes || '—'}</p>
                 </section>
-                <section className="rounded-lg border border-gray-100 dark:border-slate-700 p-3">
+                <section className="rounded-lg border border-gray-100 dark:border-slate-700 p-3 min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-1">Décisions</p>
-                  <p className="text-gray-700 dark:text-slate-300 whitespace-pre-wrap">{it.decisions || '—'}</p>
+                  <p className="text-gray-700 dark:text-slate-300 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{it.decisions || '—'}</p>
                 </section>
-                <section className="rounded-lg border border-gray-100 dark:border-slate-700 p-3">
+                <section className="rounded-lg border border-gray-100 dark:border-slate-700 p-3 min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-1">Actions</p>
-                  <p className="text-gray-700 dark:text-slate-300 whitespace-pre-wrap">{it.actions || '—'}</p>
+                  <p className="text-gray-700 dark:text-slate-300 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{it.actions || '—'}</p>
                 </section>
               </div>
             </div>
