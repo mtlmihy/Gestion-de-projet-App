@@ -4,7 +4,7 @@ const EMPTY = { collaborateur: '', poste: '', manager: '', numero: '', email: ''
 
 const cls = {
   label: 'block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1',
-  input: 'w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500',
+  input: 'w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-base sm:text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500',
 }
 
 export default function MembreForm({ initial, onSubmit, onCancel, loading }) {

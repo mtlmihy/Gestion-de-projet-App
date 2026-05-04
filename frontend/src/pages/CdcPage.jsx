@@ -15,11 +15,11 @@ const EMPTY = {
 }
 
 // ── Helpers styles ────────────────────────────────────────────────────────────
-const inp  = 'w-full border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-gray-800 dark:text-slate-100 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition'
-const ta   = 'w-full border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-3 text-sm text-gray-800 dark:text-slate-100 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical leading-relaxed transition min-h-[130px]'
+const inp  = 'w-full border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2 text-base sm:text-sm text-gray-800 dark:text-slate-100 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition'
+const ta   = 'w-full border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-3 text-base sm:text-sm text-gray-800 dark:text-slate-100 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical leading-relaxed transition min-h-[130px]'
 const lbl  = 'block text-[.68rem] font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-1'
 const help = 'text-[.75rem] text-gray-400 dark:text-slate-500 italic mb-3 ml-9 leading-snug'
-const rowIn = 'w-full border-0 bg-transparent text-sm text-gray-700 dark:text-slate-300 px-1 py-0.5 rounded focus:bg-gray-50 dark:focus:bg-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-400'
+const rowIn = 'w-full border-0 bg-transparent text-base sm:text-sm text-gray-700 dark:text-slate-300 px-1 py-0.5 rounded focus:bg-gray-50 dark:focus:bg-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-400'
 
 // ── Helpers export PDF / Charte Projet ───────────────────────────────────────
 function escH(s) {
