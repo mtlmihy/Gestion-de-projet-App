@@ -89,7 +89,7 @@ async def login(
         )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="E-mail ou mot de passe incorrect.",
+            detail="Identifiants invalides.",
         )
 
     token = auth_service.create_access_token(
@@ -206,7 +206,7 @@ async def change_password(
         ):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Mot de passe actuel incorrect.",
+                detail="Opération refusée.",
             )
         new_hash = auth_service.hash_password(payload.new_password)
         await conn.execute(

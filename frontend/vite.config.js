@@ -4,6 +4,15 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  // Sécurité : pas de source maps en prod (interdit le reverse engineering du JS).
+  build: {
+    sourcemap: false,
+    minify: 'esbuild',
+  },
+  // En prod, supprime tous les console.* et debugger du bundle.
+  esbuild: {
+    drop: ['console', 'debugger'],
+  },
   server: {
     proxy: {
       // Clés avec "/" final : n'intercepte que les vraies requêtes API,

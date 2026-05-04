@@ -77,29 +77,86 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 # ── Headers de sécurité HTTP ──────────────────────────────────────────────────
+# Stratégie « zero-information » : on retire tous les en-têtes qui révèlent la
+# stack (Server, X-Powered-By, Via). On ajoute les en-têtes OWASP + une CSP
+# stricte qui n'est appliquée qu'aux réponses HTML (l'API renvoie du JSON).
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
-    """
-    Ajoute les en-têtes HTTP de sécurité recommandés par OWASP.
-    HSTS n'est ajouté qu'en production (sinon casse le dev sur http://).
-    """
-
     async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
+        # Retire toute info sur la pile technique
+        for h in ("server", "x-powered-by", "via", "x-aspnet-version"):
+            if h in response.headers:
+                del response.headers[h]
+        # En-têtes OWASP de base
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
-        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Referrer-Policy"] = "no-referrer"
         response.headers["Permissions-Policy"] = (
-            "geolocation=(), microphone=(), camera=()"
+            "geolocation=(), microphone=(), camera=(), payment=(), usb=()"
         )
+        response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+        response.headers["Cross-Origin-Resource-Policy"] = "same-site"
+        # API JSON only — pas de scripts à autoriser, on bloque tout.
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
+        )
+        # En-tête générique non identifiant
+        response.headers["Server"] = "web"
         if settings.is_production:
             response.headers["Strict-Transport-Security"] = (
                 "max-age=63072000; includeSubDomains; preload"
             )
+            # Cache désactivé pour toute réponse API (évite leak via cache)
+            response.headers.setdefault("Cache-Control", "no-store")
         return response
 
 
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(CSRFMiddleware)
+
+
+# ── Handler global 500 — réponse opaque ───────────────────────────────────────
+# Empêche FastAPI de renvoyer une stack trace ou un message technique en cas
+# d'erreur non gérée. L'erreur réelle reste loggée côté serveur (Sentry/Render).
+from fastapi.exceptions import RequestValidationError  # noqa: E402
+from starlette.exceptions import HTTPException as StarletteHTTPException  # noqa: E402
+import logging  # noqa: E402
+
+_logger = logging.getLogger("app")
+
+
+@app.exception_handler(Exception)
+async def _unhandled_exception_handler(request: Request, exc: Exception):
+    # Log côté serveur uniquement
+    _logger.exception("Unhandled error on %s %s", request.method, request.url.path)
+    return JSONResponse(status_code=500, content={"detail": "Erreur interne."})
+
+
+@app.exception_handler(StarletteHTTPException)
+async def _http_exception_handler(request: Request, exc: StarletteHTTPException):
+    # En prod, on neutralise les messages détaillés des 4xx/5xx serveur-side
+    # qui pourraient renseigner un attaquant (ex: "Membre introuvable" vs "Projet introuvable").
+    if settings.is_production and exc.status_code in (401, 403, 404):
+        # Réponse uniforme : pas d'indice sur la cause
+        generic = {
+            401: "Authentification requise.",
+            403: "Accès refusé.",
+            404: "Ressource introuvable.",
+        }[exc.status_code]
+        return JSONResponse(status_code=exc.status_code, content={"detail": generic})
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail if isinstance(exc.detail, str) else "Erreur."},
+        headers=getattr(exc, "headers", None) or {},
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def _validation_exception_handler(request: Request, exc: RequestValidationError):
+    # En prod : message générique (ne révèle pas la structure attendue).
+    if settings.is_production:
+        return JSONResponse(status_code=422, content={"detail": "Requête invalide."})
+    return JSONResponse(status_code=422, content={"detail": exc.errors()})
 
 
 # ── CORS ──────────────────────────────────────────────────────────────────────
@@ -127,7 +184,9 @@ app.include_router(cdc_router,     prefix="/cdc",     tags=["Cahier des Charges"
 app.include_router(liens_router,                      tags=["Liens externes"])
 
 
-@app.get("/health", tags=["Infra"])
+@app.get("/health", include_in_schema=False)
 async def health_check():
-    """Endpoint de supervision — retourne 200 si l'API est en ligne."""
-    return {"status": "ok"}
+    # Réponse minimale : 204 No Content. Aucun corps, aucune info.
+    # Render/Azure n'ont besoin que d'un 2xx pour le healthcheck.
+    from fastapi import Response as _Resp
+    return _Resp(status_code=204)

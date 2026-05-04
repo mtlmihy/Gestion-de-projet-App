@@ -20,7 +20,7 @@ export default function LoginPage() {
       await login(email, password)
       navigate('/', { replace: true })
     } catch {
-      setError('E-mail ou mot de passe incorrect.')
+      setError('Identifiants invalides.')
     } finally {
       setLoading(false)
     }

@@ -20,9 +20,15 @@ from app.config import settings
 
 _CREDENTIALS_EXCEPTION = HTTPException(
     status_code=status.HTTP_401_UNAUTHORIZED,
-    detail="Session invalide ou expirée. Veuillez vous reconnecter.",
-    headers={"WWW-Authenticate": "Bearer"},
+    detail="Authentification requise.",
+    # Pas de WWW-Authenticate: révèle inutilement le schéma d'auth Bearer.
 )
+
+
+# Hash bcrypt factice (cost 12) utilisé pour faire un check même quand
+# l'utilisateur n'existe pas → égalise les temps de réponse et bloque
+# l'énumération des comptes par mesure de timing.
+_DUMMY_HASH = "$2b$12$CwTycUXWue0Thq9StjUM0uJ8.bnB3jB9uH5Q1dGZ2c1aN3RvR3K3K"
 
 
 # ── Mots de passe ─────────────────────────────────────────────────────────────
@@ -74,6 +80,8 @@ async def authenticate_user(
 ) -> dict | None:
     """
     Cherche l'utilisateur par e-mail, vérifie le mot de passe bcrypt.
+    ⚠️ Constant-time : exécute toujours un bcrypt (même si l'email n'existe
+    pas) pour égaliser les temps de réponse → bloque l'énumération des comptes.
     Retourne le dict utilisateur (incl. token_version) ou None si KO.
     """
     row = await conn.fetchrow(
@@ -81,11 +89,9 @@ async def authenticate_user(
         "FROM utilisateurs WHERE email=$1",
         email.lower().strip(),
     )
-    if not row:
+    # Toujours hasher pour ne pas révéler l'absence de l'utilisateur via timing.
+    stored_hash = row["mot_de_passe"] if row else _DUMMY_HASH
+    password_ok = verify_password(password, stored_hash)
+    if not row or not password_ok or not row["is_active"]:
         return None
-    user = dict(row)
-    if not verify_password(password, user["mot_de_passe"]):
-        return None
-    if not user["is_active"]:
-        return None
-    return user
+    return dict(row)

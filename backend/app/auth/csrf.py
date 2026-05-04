@@ -60,9 +60,10 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             or not header_token
             or not secrets.compare_digest(cookie_token, header_token)
         ):
+            # Message générique : ne mentionne pas "CSRF" → ne révèle pas la défense.
             return JSONResponse(
                 status_code=403,
-                content={"detail": "Jeton CSRF invalide ou manquant."},
+                content={"detail": "Opération refusée."},
             )
 
         return await call_next(request)

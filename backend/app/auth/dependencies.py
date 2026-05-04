@@ -22,15 +22,21 @@ async def get_current_user(
     """
     Lit le cookie HttpOnly 'access_token', valide le JWT,
     puis charge l'utilisateur depuis la base.
-    Retourne un dict  {id, email, nom, poste, is_admin, is_active}.
-    Lève HTTP 401 si absent, invalide ou utilisateur inactif.
+    Retourne un dict {id, email, nom, poste, is_admin, is_active}.
+    ⚠️ Tous les échecs renvoient le même 401 générique pour ne pas révéler
+    à un attaquant si le token est absent / expiré / révoqué / l'utilisateur désactivé.
     """
+    _UNAUTHORIZED = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Authentification requise.",
+    )
+
     if access_token is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Non authentifié.",
-        )
-    payload  = auth_service.decode_access_token(access_token)
+        raise _UNAUTHORIZED
+    try:
+        payload = auth_service.decode_access_token(access_token)
+    except HTTPException:
+        raise _UNAUTHORIZED
     user_id  = payload.get("sub")
     token_v  = payload.get("tv")
 
@@ -43,18 +49,13 @@ async def get_current_user(
         )
 
     if row is None or not row["is_active"]:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Utilisateur introuvable ou désactivé.",
-        )
+        raise _UNAUTHORIZED
 
     # Révocation : si le token a été émis avant un changement
-    # (logout global, reset mot de passe, désactivation), on refuse.
+    # (logout global, reset mot de passe, désactivation), on refuse —
+    # même message générique.
     if token_v is None or token_v != row["token_version"]:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Session révoquée. Veuillez vous reconnecter.",
-        )
+        raise _UNAUTHORIZED
 
     user = dict(row)
     user.pop("token_version", None)

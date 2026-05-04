@@ -174,8 +174,8 @@ export default function PlanningPage() {
           .filter((j) => j.label && j.date && !isNaN(j.date))
           .sort((a, b) => a.date - b.date)
         setJalons(parsed)
-      } catch (e) {
-        console.warn('CDC parse error', e)
+      } catch {
+        // ignore : CDC mal formé → page s'affiche vide.
       }
     }).catch(() => { /* pas de CDC — page s'affiche vide */ })
 
