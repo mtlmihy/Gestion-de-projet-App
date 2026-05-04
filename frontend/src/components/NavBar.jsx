@@ -80,7 +80,7 @@ export default function NavBar() {
         </div>
 
         {/* Nav links */}
-        <nav className="flex items-center gap-0.5 overflow-x-auto flex-1">
+        <nav className="flex items-center gap-0.5 overflow-x-auto flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {LINKS.filter(({ page }) => canAccess(page) && canAccessPage(page)).map(({ to, label }) => (
             <NavLink
               key={to}
