@@ -24,6 +24,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
+from app.config import settings
+
 
 _logger = logging.getLogger("app.csrf")
 
@@ -58,6 +60,27 @@ class CSRFMiddleware(BaseHTTPMiddleware):
 
         cookie_token = request.cookies.get(CSRF_COOKIE_NAME)
         header_token = request.headers.get(CSRF_HEADER_NAME)
+
+        # Mode 1 (préféré) : double-submit cookie classique.
+        if (
+            cookie_token
+            and header_token
+            and secrets.compare_digest(cookie_token, header_token)
+        ):
+            return await call_next(request)
+
+        # Mode 2 (fallback cross-domain Vercel <-> Render) : le frontend ne
+        # peut pas lire un cookie posé sur un autre domaine. On accepte alors
+        # uniquement les requêtes AJAX venant d'une Origin explicitement
+        # autorisée ET avec un header non simple imposant un preflight CORS.
+        origin = request.headers.get("origin")
+        requested_with = request.headers.get("x-requested-with")
+        if (
+            origin
+            and origin in settings.cors_origins_list
+            and requested_with == "XMLHttpRequest"
+        ):
+            return await call_next(request)
 
         if (
             not cookie_token

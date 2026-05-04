@@ -24,9 +24,12 @@ function readCookie(name) {
 client.interceptors.request.use((config) => {
   const method = (config.method || 'get').toLowerCase()
   if (!CSRF_SAFE_METHODS.has(method)) {
+    config.headers = config.headers || {}
+    // Header non-simple : force un preflight CORS, utile pour la défense CSRF
+    // quand frontend et API sont sur des domaines différents.
+    config.headers['X-Requested-With'] = 'XMLHttpRequest'
     const token = readCookie('csrf_token')
     if (token) {
-      config.headers = config.headers || {}
       config.headers['X-CSRF-Token'] = token
     }
   }
