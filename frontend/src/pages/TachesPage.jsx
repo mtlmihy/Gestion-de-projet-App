@@ -148,10 +148,11 @@ export default function TachesPage() {
         </h1>
         <button
           onClick={() => setAddOpen(true)}
-          className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 sm:px-4 py-2 rounded-lg transition-colors"
           hidden={estLecteur}
         >
-          <span className="text-lg leading-none">＋</span> Ajouter une tâche
+          <span className="text-lg leading-none">＋</span>
+          <span className="hidden sm:inline">Ajouter une tâche</span>
         </button>
       </div>
 

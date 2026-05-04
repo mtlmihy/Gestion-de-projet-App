@@ -172,9 +172,10 @@ export default function CopilPage() {
         <button
           onClick={() => setAddOpen(true)}
           hidden={estLecteur}
-          className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 sm:px-4 py-2 rounded-lg transition-colors"
         >
-          <span className="text-lg leading-none">+</span> Ajouter une réunion
+          <span className="text-lg leading-none">+</span>
+          <span className="hidden sm:inline">Ajouter une réunion</span>
         </button>
       </div>
 

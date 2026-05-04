@@ -12,10 +12,13 @@ export default function Modal({ open, title, onClose, children, size = 'md' }) {
   const sizes = { sm: 'max-w-md', md: 'max-w-lg', lg: 'max-w-2xl', xl: 'max-w-4xl' }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-16">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-start justify-center sm:p-4 sm:pt-16">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div
-        className={`relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full ${sizes[size]} max-h-[80vh] overflow-y-auto`}
+        className={`relative bg-white dark:bg-slate-800 shadow-2xl w-full ${sizes[size]}
+          rounded-t-2xl sm:rounded-2xl
+          max-h-[92dvh] sm:max-h-[80vh]
+          overflow-y-auto`}
       >
         <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-slate-700 sticky top-0 bg-white dark:bg-slate-800 z-10">
           <h2 className="text-base font-semibold text-gray-900 dark:text-slate-100">{title}</h2>
