@@ -648,44 +648,47 @@ body{background:${tb.bodyBg};color:#1e293b;}
       </Card>
 
       {/* ── Barre d'actions collante ────────────────────────────────────── */}
-      <div className="sticky bottom-4 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl px-6 py-3.5 flex items-center justify-between shadow-lg dark:shadow-black/40 z-10">
+      <div className="sticky bottom-2 sm:bottom-4 bg-white/95 dark:bg-slate-800/95 backdrop-blur border border-gray-100 dark:border-slate-700 rounded-2xl px-3 sm:px-6 py-2.5 sm:py-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3 shadow-lg dark:shadow-black/40 z-10">
         {lastSaved ? (
-          <span className="text-xs text-gray-400 dark:text-slate-500">
+          <span className="text-xs text-gray-400 dark:text-slate-500 text-center sm:text-left">
             Sauvegardé le {lastSaved.toLocaleString('fr-FR')}
           </span>
         ) : <span />}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2">
           <button
             onClick={handleExportPDF}
-            className="flex items-center gap-1.5 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
+            className="flex items-center justify-center gap-1.5 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 text-xs sm:text-sm font-semibold px-3 sm:px-4 py-2 rounded-xl transition-colors"
             title="Exporter le CDC en PDF (impression)"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
             </svg>
-            Exporter PDF
+            <span className="hidden sm:inline">Exporter PDF</span>
+            <span className="sm:hidden">PDF</span>
           </button>
           <button
             onClick={handleOpenCharter}
-            className="flex items-center gap-1.5 bg-gray-800 dark:bg-slate-600 hover:bg-gray-900 dark:hover:bg-slate-500 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
+            className="flex items-center justify-center gap-1.5 bg-gray-800 dark:bg-slate-600 hover:bg-gray-900 dark:hover:bg-slate-500 text-white text-xs sm:text-sm font-semibold px-3 sm:px-4 py-2 rounded-xl transition-colors"
             title="Générer la Charte Projet dans une nouvelle fenêtre"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
             </svg>
-            Charte Projet
+            <span className="hidden sm:inline">Charte Projet</span>
+            <span className="sm:hidden">Charte</span>
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 disabled:opacity-50 text-white text-sm font-semibold px-5 py-2 rounded-xl transition-colors"
+            className="flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 disabled:opacity-50 text-white text-xs sm:text-sm font-semibold px-3 sm:px-5 py-2 rounded-xl transition-colors"
             hidden={estLecteur}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
               <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
             </svg>
-            {saving ? 'Enregistrement…' : 'Sauvegarder'}
+            <span className="hidden sm:inline">{saving ? 'Enregistrement…' : 'Sauvegarder'}</span>
+            <span className="sm:hidden">{saving ? '…' : 'Sauver'}</span>
           </button>
         </div>
       </div>

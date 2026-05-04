@@ -563,7 +563,7 @@ function PermissionsTab() {
             <table className="w-full text-sm border-collapse">
               <thead className="bg-gray-50 dark:bg-slate-700">
                 <tr>
-                  <th className="sticky left-0 bg-gray-50 dark:bg-slate-700 text-left text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 px-4 py-3 z-10">
+                  <th className="md:sticky md:left-0 bg-gray-50 dark:bg-slate-700 text-left text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 px-4 py-3 md:z-10">
                     Utilisateur
                   </th>
                   <th className="text-left text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 px-3 py-3 whitespace-nowrap">
@@ -592,7 +592,7 @@ function PermissionsTab() {
                   const dormant = !u.is_admin && u.is_active && (d === null || d > INACTIVITY_DAYS)
                   return (
                     <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
-                      <td className="sticky left-0 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700/50 px-4 py-3 z-10">
+                      <td className="md:sticky md:left-0 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700/50 px-4 py-3 md:z-10 min-w-[200px]">
                         <div className="flex flex-col">
                           <div className="flex items-center gap-2">
                             <span className={`font-medium text-gray-900 dark:text-slate-100 ${!u.is_active ? 'opacity-50' : ''}`}>
