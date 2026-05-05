@@ -10,6 +10,7 @@ const PAGE_TITLES = {
   '/risques':  'Risques',
   '/taches':   'Tâches',
   '/equipe':   'Équipe',
+  '/raci':     'Matrice RACI',
   '/aide':     'Aide',
   '/admin':    'Administration',
   '/projets':  'Projets',

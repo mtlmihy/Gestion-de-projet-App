@@ -12,6 +12,7 @@ const LINKS = [
   { to: '/copil',    label: 'COPIL',               page: 'copil'    },
   { to: '/risques',  label: 'Risques',             page: 'risques'  },
   { to: '/taches',   label: 'Tâches',              page: 'taches'   },
+  { to: '/raci',     label: 'RACI',                page: 'raci'     },
   { to: '/equipe',   label: 'Équipe',              page: 'equipe'   },
   { to: '/aide',     label: 'Aide',                page: 'aide'     },
 ]

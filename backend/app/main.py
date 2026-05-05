@@ -40,6 +40,7 @@ from app.copils.router import router as copils_router
 from app.equipe.router import router as equipe_router
 from app.cdc.router import router as cdc_router
 from app.liens.router import router as liens_router
+from app.raci.router import router as raci_router
 
 
 @asynccontextmanager
@@ -191,6 +192,7 @@ app.include_router(copils_router,  prefix="/copils",  tags=["COPIL"])
 app.include_router(equipe_router,  prefix="/equipe",  tags=["Équipe"])
 app.include_router(cdc_router,     prefix="/cdc",     tags=["Cahier des Charges"])
 app.include_router(liens_router,                      tags=["Liens externes"])
+app.include_router(raci_router,    prefix="/raci",    tags=["RACI"])
 
 
 @app.get("/health", include_in_schema=False)

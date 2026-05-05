@@ -69,6 +69,7 @@ const PAGES_DISPONIBLES = [
   { key: 'cdc',      label: "Cahier des charges" },
   { key: 'risques',  label: "Risques" },
   { key: 'taches',   label: "Tâches" },
+  { key: 'raci',     label: "RACI" },
   { key: 'planning', label: "Planning" },
   { key: 'copil',    label: "COPIL" },
   { key: 'equipe',   label: "Équipe" },
