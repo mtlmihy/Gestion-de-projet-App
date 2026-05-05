@@ -66,7 +66,7 @@ function MiniBar({ value, color = '#3b82f6' }) {
 
 // ── Timeline SVG ──────────────────────────────────────────────────────────────
 function TimelineSVG({ jalons, startDate, endDate, onSelect }) {
-  const W = 900, H = 230, PL = 70, PR = 70
+  const W = 900, H = 190, PL = 70, PR = 70
   const TW = W - PL - PR
   const BAR_Y = 115, BAR_H = 10
 
@@ -94,14 +94,16 @@ function TimelineSVG({ jalons, startDate, endDate, onSelect }) {
 
   // Losanges jalons
   const DS = 7
+  const MIN_DATE_GAP = 58
+  let lastDateLabelX = -Infinity
   const milestones = jalons.map((j, i) => {
     const x     = xOf(j.date)
     const col   = j._color
-    const above = i % 2 === 0
-    const sy1   = above ? BAR_Y : BAR_Y + BAR_H
-    const sy2   = above ? BAR_Y - 48 : BAR_Y + BAR_H + 48
-    const ly    = above ? BAR_Y - 56 : BAR_Y + BAR_H + 62
-    const dy    = above ? BAR_Y - 67 : BAR_Y + BAR_H + 73
+    const sy1   = BAR_Y + BAR_H
+    const sy2   = BAR_Y + BAR_H + 30
+    const dy    = BAR_Y + BAR_H + 42
+    const showDate = i === 0 || i === jalons.length - 1 || (x - lastDateLabelX >= MIN_DATE_GAP)
+    if (showDate) lastDateLabelX = x
     return (
       <g
         key={i}
@@ -111,8 +113,7 @@ function TimelineSVG({ jalons, startDate, endDate, onSelect }) {
         {onSelect && <title>{`Voir les tâches du jalon « ${j.label} »`}</title>}
         <line x1={x} y1={sy1} x2={x} y2={sy2} stroke={col} strokeWidth="1.5" strokeDasharray="3,2" opacity=".8" />
         <polygon points={`${x},${BAR_Y - DS} ${x + DS},${BAR_Y} ${x},${BAR_Y + DS} ${x - DS},${BAR_Y}`} fill={col} />
-        <text x={x} y={ly} textAnchor="middle" fontSize="9" fontWeight="700" fill="#1e293b">{j.label}</text>
-        <text x={x} y={dy} textAnchor="middle" fontSize="8" fill={col}>{fmtShort(j.date)}</text>
+        {showDate && <text x={x} y={dy} textAnchor="middle" fontSize="8" fill={col}>{fmtShort(j.date)}</text>}
       </g>
     )
   })
@@ -128,9 +129,9 @@ function TimelineSVG({ jalons, startDate, endDate, onSelect }) {
       <rect x={todayX} y={BAR_Y} width={futW} height={BAR_H} rx="5" fill="#2563eb" opacity=".25" />
       {milestones}
       {/* Ligne aujourd'hui */}
-      <line x1={todayX} y1={BAR_Y - 52} x2={todayX} y2={BAR_Y + BAR_H + 48} stroke="#ef4444" strokeWidth="1.5" strokeDasharray="4,3" />
-      <rect x={todayX - 16} y={BAR_Y + BAR_H + 48} width="32" height="14" rx="4" fill="#ef4444" />
-      <text x={todayX} y={BAR_Y + BAR_H + 58} textAnchor="middle" fontSize="8" fontWeight="700" fill="#fff">Auj.</text>
+      <line x1={todayX} y1={BAR_Y - 22} x2={todayX} y2={BAR_Y + BAR_H + 44} stroke="#ef4444" strokeWidth="1.5" strokeDasharray="4,3" />
+      <rect x={todayX - 16} y={BAR_Y + BAR_H + 44} width="32" height="14" rx="4" fill="#ef4444" />
+      <text x={todayX} y={BAR_Y + BAR_H + 54} textAnchor="middle" fontSize="8" fontWeight="700" fill="#fff">Auj.</text>
     </svg>
   )
 }
