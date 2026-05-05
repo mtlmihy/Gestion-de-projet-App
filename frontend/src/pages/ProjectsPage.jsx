@@ -75,6 +75,17 @@ const PAGES_DISPONIBLES = [
   { key: 'aide',     label: "Aide" },
 ]
 
+function mergeProjetForUi(prev, patch) {
+  if (!prev) return patch
+  return {
+    ...prev,
+    ...patch,
+    // Les endpoints PATCH projet ne renvoient pas toujours ces champs métier.
+    mon_role: patch?.mon_role ?? prev.mon_role,
+    mes_pages: patch?.mes_pages ?? prev.mes_pages,
+  }
+}
+
 // ── Modal gestion des accès ───────────────────────────────────────────────────
 function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDeleteProjet, onCloturerProjet, onReactiverProjet, onStatutProjetChange }) {
   const rolesDisponibles = isAdmin ? ROLES : ROLES_SANS_PROPRIO
@@ -849,8 +860,8 @@ export default function ProjectsPage() {
     try {
       const { data } = await cloturerProjet(projet.id)
       const updated = data ?? { ...projet, est_cloture: true }
-      setProjets((p) => p.map((x) => x.id === projet.id ? { ...x, ...updated } : x))
-      setAccesProjet((current) => (current?.id === projet.id ? { ...current, ...updated } : current))
+      setProjets((p) => p.map((x) => x.id === projet.id ? mergeProjetForUi(x, updated) : x))
+      setAccesProjet((current) => (current?.id === projet.id ? mergeProjetForUi(current, updated) : current))
       return updated
     } catch (err) {
       setError(err?.response?.data?.detail ?? 'Erreur lors de la clôture.')
@@ -863,8 +874,8 @@ export default function ProjectsPage() {
     try {
       const { data } = await reactiverProjet(projet.id)
       const updated = data ?? { ...projet, est_cloture: false }
-      setProjets((p) => p.map((x) => x.id === projet.id ? { ...x, ...updated } : x))
-      setAccesProjet((current) => (current?.id === projet.id ? { ...current, ...updated } : current))
+      setProjets((p) => p.map((x) => x.id === projet.id ? mergeProjetForUi(x, updated) : x))
+      setAccesProjet((current) => (current?.id === projet.id ? mergeProjetForUi(current, updated) : current))
       return updated
     } catch (err) {
       setError(err?.response?.data?.detail ?? 'Erreur lors de la réactivation.')
@@ -876,8 +887,8 @@ export default function ProjectsPage() {
     try {
       const { data } = await updateStatutProjet(projet.id, newStatut)
       const updated = data ?? { ...projet, statut: newStatut }
-      setProjets((p) => p.map((x) => x.id === projet.id ? { ...x, ...updated } : x))
-      setAccesProjet((current) => (current?.id === projet.id ? { ...current, ...updated } : current))
+      setProjets((p) => p.map((x) => x.id === projet.id ? mergeProjetForUi(x, updated) : x))
+      setAccesProjet((current) => (current?.id === projet.id ? mergeProjetForUi(current, updated) : current))
       return updated
     } catch (err) {
       setError(err?.response?.data?.detail ?? 'Erreur lors du changement de statut.')
@@ -886,8 +897,8 @@ export default function ProjectsPage() {
   }
 
   const handleProjetUpdated = (updatedProjet) => {
-    setProjets((list) => list.map((p) => (p.id === updatedProjet.id ? { ...p, ...updatedProjet } : p)))
-    setAccesProjet((current) => (current?.id === updatedProjet.id ? { ...current, ...updatedProjet } : current))
+    setProjets((list) => list.map((p) => (p.id === updatedProjet.id ? mergeProjetForUi(p, updatedProjet) : p)))
+    setAccesProjet((current) => (current?.id === updatedProjet.id ? mergeProjetForUi(current, updatedProjet) : current))
   }
   const initiales = (user?.nom ?? user?.email ?? '?')
     .split(' ').map((p) => p[0]?.toUpperCase()).slice(0, 2).join('')
