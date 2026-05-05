@@ -111,6 +111,7 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
     setTimeout(() => setNotif({ msg: '', type: 'success' }), 3000)
   }
 
+  // Chargement membres uniquement au montage / changement de projet
   useEffect(() => {
     setLoading(true)
     getMembres(projet.id)
@@ -119,14 +120,22 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
       .finally(() => setLoading(false))
     getUsersDisponibles()
       .then(({ data }) => setUsers(data))
-      .catch(() => {}) // non bloquant : impact uniquement le formulaire d'ajout
+      .catch(() => {})
+  }, [projet.id])
+
+  // Sync pages sans déclencher rechargement membres
+  useEffect(() => {
     setPagesProjet(projet?.pages_visibles ?? null)
+  }, [projet?.pages_visibles])
+
+  // Sync paramètres budget/type sans déclencher rechargement membres
+  useEffect(() => {
     setSettingsForm({
       type_projet: projet?.type_projet ?? 'Interne',
       budget_prevu: projet?.budget_prevu == null ? '' : String(projet.budget_prevu),
       devise: projet?.devise ?? 'CHF',
     })
-  }, [projet.id, projet?.pages_visibles, projet?.type_projet, projet?.budget_prevu, projet?.devise])
+  }, [projet?.type_projet, projet?.budget_prevu, projet?.devise])
 
   const membresIds      = new Set(membres.map((m) => m.user_id))
   const usersDisponibles = users.filter((u) => !membresIds.has(u.id))
