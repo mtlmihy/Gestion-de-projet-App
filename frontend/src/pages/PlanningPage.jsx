@@ -66,7 +66,7 @@ function MiniBar({ value, color = '#3b82f6' }) {
 
 // ── Timeline SVG ──────────────────────────────────────────────────────────────
 function TimelineSVG({ jalons, startDate, endDate, onSelect }) {
-  const W = 900, H = 190, PL = 70, PR = 70
+  const W = 900, H = 210, PL = 70, PR = 70
   const TW = W - PL - PR
   const BAR_Y = 115, BAR_H = 10
 
@@ -95,15 +95,21 @@ function TimelineSVG({ jalons, startDate, endDate, onSelect }) {
   // Losanges jalons
   const DS = 7
   const MIN_DATE_GAP = 58
-  let lastDateLabelX = -Infinity
+  let lastTopDateX = -Infinity
+  let lastBottomDateX = -Infinity
   const milestones = jalons.map((j, i) => {
     const x     = xOf(j.date)
     const col   = j._color
-    const sy1   = BAR_Y + BAR_H
-    const sy2   = BAR_Y + BAR_H + 30
-    const dy    = BAR_Y + BAR_H + 42
-    const showDate = i === 0 || i === jalons.length - 1 || (x - lastDateLabelX >= MIN_DATE_GAP)
-    if (showDate) lastDateLabelX = x
+    const above = i % 2 === 0
+    const sy1   = above ? BAR_Y : BAR_Y + BAR_H
+    const sy2   = above ? BAR_Y - 32 : BAR_Y + BAR_H + 32
+    const dy    = above ? BAR_Y - 40 : BAR_Y + BAR_H + 44
+    const lastX = above ? lastTopDateX : lastBottomDateX
+    const showDate = i === 0 || i === jalons.length - 1 || (x - lastX >= MIN_DATE_GAP)
+    if (showDate) {
+      if (above) lastTopDateX = x
+      else lastBottomDateX = x
+    }
     return (
       <g
         key={i}
