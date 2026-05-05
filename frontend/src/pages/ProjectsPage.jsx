@@ -315,8 +315,8 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
               }}
               className="text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="Interne">Projet interne (sans budget)</option>
-              <option value="Client">Projet client (avec budget)</option>
+              <option value="Interne">Sans budget</option>
+              <option value="Client">Avec budget</option>
             </select>
             {settingsForm.type_projet === 'Client' && (
               <>
@@ -389,42 +389,19 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
           </div>
 
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-2">Pages visibles dans ce projet</p>
-          <div className="space-y-1.5">
-            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300 cursor-pointer font-medium">
-              <input
-                type="checkbox"
-                className="accent-blue-600 w-4 h-4"
-                checked={pagesProjet == null}
-                onChange={(e) => {
-                  const payload = e.target.checked ? null : PAGES_DISPONIBLES.map((p) => p.key)
-                  updateProjetPages(projet.id, payload)
-                    .then(({ data }) => {
-                      setPagesProjet(data.pages_visibles ?? null)
-                      onProjetUpdated?.(data)
-                    })
-                    .catch((err) => notify(err?.response?.data?.detail ?? 'Erreur lors de la mise à jour des paramètres projet.', 'error'))
-                }}
-              />
-              Toutes les pages (aucune restriction)
-            </label>
-            <div className="ml-1 grid grid-cols-2 sm:grid-cols-3 gap-1 pt-0.5">
-              {PAGES_DISPONIBLES.map((p) => {
-                const allPages = pagesProjet == null
-                const hasAccess = allPages || pagesProjet.includes(p.key)
-                return (
-                  <label key={p.key} className={`flex items-center gap-2 text-sm cursor-pointer px-2 py-1 rounded-lg transition-colors ${allPages ? 'text-gray-300 dark:text-slate-600' : 'text-gray-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}>
-                    <input
-                      type="checkbox"
-                      className="accent-blue-600 w-3.5 h-3.5"
-                      disabled={allPages}
-                      checked={hasAccess}
-                      onChange={(e) => handleProjectPagesChange(p.key, e.target.checked)}
-                    />
-                    {p.label}
-                  </label>
-                )
-              })}
-            </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+            {PAGES_DISPONIBLES.map((p) => {
+              const hasAccess = pagesProjet == null || pagesProjet.includes(p.key)
+              return (
+                <label key={p.key} className="flex items-center gap-2 text-sm cursor-pointer px-2.5 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-gray-700 dark:text-slate-300">
+                  <span className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${hasAccess ? 'bg-blue-600 border-blue-600' : 'border-gray-300 dark:border-slate-500 bg-white dark:bg-slate-700'}`}>
+                    {hasAccess && <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>}
+                  </span>
+                  <input type="checkbox" className="sr-only" checked={hasAccess} onChange={(e) => handleProjectPagesChange(p.key, e.target.checked)} />
+                  {p.label}
+                </label>
+              )
+            })}
           </div>
         </div>}
 
@@ -497,41 +474,19 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
                     <tr className="bg-orange-50/60 dark:bg-orange-900/10">
                       <td colSpan="4" className="px-6 pb-4 pt-2">
                         <p className="text-xs font-semibold text-orange-700 dark:text-orange-400 mb-2">Pages accessibles pour ce membre :</p>
-                        <div className="space-y-1.5">
-                          {/* Case "Toutes les pages" */}
-                          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300 cursor-pointer font-medium">
-                            <input
-                              type="checkbox"
-                              className="accent-orange-500 w-4 h-4"
-                              checked={m.pages_autorisees == null}
-                              onChange={(e) => {
-                                const payload = e.target.checked ? null : PAGES_DISPONIBLES.map((p) => p.key)
-                                updateMembrePages(projet.id, m.user_id, payload)
-                                  .then(() => setMembres((mb) => mb.map((x) => x.user_id === m.user_id ? { ...x, pages_autorisees: payload } : x)))
-                                  .catch(() => notify('Erreur lors de la mise à jour.', 'error'))
-                              }}
-                            />
-                            Toutes les pages (aucune restriction)
-                          </label>
-                          {/* Cases individuelles */}
-                          <div className="ml-1 grid grid-cols-3 gap-1 pt-0.5">
-                            {PAGES_DISPONIBLES.map((p) => {
-                              const allPages = m.pages_autorisees == null
-                              const hasAccess = allPages || m.pages_autorisees.includes(p.key)
-                              return (
-                                <label key={p.key} className={`flex items-center gap-2 text-sm cursor-pointer px-2 py-1 rounded-lg transition-colors ${allPages ? 'text-gray-300 dark:text-slate-600' : 'text-gray-700 dark:text-slate-300 hover:bg-orange-50 dark:hover:bg-orange-900/20'}`}>
-                                  <input
-                                    type="checkbox"
-                                    className="accent-orange-500 w-3.5 h-3.5"
-                                    disabled={allPages}
-                                    checked={hasAccess}
-                                    onChange={(e) => handlePagesChange(m.user_id, p.key, e.target.checked)}
-                                  />
-                                  {p.label}
-                                </label>
-                              )
-                            })}
-                          </div>
+                        <div className="grid grid-cols-3 gap-1">
+                          {PAGES_DISPONIBLES.map((p) => {
+                            const hasAccess = m.pages_autorisees == null || m.pages_autorisees.includes(p.key)
+                            return (
+                              <label key={p.key} className="flex items-center gap-2 text-sm cursor-pointer px-2.5 py-1.5 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors text-gray-700 dark:text-slate-300">
+                                <span className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${hasAccess ? 'bg-orange-500 border-orange-500' : 'border-gray-300 dark:border-slate-500 bg-white dark:bg-slate-700'}`}>
+                                  {hasAccess && <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>}
+                                </span>
+                                <input type="checkbox" className="sr-only" checked={hasAccess} onChange={(e) => handlePagesChange(m.user_id, p.key, e.target.checked)} />
+                                {p.label}
+                              </label>
+                            )
+                          })}
                         </div>
                       </td>
                     </tr>
@@ -666,8 +621,8 @@ function CreateModal({ onClose, onCreated }) {
             <div>
               <label className={lbl}>Type de projet</label>
               <select className={inp} value={form.type_projet} onChange={setF('type_projet')}>
-                <option value="Interne">Interne (sans budget)</option>
-                <option value="Client">Client (avec budget)</option>
+                <option value="Interne">Sans budget</option>
+                <option value="Client">Avec budget</option>
               </select>
             </div>
             {form.type_projet === 'Client' && (
