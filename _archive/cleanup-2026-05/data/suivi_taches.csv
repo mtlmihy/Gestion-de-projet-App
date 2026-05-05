@@ -1,0 +1,6 @@
+﻿Nom,Description,Importance,Avancement,Assigné,Jalon
+Suivi de taches,Faire une page de suivi des taches et faire en fonction le planing,Élevée,100,Mathys LEONI,Livrable 1
+Mise en page des tableaux,Mettre en forme les tableaux pour qu'ils soient le plus lisibles possible,Moyenne,50,Francois,Retour utilisateur
+Guide-CDP.pdf,Mettre à disposition le guide de gestion de projet,Faible,100,Mathys LEONI,Retour utilisateur
+Sauvegarde Unique par Projet,Centraliser la sauvegarde des données mis dans les tableaux de façon unique pour pouvoir les stocker et importer plus facilement,Critique,35,Mathys LEONI,Retour utilisateur
+Filtres sur les tâches,Faire les filtres sur les tâches comme sur les risques,Moyenne,100,Mathys LEONI,Clôture du projet

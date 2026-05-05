@@ -8,7 +8,6 @@ import {
 import { getProjets } from '../api/projets'
 import KpiCard from '../components/KpiCard'
 
-// PushTest
 // ── Modal générique ──────────────────────────────────────────────────────────
 function Modal({ title, onClose, children }) {
   return (

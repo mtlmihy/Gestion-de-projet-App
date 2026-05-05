@@ -1,16 +1,35 @@
-# React + Vite
+# Frontend - QimProject
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Application frontend React 19 + Vite 8 + Tailwind CSS 4.
 
-Currently, two official plugins are available:
+## Prerequis
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Node.js 20+
+- npm 10+
 
-## React Compiler
+## Lancer en local
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install
+npm run dev
+```
 
-## Expanding the ESLint configuration
+Par defaut, Vite est disponible sur http://localhost:5173.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Build production
+
+```bash
+npm run build
+```
+
+Le build est genere dans dist/.
+
+## Deploiement
+
+- Plateforme cible: Vercel
+- Configuration: vercel.json
+
+## Notes
+
+- Le frontend consomme l'API FastAPI via proxy Vite en local.
+- Les routes applicatives sont gerees par React Router.

@@ -1,0 +1,5 @@
+﻿Identifiant,Description,Catégorie,Probabilité,Impact,Priorité,Responsable,Atténuation,Statut
+Légèreté,Une des demande de base était que l'application soit légère et au vu du nombre de fonctionnalités externes qui vont etre ajouté je pense que ce risque dois impérativement etre mis en évidence,Conformité,Moyenne,Élevé,3,Mathys LEONI,"Par pas dans délire de fou, reste simple",En cours
+Manque de ressources,Manque de temps ou de ressource,Qualité,Faible,Moyen,1,Mathys LEONI,Osef j'ai le temps tkt,En cours
+Fonctionnalités trop complexe,Manque de maitrise de la technologie (ici python) ou trop grande complexité algorithmique,Technologie,Faible,Élevé,2,Mathys LEONI,Tkt je suis trop fort au pire ya claude,Ouvert
+Inutilité de l'app,Inutilité de l'application et donc temps perdu et mal investi,Qualité,Moyenne,Élevé,3,Mathys LEONI,"Développer les bonnes fonctionnalités et créer de l'intérêt sur l'application, la rendre utile",Ouvert

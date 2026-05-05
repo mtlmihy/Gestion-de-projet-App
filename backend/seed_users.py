@@ -11,10 +11,12 @@ Utilisateurs créés :
   bob@projet.local    / Test2026!    → développeur (test)
 """
 import asyncio
+import os
 import asyncpg
 import bcrypt
 
-DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/AppGDP"
+DEFAULT_DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/AppGDP-local"
+DATABASE_URL = os.environ.get("DATABASE_URL", DEFAULT_DATABASE_URL)
 
 def hash_password(plain: str) -> str:
     return bcrypt.hashpw(plain.encode(), bcrypt.gensalt()).decode()
@@ -45,6 +47,7 @@ USERS = [
 
 
 async def main() -> None:
+    print(f"Connexion DB pour seeding: {DATABASE_URL}")
     conn = await asyncpg.connect(DATABASE_URL)
 
     # Appliquer la migration 002 si pas encore faite
