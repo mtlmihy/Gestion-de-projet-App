@@ -397,7 +397,7 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
                   <span className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${hasAccess ? 'bg-blue-600 border-blue-600' : 'border-gray-300 dark:border-slate-500 bg-white dark:bg-slate-700'}`}>
                     {hasAccess && <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>}
                   </span>
-                  <input type="checkbox" className="sr-only" checked={hasAccess} onChange={(e) => handleProjectPagesChange(p.key, e.target.checked)} />
+                  <input type="checkbox" className="sr-only" tabIndex={-1} checked={hasAccess} onChange={(e) => handleProjectPagesChange(p.key, e.target.checked)} />
                   {p.label}
                 </label>
               )
@@ -482,7 +482,7 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
                                 <span className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${hasAccess ? 'bg-orange-500 border-orange-500' : 'border-gray-300 dark:border-slate-500 bg-white dark:bg-slate-700'}`}>
                                   {hasAccess && <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>}
                                 </span>
-                                <input type="checkbox" className="sr-only" checked={hasAccess} onChange={(e) => handlePagesChange(m.user_id, p.key, e.target.checked)} />
+                                <input type="checkbox" className="sr-only" tabIndex={-1} checked={hasAccess} onChange={(e) => handlePagesChange(m.user_id, p.key, e.target.checked)} />
                                 {p.label}
                               </label>
                             )
