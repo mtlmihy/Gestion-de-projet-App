@@ -233,7 +233,6 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
       const { data } = await updateProjetPages(projet.id, payload)
       setPagesProjet(data.pages_visibles ?? null)
       onProjetUpdated?.(data)
-      notify('Pages visibles du projet mises à jour.')
     } catch (err) {
       notify(err?.response?.data?.detail ?? 'Erreur lors de la mise à jour des paramètres projet.', 'error')
     }
