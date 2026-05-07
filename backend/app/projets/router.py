@@ -47,7 +47,13 @@ async def create_projet(
 
 
 @router.put("/{projet_id}", response_model=ProjetRead)
-async def update_projet(projet_id: str, payload: ProjetUpdate, pool: Pool = Depends(get_pool)):
+async def update_projet(
+    projet_id: str,
+    payload: ProjetUpdate,
+    pool: Pool = Depends(get_pool),
+    current_user: dict = Depends(get_current_user),
+):
+    await _check_owner_or_admin(projet_id, current_user, pool)
     type_projet, budget_prevu, devise = _normalize_type_budget(payload.type_projet, payload.budget_prevu, payload.devise)
     body = payload.model_dump()
     body["type_projet"] = type_projet
@@ -140,6 +146,7 @@ async def delete_projet(
     pool: Pool = Depends(get_pool),
     current_user: dict = Depends(get_current_user),
 ):
+    await _check_owner_or_admin(projet_id, current_user, pool)
     async with pool.acquire() as conn:
         deleted = await svc.delete(conn, projet_id)
     if not deleted:
