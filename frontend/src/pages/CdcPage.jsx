@@ -15,11 +15,11 @@ const EMPTY = {
 }
 
 // ── Helpers styles ────────────────────────────────────────────────────────────
-const inp  = 'w-full border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2 text-base sm:text-sm text-gray-800 dark:text-slate-100 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition'
-const ta   = 'w-full border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-3 text-base sm:text-sm text-gray-800 dark:text-slate-100 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical leading-relaxed transition min-h-[130px]'
-const lbl  = 'block text-[.68rem] font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-1'
-const help = 'text-[.75rem] text-gray-400 dark:text-slate-500 italic mb-3 ml-9 leading-snug'
-const rowIn = 'w-full border-0 bg-transparent text-base sm:text-sm text-gray-700 dark:text-slate-300 px-1 py-0.5 rounded focus:bg-gray-50 dark:focus:bg-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-400'
+const inp  = 'w-full border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2 text-base sm:text-sm text-gray-800 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-400 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition'
+const ta   = 'w-full border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-3 text-base sm:text-sm text-gray-800 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-400 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical leading-relaxed transition min-h-[130px]'
+const lbl  = 'block text-[.68rem] font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-300 mb-1'
+const help = 'text-[.75rem] text-gray-400 dark:text-slate-300 italic mb-3 ml-9 leading-snug'
+const rowIn = 'w-full border-0 bg-transparent text-base sm:text-sm text-gray-700 dark:text-slate-300 placeholder:text-gray-400 dark:placeholder:text-slate-400 px-1 py-0.5 rounded focus:bg-gray-50 dark:focus:bg-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-400'
 
 // ── Helpers export PDF / Charte Projet ───────────────────────────────────────
 function escH(s) {
@@ -566,12 +566,12 @@ function closeViewer(){
           </div>
           <div>
             <div className="text-xl font-bold text-gray-900 dark:text-slate-100 leading-tight">Cahier des Charges</div>
-            <div className="text-xs text-gray-400 dark:text-slate-500">Document de cadrage projet</div>
+            <div className="text-xs text-gray-400 dark:text-slate-400">Document de cadrage projet</div>
           </div>
         </div>
         <div className="flex items-center gap-3">
           {lastSaved && (
-            <span className="text-xs text-gray-400 dark:text-slate-500 hidden sm:block">
+            <span className="text-xs text-gray-400 dark:text-slate-400 hidden sm:block">
               Sauvegardé le {lastSaved.toLocaleString('fr-FR')}
             </span>
           )}
@@ -740,7 +740,7 @@ function closeViewer(){
       {/* ── Barre d'actions collante ────────────────────────────────────── */}
       <div className="sticky bottom-2 sm:bottom-4 bg-white/95 dark:bg-slate-800/95 backdrop-blur border border-gray-100 dark:border-slate-700 rounded-2xl px-3 sm:px-6 py-2.5 sm:py-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3 shadow-lg dark:shadow-black/40 z-10">
         {lastSaved ? (
-          <span className="text-xs text-gray-400 dark:text-slate-500 text-center sm:text-left">
+          <span className="text-xs text-gray-400 dark:text-slate-400 text-center sm:text-left">
             Sauvegardé le {lastSaved.toLocaleString('fr-FR')}
           </span>
         ) : <span />}
