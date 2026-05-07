@@ -1,0 +1,9 @@
+# Ignore backend — il est déployé sur Render, pas Vercel
+backend/
+.venv/
+data/
+_archive/
+
+# Ignore fichiers de config non-frontend
+render.yaml
+start.ps1
