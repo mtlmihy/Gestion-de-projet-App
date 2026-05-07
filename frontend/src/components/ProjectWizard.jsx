@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { createProjet } from '../api/projets'
+import { updateProjetPages } from '../api/projets'
 import { updateCdc } from '../api/cdc'
 
 // ── Styles partagés (cohérents avec le reste de l'app) ───────────────────────
@@ -7,6 +8,20 @@ const inp = 'w-full border border-gray-200 dark:border-slate-600 rounded-xl px-3
 const ta  = 'w-full border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none transition leading-relaxed'
 const lbl = 'block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-1'
 const help = 'text-xs text-gray-400 dark:text-slate-500 italic mt-1'
+
+const PAGES_DISPONIBLES = [
+  { key: 'cdc',      label: 'Cahier des charges' },
+  { key: 'risques',  label: 'Risques' },
+  { key: 'taches',   label: 'Taches' },
+  { key: 'raci',     label: 'RACI' },
+  { key: 'planning', label: 'Planning' },
+  { key: 'copil',    label: 'COPIL' },
+  { key: 'equipe',   label: 'Equipe' },
+  { key: 'aide',     label: 'Aide' },
+  { key: 'budget',   label: 'Budget', onlyClient: true },
+]
+
+const DEFAULT_PAGES_INTERNE = PAGES_DISPONIBLES.filter((p) => !p.onlyClient).map((p) => p.key)
 
 // ── État initial ─────────────────────────────────────────────────────────────
 const EMPTY_FORM = {
@@ -26,13 +41,16 @@ const EMPTY_FORM = {
   perimetre: '',
   // Étape 3 — Jalons (liste dynamique)
   jalons: [{ label: 'Démarrage du projet', date: '', description: '' }],
+  // Étape 4 — Pages visibles
+  pages_visibles: DEFAULT_PAGES_INTERNE,
 }
 
 const STEPS = [
   { num: 1, label: 'Identité',   icon: '🏷️' },
   { num: 2, label: 'Cadrage',    icon: '🎯' },
   { num: 3, label: 'Jalons',     icon: '📅' },
-  { num: 4, label: 'Récap',      icon: '✅' },
+  { num: 4, label: 'Pages',      icon: '🧩' },
+  { num: 5, label: 'Récap',      icon: '✅' },
 ]
 
 export default function ProjectWizard({ onClose, onCreated }) {
@@ -42,6 +60,36 @@ export default function ProjectWizard({ onClose, onCreated }) {
   const [error, setError]     = useState('')
 
   const setField = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
+
+  // Garde le jalon de démarrage aligné avec la date de début tant qu'il n'a pas été renommé.
+  useEffect(() => {
+    setForm((f) => {
+      if (!f.jalons.length) return f
+      const first = f.jalons[0]
+      if (first.label !== 'Démarrage du projet') return f
+      if (first.date === f.date_debut) return f
+      return {
+        ...f,
+        jalons: [{ ...first, date: f.date_debut }, ...f.jalons.slice(1)],
+      }
+    })
+  }, [form.date_debut])
+
+  useEffect(() => {
+    setForm((f) => {
+      if (f.type_projet === 'Client') {
+        if (f.pages_visibles.includes('budget')) return f
+        return { ...f, pages_visibles: [...f.pages_visibles, 'budget'] }
+      }
+      if (!f.pages_visibles.includes('budget')) return f
+      return { ...f, pages_visibles: f.pages_visibles.filter((p) => p !== 'budget') }
+    })
+  }, [form.type_projet])
+
+  const pagesDisponibles = useMemo(
+    () => PAGES_DISPONIBLES.filter((p) => !p.onlyClient || form.type_projet === 'Client'),
+    [form.type_projet],
+  )
 
   // ── Validation par étape ─────────────────────────────────────────────────
   const stepValidation = useMemo(() => {
@@ -57,6 +105,9 @@ export default function ProjectWizard({ onClose, onCreated }) {
     if (step === 2) {
       if (!form.contexte.trim())   return 'Le contexte est requis.'
       if (!form.objectifs.trim())  return 'Les objectifs sont requis.'
+    }
+    if (step === 4) {
+      if (!form.pages_visibles.length) return 'Sélectionnez au moins une page visible.'
     }
     return null
   }, [step, form])
@@ -81,6 +132,16 @@ export default function ProjectWizard({ onClose, onCreated }) {
   const removeJalon = (i) =>
     setForm((f) => ({ ...f, jalons: f.jalons.filter((_, idx) => idx !== i) }))
 
+  const togglePageVisible = (pageKey, checked) => {
+    setForm((f) => {
+      const current = f.pages_visibles
+      const next = checked
+        ? (current.includes(pageKey) ? current : [...current, pageKey])
+        : current.filter((k) => k !== pageKey)
+      return { ...f, pages_visibles: next }
+    })
+  }
+
   // ── Soumission finale ────────────────────────────────────────────────────
   const handleSubmit = async () => {
     setSaving(true)
@@ -99,6 +160,11 @@ export default function ProjectWizard({ onClose, onCreated }) {
         devise: form.devise,
         budget_prevu: budgetClient,
       })
+
+      const availableKeys = pagesDisponibles.map((p) => p.key)
+      const selectedKeys = form.pages_visibles.filter((k) => availableKeys.includes(k))
+      const pagesPayload = selectedKeys.length === availableKeys.length ? null : selectedKeys
+      const { data: projetUpdated } = await updateProjetPages(projet.id, pagesPayload)
 
       // 2. Construire le contenu CDC structuré
       const today = new Date().toISOString().slice(0, 10)
@@ -132,7 +198,7 @@ export default function ProjectWizard({ onClose, onCreated }) {
       await updateCdc(projet.id, JSON.stringify(cdcContent))
 
       // 4. Notifier le parent → redirection vers /cdc
-      onCreated(projet)
+      onCreated(projetUpdated ?? projet)
     } catch (err) {
       setError(err?.response?.data?.detail ?? 'Erreur lors de la création du projet.')
       setSaving(false)
@@ -378,6 +444,37 @@ export default function ProjectWizard({ onClose, onCreated }) {
           {step === 4 && (
             <div className="space-y-4">
               <p className="text-sm text-gray-600 dark:text-slate-400 mb-2">
+                Choisissez les pages visibles dans le menu pour ce projet. Vous pourrez les modifier plus tard.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {pagesDisponibles.map((p) => {
+                  const checked = form.pages_visibles.includes(p.key)
+                  return (
+                    <label
+                      key={p.key}
+                      className="flex items-center gap-2 text-sm cursor-pointer px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700/60 transition-colors"
+                    >
+                      <span className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${checked ? 'bg-blue-600 border-blue-600' : 'border-gray-300 dark:border-slate-500 bg-white dark:bg-slate-700'}`}>
+                        {checked && <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>}
+                      </span>
+                      <input
+                        type="checkbox"
+                        className="sr-only"
+                        tabIndex={-1}
+                        checked={checked}
+                        onChange={(e) => togglePageVisible(p.key, e.target.checked)}
+                      />
+                      {p.label}
+                    </label>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {step === 5 && (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600 dark:text-slate-400 mb-2">
                 Vérifiez les informations avant la création. Le cahier des charges sera pré-rempli automatiquement.
               </p>
 
@@ -412,6 +509,19 @@ export default function ProjectWizard({ onClose, onCreated }) {
                     ))}
                   </ul>
                 )}
+              </RecapSection>
+
+              <RecapSection title={`Pages visibles (${form.pages_visibles.length})`}>
+                <ul className="space-y-1 text-sm">
+                  {pagesDisponibles
+                    .filter((p) => form.pages_visibles.includes(p.key))
+                    .map((p) => (
+                      <li key={p.key} className="flex items-center gap-2 text-gray-700 dark:text-slate-300">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                        <span className="font-medium">{p.label}</span>
+                      </li>
+                    ))}
+                </ul>
               </RecapSection>
             </div>
           )}

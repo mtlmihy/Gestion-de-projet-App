@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Documentation — Gestion de Projet</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 11pt;
+      color: #1a1a2e;
+      background: #fff;
+      line-height: 1.6;
+    }
+
+    /* ── Page de garde ── */
+    .cover {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+      color: white;
+      text-align: center;
+      page-break-after: always;
+    }
+    .cover h1 { font-size: 32pt; font-weight: 800; margin-bottom: 12px; letter-spacing: -1px; }
+    .cover h2 { font-size: 16pt; font-weight: 400; opacity: 0.85; margin-bottom: 40px; }
+    .cover .subtitle {
+      font-size: 11pt;
+      opacity: 0.7;
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 12px 24px;
+    }
+    .cover .date { margin-top: 20px; font-size: 10pt; opacity: 0.6; }
+    .cover-icon {
+      width: 80px; height: 80px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 32px;
+      font-size: 36pt;
+    }
+
+    /* ── Sommaire ── */
+    .toc {
+      padding: 60px 80px;
+      page-break-after: always;
+    }
+    .toc h2 { font-size: 18pt; color: #2563eb; margin-bottom: 24px; border-bottom: 2px solid #2563eb; padding-bottom: 8px; }
+    .toc ol { list-style: none; counter-reset: toc; }
+    .toc ol li {
+      counter-increment: toc;
+      display: flex;
+      align-items: baseline;
+      padding: 6px 0;
+      border-bottom: 1px dotted #e5e7eb;
+    }
+    .toc ol li::before {
+      content: counter(toc) ".";
+      font-weight: 700;
+      color: #2563eb;
+      min-width: 30px;
+    }
+    .toc-title { flex: 1; font-size: 11pt; }
+    .toc-section {
+      font-size: 9pt;
+      color: #6b7280;
+      margin-left: 8px;
+    }
+
+    /* ── Contenu principal ── */
+    .content { padding: 50px 70px; }
+
+    /* ── Section ── */
+    .section {
+      margin-bottom: 40px;
+      page-break-inside: avoid;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 3px solid #2563eb;
+    }
+    .section-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20pt;
+      flex-shrink: 0;
+    }
+    .section h2 { font-size: 16pt; color: #1e3a5f; font-weight: 700; }
+    .section .section-desc { font-size: 10pt; color: #6b7280; margin-top: 2px; }
+
+    /* ── Feature cards ── */
+    .features {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .feature {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 14px 16px;
+      background: #f9fafb;
+    }
+    .feature h3 {
+      font-size: 10.5pt;
+      font-weight: 700;
+      color: #1e3a5f;
+      margin-bottom: 6px;
+    }
+    .feature p, .feature li {
+      font-size: 9.5pt;
+      color: #4b5563;
+      line-height: 1.5;
+    }
+    .feature ul { padding-left: 16px; }
+    .feature li { margin-bottom: 2px; }
+
+    /* ── Roles table ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 9.5pt;
+    }
+    th {
+      background: #1e3a5f;
+      color: white;
+      padding: 8px 12px;
+      text-align: left;
+      font-weight: 600;
+    }
+    td {
+      padding: 7px 12px;
+      border-bottom: 1px solid #e5e7eb;
+      vertical-align: top;
+    }
+    tr:nth-child(even) td { background: #f9fafb; }
+
+    /* ── Badge ── */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 8.5pt;
+      font-weight: 600;
+    }
+    .badge-blue   { background: #dbeafe; color: #1d4ed8; }
+    .badge-green  { background: #dcfce7; color: #15803d; }
+    .badge-purple { background: #f3e8ff; color: #7e22ce; }
+    .badge-amber  { background: #fef9c3; color: #92400e; }
+    .badge-red    { background: #fee2e2; color: #b91c1c; }
+    .badge-gray   { background: #f3f4f6; color: #374151; }
+
+    /* ── Callout ── */
+    .callout {
+      border-left: 4px solid #2563eb;
+      background: #eff6ff;
+      padding: 10px 14px;
+      border-radius: 0 8px 8px 0;
+      margin: 12px 0;
+      font-size: 9.5pt;
+      color: #1e40af;
+    }
+    .callout.warn {
+      border-color: #f59e0b;
+      background: #fffbeb;
+      color: #92400e;
+    }
+
+    /* ── Stack technique ── */
+    .stack-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .stack-item {
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+      background: #f9fafb;
+    }
+    .stack-item .stack-name { font-weight: 700; font-size: 10pt; color: #1e3a5f; }
+    .stack-item .stack-role { font-size: 8.5pt; color: #6b7280; margin-top: 3px; }
+
+    /* ── Print ── */
+    @media print {
+      .cover { height: 100vh; }
+      .section { page-break-inside: avoid; }
+      @page { margin: 15mm 18mm; }
+    }
+
+    /* ── Page break helper ── */
+    .page-break { page-break-before: always; padding-top: 50px; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE DE GARDE
+═══════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-icon">📋</div>
+  <h1>Gestion de Projet</h1>
+  <h2>Documentation des fonctionnalités</h2>
+  <div class="subtitle">
+    Application web de gestion de projets pour chefs de projet, équipes et clients.<br />
+    Registre des risques · Suivi des tâches · COPIL · RACI · Budget · CDC
+  </div>
+  <div class="date">Version 1.0 — Mai 2026</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     SOMMAIRE
+═══════════════════════════════════════════════════ -->
+<div class="toc">
+  <h2>Sommaire</h2>
+  <ol>
+    <li><span class="toc-title">Vue d'ensemble &amp; architecture</span></li>
+    <li><span class="toc-title">Authentification &amp; sécurité</span></li>
+    <li><span class="toc-title">Gestion des projets</span></li>
+    <li><span class="toc-title">Rôles &amp; permissions</span></li>
+    <li><span class="toc-title">Registre des risques</span></li>
+    <li><span class="toc-title">Suivi des tâches</span></li>
+    <li><span class="toc-title">Planning</span></li>
+    <li><span class="toc-title">COPIL (Comité de pilotage)</span></li>
+    <li><span class="toc-title">Cahier des charges (CDC)</span></li>
+    <li><span class="toc-title">Matrice RACI</span></li>
+    <li><span class="toc-title">Équipe projet</span></li>
+    <li><span class="toc-title">Suivi budgétaire</span></li>
+    <li><span class="toc-title">Administration (Admin)</span></li>
+    <li><span class="toc-title">Navigation personnalisable</span></li>
+    <li><span class="toc-title">Stack technique</span></li>
+  </ol>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     CONTENU
+═══════════════════════════════════════════════════ -->
+<div class="content">
+
+  <!-- 1. Vue d'ensemble -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background:#eff6ff">🌐</div>
+      <div>
+        <h2>1. Vue d'ensemble &amp; architecture</h2>
+        <div class="section-desc">Application web fullstack, multi-projet, multi-utilisateur</div>
+      </div>
+    </div>
+    <p style="font-size:10pt; color:#374151; margin-bottom:14px;">
+      L'application est une plateforme de gestion de projets professionnelle destinée aux chefs de projet,
+      aux équipes internes et aux clients. Elle centralise toutes les informations d'un projet dans une
+      interface unifiée, accessible en ligne depuis n'importe quel navigateur.
+    </p>
+    <div class="features">
+      <div class="feature">
+        <h3>🏗️ Architecture</h3>
+        <ul>
+          <li>Frontend React 19 + Vite + Tailwind CSS</li>
+          <li>Backend FastAPI (Python) + asyncpg</li>
+          <li>Base de données PostgreSQL (Supabase)</li>
+          <li>Déploiement : Vercel (front) + Render (back)</li>
+        </ul>
+      </div>
+      <div class="feature">
+        <h3>🎨 Interface</h3>
+        <ul>
+          <li>Mode clair / mode sombre (toggle)</li>
+          <li>Design responsive (mobile + desktop)</li>
+          <li>Drawer mobile pour la navigation</li>
+          <li>Notifications toast en temps réel</li>
+        </ul>
+      </div>
+      <div class="feature">
+        <h3>🔄 Multi-projet</h3>
+        <ul>
+          <li>Sélecteur de projet au démarrage</li>
+          <li>Changement de projet rapide depuis la navbar</li>
+          <li>Contexte projet conservé en localStorage</li>
+        </ul>
+      </div>
+      <div class="feature">
+        <h3>📱 Accessibilité</h3>
+        <ul>
+          <li>Navigation clavier complète</li>
+          <li>Modals avec gestion du scroll body</li>
+          <li>Labels ARIA sur les boutons d'action</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Authentification -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background:#f0fdf4">🔐</div>
+      <div>
+        <h2>2. Authentification &amp; sécurité</h2>
+        <div class="section-desc">JWT HttpOnly, CSRF, rate limiting, audit log</div>
+      </div>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <h3>🔑 Connexion sécurisée</h3>
+        <ul>
+          <li>JWT stocké en cookie HttpOnly (non accessible JS)</li>
+          <li>Token CSRF double-submit (protection CSRF)</li>
+          <li>Rate limiting sur les endpoints sensibles</li>
+          <li>Tarpit : délai progressif après échecs de connexion</li>
+        </ul>
+      </div>
+      <div class="feature">
+        <h3>🔒 Politique de mot de passe</h3>
+        <ul>
+          <li>Minimum 12 caractères</li>
+          <li>Au moins 1 majuscule, 1 minuscule</li>
+          <li>Au moins 1 chiffre et 1 caractère spécial</li>
+          <li>Hachage bcrypt côté serveur</li>
+        </ul>
+      </div>
+      <div class="feature">
+        <h3>📝 Journal d'audit</h3>
+        <ul>
+          <li>Traçabilité de toutes les actions sensibles</li>
+          <li>Enregistrement : IP, user-agent, action, timestamp</li>
+          <li>Table <code>audit_log</code> en base de données</li>
+        </ul>
+      </div>
+      <div class="feature">
+        <h3>🔄 Gestion de session</h3>
+        <ul>
+          <li>Changement de mot de passe depuis le profil</li>
+          <li>Révocation de session à la déconnexion</li>
+          <li>Forçage de déconnexion par un admin</li>
+          <li>Session invalidée automatiquement après changement de MDP</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Gestion des projets -->
+  <div class="section page-break">
+    <div class="section-header">
+      <div class="section-icon" style="background:#faf5ff">📁</div>
+      <div>
+        <h2>3. Gestion des projets</h2>
+        <div class="section-desc">Création, configuration, clôture et suppression de projets</div>
+      </div>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <h3>➕ Création de projet</h3>
+        <ul>
+          <li>Nom, description, statut initial</li>
+          <li>Type : <span class="badge badge-blue">Interne</span> ou <span class="badge badge-purple">Client</span></li>
+          <li>Le créateur devient automatiquement Propriétaire</li>
+          <li>Accessible aux admins et chefs de projet</li>
+        </ul>
+      </div>
+      <div class="feature">
+        <h3>⚙️ Paramètres projet</h3>
+        <ul>
+          <li>Modification du nom, description, statut</li>
+          <li>Changement de type (Interne ↔ Client)</li>
+          <li>Budget prévu et devise (CHF / EUR) pour projets Client</li>
+          <li>Clôture et réactivation du projet</li>
+        </ul>
+      </div>
+      <div class="feature">
+        <h3>👁️ Pages visibles</h3>
+        <ul>
+          <li>Le propriétaire choisit les pages actives pour le projet</li>
+          <li>Masquage de modules non utilisés (Planning, COPIL…)</li>
+          <li>Page Budget réservée aux projets de type Client</li>
+        </ul>
+      </div>
+      <div class="feature">
+        <h3>🔗 Liens externes</h3>
+        <ul>
+          <li>Ajout de liens web associés au projet</li>
+          <li>Titre + URL, ouverture dans un nouvel onglet</li>
+          <li>Gestion (ajout / suppression) par les éditeurs</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout">
+      Un projet clôturé passe en lecture seule pour tous les membres non-admin. Seul un administrateur peut réactiver un projet clôturé.
+    </div>
+  </div>
+
+  <!-- 4. Rôles & permissions -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background:#fff7ed">🛡️</div>
+      <div>
+        <h2>4. Rôles &amp; permissions</h2>
+        <div class="section-desc">Contrôle d'accès granulaire par projet et par page</div>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Rôle</th>
+          <th>Qui ?</th>
+          <th>Droits</th>
+          <th>Restrictions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge badge-red">Administrateur</span></td>
+          <td>Équipe IT / DG</td>
+          <td>Accès total à tous les projets et à la page Admin</td>
+          <td>Aucune</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-purple">Propriétaire</span></td>
+          <td>Chef de projet</td>
+          <td>CRUD complet, gestion membres, paramètres, pages, ordre menu</td>
+          <td>Limité à ses projets</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-blue">Éditeur</span></td>
+          <td>Consultant, collaborateur</td>
+          <td>Créer, modifier, supprimer les données du projet</td>
+          <td>Pas de gestion des membres ni paramètres</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-gray">Lecteur</span></td>
+          <td>Manager, observateur</td>
+          <td>Consultation uniquement, aucune modification</td>
+          <td>Toutes les pages en lecture seule</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-amber">Client</span></td>
+          <td>Client final</td>
+          <td>Accès à un sous-ensemble de pages défini par le propriétaire</td>
+          <td>Pages restreintes, lecture seule</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout" style="margin-top:14px;">
+      <strong>Gestion des accès membre :</strong> Le propriétaire peut définir quelles pages sont visibles pour chaque membre de type Client, offrant un contrôle très fin de l'information partagée.
+    </div>
+  </div>
+
+  <!-- 5. Registre des risques -->
+  <div class="section page-break">
+    <div class="section-header">
+      <div class="section-icon" style="background:#fef2f2">⚠️</div>
+      <div>
+        <h2>5. Registre des risques</h2>
+        <div class="section-desc">Identification, évaluation et suivi des risques projet</div>
+      </div>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <h3>📋 Fiche de risque</h3>
+        <ul>
+          <li>Titre et description du risque</li>
+          <li>Probabilité (1 à 5) et Impact (1 à 5)</li>
+          <li>Score de criticité calculé automatiquement (P × I)</li>
+          <li>Statut : Ouvert, En cours, Résolu, Accepté</li>
+        </ul>
+      </div>
+      <div class="feature">
+        <h3>📊 Catégorisation</h3>
+        <ul>
+          <li>Catégories : Technique, Planning, Budget, Humain, Juridique, Autre</li>
+          <li>Niveau de criticité : Faible / Moyen / Élevé / Critique</li>
+          <li>Tri et filtrage par catégorie et niveau</li>
+        </ul>
+      </div>
+      <div class="feature">
+        <h3>🛡️ Plan de mitigation</h3>
+        <ul>
+          <li>Description de la stratégie de réponse</li>
+          <li>Assignation d'un responsable (membre de l'équipe)</li>
+          <li>Date d'échéance pour la résolution</li>
+        </ul>
+      </div>
+      <div class="feature">
+        <h3>📈 Tableau de bord</h3>
+        <ul>
+          <li>KPIs : total, ouverts, critiques, résolus</li>
+          <li>Filtres par statut et par catégorie</li>
+          <li>Indicateurs visuels colorés par niveau de risque</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Suivi des tâches -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background:#f0fdf4">✅</div>
+      <div>
+        <h2>6. Suivi des tâches</h2>
+        <div class="section-desc">Gestion complète des tâches avec statuts, priorités et assignation</div>
+      </div>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <h3>📝 Fiche tâche</h3>
+        <ul>
+          <li>Titre, description, date de début et d'échéance</li>
+          <li>Statut : À faire, En cours, En révision, Terminé, Annulé</li>
+          <li>Priorité : Basse, Normale, Haute, Urgente</li>
+          <li>Assignation à un membre de l'équipe</li>
+        </ul>
+      </div>
+      <div class="feature">
+        <h3>🏷️ Organisation</h3>
+        <ul>
+          <li>Filtrage par statut, priorité, assigné</li>
+          <li>Tri par date d'échéance ou priorité</li>
+          <li>Indicateurs visuels de retard (tâches en rouge)</li>
+          <li>Compteur de tâches par statut</li>
+        </ul>
+      </div>
+      <div class="feature">
+        <h3>📊 KPIs tâches</h3>
+        <ul>
+          <li>Total des tâches, terminées, en cours</li>
+          <li>Tâches en retard (date dépassée)</li>
+          <li>Barre de progression globale du projet</li>
+        </ul>
+      </div>
+      <div class="feature">
+        <h3>🔒 Contrôle d'accès</h3>
+        <ul>
+          <li>Création/modification réservée aux Éditeurs+</li>
+          <li>Accès en lecture pour Lecteurs et Clients</li>
+          <li>Vérification de l'appartenance au projet côté API</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. Planning -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background:#f0f9ff">📅</div>
+      <div>
+        <h2>7. Planning</h2>
+        <div class="section-desc">Vue calendrier et timeline des tâches et jalons</div>
+      </div>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <h3>🗓️ Vue calendrier</h3>
+        <ul>
+          <li>Affichage mensuel des tâches</li>
+          <li>Navigation entre les mois</li>
+          <li>Coloration par statut ou priorité</li>
+        </ul>
+      </div>
+      <div class="feature">
+        <h3>📌 Jalons</h3>
+        <ul>
+          <li>Création de jalons projet avec date cible</li>
+          <li>Visualisation sur la timeline</li>
+          <li>Association aux tâches concernées</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. COPIL -->
+  <div class="section page-break">
+    <div class="section-header">
+      <div class="section-icon" style="background:#fdf4ff">🏛️</div>
+      <div>
+        <h2>8. COPIL (Comité de pilotage)</h2>
+        <div class="section-desc">Compte-rendus et suivi des décisions des comités</div>
+      </div>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <h3>📄 Compte-rendu COPIL</h3>
+        <ul>
+          <li>Date, titre et contexte de la réunion</li>
+          <li>Participants et animateur</li>
+          <li>Points abordés et décisions prises</li>
+          <li>Actions de suivi avec responsable et délai</li>
+        </ul>
+      </div>
+      <div class="feature">
+        <h3>📋 Historique</h3>
+        <ul>
+          <li>Liste chronologique de tous les COPIL</li>
+          <li>Consultation des CR passés</li>
+          <li>Export possible pour archivage</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9. Cahier des charges -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background:#fffbeb">📖</div>
+      <div>
+        <h2>9. Cahier des charges (CDC)</h2>
+        <div class="section-desc">Documentation structurée des exigences projet</div>
+      </div>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <h3>📝 Structure du CDC</h3>
+        <ul>
+          <li>Sections configurables : contexte, périmètre, livrables…</li>
+          <li>Éditeur de texte riche par section</li>
+          <li>Versioning : date de dernière modification</li>
+        </ul>
+      </div>
+      <div class="feature">
+        <h3>🔄 Synchronisation</h3>
+        <ul>
+          <li>Token de synchronisation pour éviter les conflits</li>
+          <li>Sauvegarde automatique des modifications</li>
+          <li>Indication de l'auteur de la dernière modification</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10. RACI -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background:#f0fdf4">🔢</div>
+      <div>
+        <h2>10. Matrice RACI</h2>
+        <div class="section-desc">Responsabilités par tâche et par membre</div>
+      </div>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <h3>📊 Matrice interactive</h3>
+        <ul>
+          <li>Lignes = tâches / activités du projet</li>
+          <li>Colonnes = membres de l'équipe</li>
+          <li>Cellules : R (Responsable), A (Approbateur), C (Consulté), I (Informé)</li>
+        </ul>
+      </div>
+      <div class="feature">
+        <h3>✏️ Édition</h3>
+        <ul>
+          <li>Clic sur une cellule pour assigner un rôle RACI</li>
+          <li>Ajout / suppression de lignes d'activités</li>
+          <li>Sauvegarde immédiate de chaque changement</li>
+        </ul>
+      </div>
+    </div>
+    <table style="margin-top:14px">
+      <thead>
+        <tr>
+          <th>Lettre</th>
+          <th>Rôle RACI</th>
+          <th>Signification</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>R</strong></td><td>Responsible</td><td>Exécute la tâche</td></tr>
+        <tr><td><strong>A</strong></td><td>Accountable</td><td>Rend compte du résultat, approbateur final</td></tr>
+        <tr><td><strong>C</strong></td><td>Consulted</td><td>Consulté avant/pendant l'exécution</td></tr>
+        <tr><td><strong>I</strong></td><td>Informed</td><td>Informé après l'exécution</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 11. Équipe -->
+  <div class="section page-break">
+    <div class="section-header">
+      <div class="section-icon" style="background:#f0f9ff">👥</div>
+      <div>
+        <h2>11. Équipe projet</h2>
+        <div class="section-desc">Annuaire des membres et gestion de l'équipe</div>
+      </div>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <h3>👤 Fiche membre</h3>
+        <ul>
+          <li>Nom, prénom, poste, email</li>
+          <li>Rôle dans le projet (Propriétaire, Éditeur…)</li>
+          <li>Avatar avec initiales généré automatiquement</li>
+        </ul>
+      </div>
+      <div class="feature">
+        <h3>🔧 Gestion</h3>
+        <ul>
+          <li>Ajout de membres (depuis la liste des utilisateurs)</li>
+          <li>Modification du rôle d'un membre</li>
+          <li>Retrait d'un membre du projet</li>
+          <li>Restriction de pages pour les Clients</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 12. Budget -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background:#fefce8">💶</div>
+      <div>
+        <h2>12. Suivi budgétaire</h2>
+        <div class="section-desc">Réservé aux projets de type Client — Suivi des dépenses engagées</div>
+      </div>
+    </div>
+    <div class="callout warn">
+      Cette fonctionnalité est disponible uniquement pour les projets de type <strong>Client</strong>. Elle n'apparaît pas dans le menu pour les projets Internes.
+    </div>
+    <div class="features" style="margin-top:14px">
+      <div class="feature">
+        <h3>📊 Tableau de bord budget</h3>
+        <ul>
+          <li>Budget prévu vs dépenses engagées</li>
+          <li>Solde restant (vert si positif, rouge si dépassé)</li>
+          <li>Barre de progression avec seuils visuels (80% = orange, 100% = rouge)</li>
+          <li>Nombre total de lignes de dépenses</li>
+        </ul>
+      </div>
+      <div class="feature">
+        <h3>💰 Lignes de dépenses</h3>
+        <ul>
+          <li>Date, catégorie, description, montant</li>
+          <li>Catégories : Prestation, Matériel, Déplacement, Formation, Sous-traitance, Autre</li>
+          <li>Devise projet (CHF ou EUR)</li>
+          <li>Ajout, modification, suppression</li>
+        </ul>
+      </div>
+      <div class="feature">
+        <h3>🔍 Filtrage</h3>
+        <ul>
+          <li>Filtre par catégorie de dépense</li>
+          <li>Total recalculé en temps réel selon le filtre actif</li>
+          <li>Tableau avec total récapitulatif en pied</li>
+        </ul>
+      </div>
+      <div class="feature">
+        <h3>🔒 Droits d'accès</h3>
+        <ul>
+          <li>Lecture : tous les membres du projet</li>
+          <li>Ajout / modification / suppression : Éditeur et Propriétaire uniquement</li>
+          <li>Mode lecture seule automatique pour Lecteurs et Clients</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 13. Administration -->
+  <div class="section page-break">
+    <div class="section-header">
+      <div class="section-icon" style="background:#fef2f2">⚙️</div>
+      <div>
+        <h2>13. Administration</h2>
+        <div class="section-desc">Réservée aux administrateurs — Gestion globale des utilisateurs et accès</div>
+      </div>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <h3>👤 Gestion des utilisateurs</h3>
+        <ul>
+          <li>Créer, modifier, désactiver, supprimer un compte</li>
+          <li>Attribuer le rôle Admin ou Chef de projet</li>
+          <li>Réinitialiser le mot de passe d'un utilisateur</li>
+          <li>Voir le statut actif/inactif de chaque compte</li>
+        </ul>
+      </div>
+      <div class="feature">
+        <h3>🗺️ Matrice des permissions</h3>
+        <ul>
+          <li>Vue croisée utilisateurs × projets</li>
+          <li>Modification du rôle directement dans la cellule</li>
+          <li>Ajout/retrait d'un utilisateur d'un projet</li>
+          <li>Date de dernière connexion visible</li>
+        </ul>
+      </div>
+      <div class="feature">
+        <h3>📊 KPIs de gouvernance</h3>
+        <ul>
+          <li>Nombre d'utilisateurs actifs / admins / chefs de projet</li>
+          <li>Projets sans propriétaire détectés</li>
+          <li>Comptes dormants (inactifs &gt; 90 jours)</li>
+          <li>Liste des anomalies de gouvernance</li>
+        </ul>
+      </div>
+      <div class="feature">
+        <h3>🚨 Actions de sécurité</h3>
+        <ul>
+          <li><strong>Forcer la déconnexion</strong> : révoque toutes les sessions actives d'un utilisateur</li>
+          <li><strong>Offboarding</strong> : retire de tous les projets + désactive le compte + révoque les sessions</li>
+          <li>Compte non supprimé, réactivable si besoin</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 14. Navigation personnalisable -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background:#f5f3ff">🗂️</div>
+      <div>
+        <h2>14. Navigation personnalisable</h2>
+        <div class="section-desc">Propriétaires peuvent réorganiser les onglets du menu</div>
+      </div>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <h3>🖱️ Glissé-déposé dans le menu</h3>
+        <ul>
+          <li>Les propriétaires et admins peuvent réordonner les onglets directement dans la barre de navigation</li>
+          <li>Feedback visuel en temps réel pendant le glissement</li>
+          <li>Sauvegarde automatique de l'ordre à la fin du drag</li>
+          <li>Ordre persisté en base de données par projet</li>
+        </ul>
+      </div>
+      <div class="feature">
+        <h3>👁️ Pages visibles</h3>
+        <ul>
+          <li>Le propriétaire active/désactive les modules du projet</li>
+          <li>La page Budget n'apparaît que pour les projets Client</li>
+          <li>Les membres Clients voient uniquement les pages que le propriétaire leur autorise</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 15. Stack technique -->
+  <div class="section page-break">
+    <div class="section-header">
+      <div class="section-icon" style="background:#f8fafc">🛠️</div>
+      <div>
+        <h2>15. Stack technique</h2>
+        <div class="section-desc">Technologies utilisées dans l'application</div>
+      </div>
+    </div>
+    <div class="stack-grid">
+      <div class="stack-item">
+        <div class="stack-name">React 19</div>
+        <div class="stack-role">Framework frontend</div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-name">Vite</div>
+        <div class="stack-role">Build tool frontend</div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-name">Tailwind CSS 4</div>
+        <div class="stack-role">Styles utilitaires</div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-name">FastAPI</div>
+        <div class="stack-role">Framework backend Python</div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-name">asyncpg</div>
+        <div class="stack-role">Driver PostgreSQL async</div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-name">Pydantic v2</div>
+        <div class="stack-role">Validation des données</div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-name">Supabase</div>
+        <div class="stack-role">PostgreSQL hébergé</div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-name">Vercel</div>
+        <div class="stack-role">Hébergement frontend</div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-name">Render</div>
+        <div class="stack-role">Hébergement backend</div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-name">JWT + HttpOnly</div>
+        <div class="stack-role">Authentification sécurisée</div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-name">bcrypt</div>
+        <div class="stack-role">Hachage des mots de passe</div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-name">slowapi</div>
+        <div class="stack-role">Rate limiting API</div>
+      </div>
+    </div>
+
+    <div style="margin-top:30px; padding:16px; background:#f8fafc; border-radius:10px; border:1px solid #e5e7eb;">
+      <p style="font-size:9pt; color:#6b7280; text-align:center; margin:0;">
+        Documentation générée le 7 mai 2026 · Application Gestion de Projet v1.0<br/>
+        Pour imprimer en PDF : Ctrl+P → Destination : Enregistrer en PDF → Désactiver les en-têtes/pieds de page
+      </p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
