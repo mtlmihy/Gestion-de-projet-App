@@ -14,6 +14,7 @@ const PAGE_TITLES = {
   '/aide':     'Aide',
   '/admin':    'Administration',
   '/projets':  'Projets',
+  '/budget':   'Budget',
 }
 
 export default function Layout() {

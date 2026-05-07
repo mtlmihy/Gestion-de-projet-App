@@ -15,6 +15,7 @@ const LINKS = [
   { to: '/raci',     label: 'RACI',                page: 'raci'     },
   { to: '/equipe',   label: 'Équipe',              page: 'equipe'   },
   { to: '/aide',     label: 'Aide',                page: 'aide'     },
+  { to: '/budget',   label: 'Budget',              page: 'budget',  onlyClient: true },
 ]
 
 function UserAvatar({ user }) {
@@ -56,7 +57,9 @@ export default function NavBar() {
     navigate('/projets', { replace: true })
   }
 
-  const visibleLinks = LINKS.filter(({ page }) => canAccess(page) && canAccessPage(page))
+  const visibleLinks = LINKS.filter(({ page, onlyClient }) =>
+    canAccess(page) && canAccessPage(page) && (!onlyClient || projet?.type_projet === 'Client')
+  )
 
   return (
     <header className="sticky top-0 z-40 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 shadow-sm transition-colors">

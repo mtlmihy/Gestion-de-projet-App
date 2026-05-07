@@ -17,6 +17,7 @@ import EquipePage from './pages/EquipePage'
 import AidePage from './pages/AidePage'
 import AdminPage from './pages/AdminPage'
 import RaciPage from './pages/RaciPage'
+import BudgetPage from './pages/BudgetPage'
 
 function AccessDenied() {
   return (
@@ -82,6 +83,7 @@ export default function App() {
               <Route path="cdc"      element={<PageGuard page="cdc"><CdcPage /></PageGuard>} />
               <Route path="equipe"   element={<PageGuard page="equipe"><EquipePage /></PageGuard>} />
               <Route path="aide"     element={<PageGuard page="aide"><AidePage /></PageGuard>} />
+              <Route path="budget"   element={<PageGuard page="budget"><BudgetPage /></PageGuard>} />
               <Route path="admin"    element={<AdminPage />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

@@ -74,6 +74,7 @@ const PAGES_DISPONIBLES = [
   { key: 'copil',    label: "COPIL" },
   { key: 'equipe',   label: "Équipe" },
   { key: 'aide',     label: "Aide" },
+  { key: 'budget',   label: "Budget", onlyClient: true },
 ]
 
 function mergeProjetForUi(prev, patch) {
@@ -398,7 +399,7 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
 
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-2">Pages visibles dans ce projet</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
-            {PAGES_DISPONIBLES.map((p) => {
+            {PAGES_DISPONIBLES.filter((p) => !p.onlyClient || projet.type_projet === 'Client').map((p) => {
               const hasAccess = pagesProjet == null || pagesProjet.includes(p.key)
               return (
                 <label key={p.key} className="flex items-center gap-2 text-sm cursor-pointer px-2.5 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-gray-700 dark:text-slate-300">
@@ -483,7 +484,7 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
                       <td colSpan="4" className="px-6 pb-4 pt-2">
                         <p className="text-xs font-semibold text-orange-700 dark:text-orange-400 mb-2">Pages accessibles pour ce membre :</p>
                         <div className="grid grid-cols-3 gap-1">
-                          {PAGES_DISPONIBLES.map((p) => {
+                          {PAGES_DISPONIBLES.filter((p) => !p.onlyClient || projet.type_projet === 'Client').map((p) => {
                             const hasAccess = m.pages_autorisees == null || m.pages_autorisees.includes(p.key)
                             return (
                               <label key={p.key} className="flex items-center gap-2 text-sm cursor-pointer px-2.5 py-1.5 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors text-gray-700 dark:text-slate-300">
