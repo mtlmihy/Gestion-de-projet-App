@@ -953,24 +953,23 @@ export default function ProjectsPage() {
       {/* Header */}
       <header className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 shadow-sm">
         <div className="max-w-screen-xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
-          <span className="flex items-center gap-2 font-bold text-blue-600 text-sm min-w-0">
+          <span className="flex items-center font-bold text-blue-600 text-sm min-w-0">
             <Logo className="w-6 h-6" />
-            <span className="truncate max-w-[110px] sm:max-w-none">QimProject</span>
           </span>
 
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {isAdmin && (
               <button
                 onClick={() => navigate('/admin')}
-                className="inline-flex items-center gap-1 text-xs font-medium px-2 sm:px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-800 hover:text-white hover:border-gray-800 transition-colors"
+                className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:bg-gray-800 dark:hover:bg-slate-700 hover:text-white hover:border-gray-800 dark:hover:border-slate-700 transition-colors"
                 title="Administration"
+                aria-label="Administration"
               >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path d="M12 3l7 4v10l-7 4-7-4V7l7-4z" />
                   <path d="M12 8v8" />
                   <path d="M8 12h8" />
                 </svg>
-                <span className="hidden sm:inline">Administration</span>
               </button>
             )}
             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-400">
