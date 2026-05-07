@@ -108,8 +108,8 @@ export default function NavBar() {
     <header className="sticky top-0 z-40 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 shadow-sm transition-colors">
       <div className="max-w-screen-xl mx-auto px-4 h-14 flex items-center gap-3">
 
-        {/* Logo seul pour alleger le top menu */}
-        <div className="flex items-center shrink-0">
+        {/* Logo + nom du projet */}
+        <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={handleChangeProjet}
@@ -119,6 +119,20 @@ export default function NavBar() {
           >
             <Logo className="w-6 h-6" />
           </button>
+          {projet && (
+            <button
+              onClick={handleChangeProjet}
+              className="hidden sm:flex items-center gap-1.5 max-w-[170px] group"
+              title="Changer de projet"
+            >
+              <span className="text-sm font-semibold text-gray-800 dark:text-slate-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                {projet.nom}
+              </span>
+              <svg className="w-3 h-3 text-gray-400 group-hover:text-blue-500 shrink-0 transition-colors" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/>
+              </svg>
+            </button>
+          )}
         </div>
 
         {/* Nav links — desktop uniquement */}
@@ -154,7 +168,13 @@ export default function NavBar() {
               </NavLink>
             </div>
           ))}
+        </nav>
 
+        {/* Spacer mobile */}
+        <div className="flex-1 md:hidden" />
+
+        {/* Utilisateur + actions — desktop */}
+        <div className="hidden md:flex shrink-0 items-center gap-2">
           {isAdmin && (
             <NavLink
               to="/admin"
@@ -175,13 +195,6 @@ export default function NavBar() {
               </svg>
             </NavLink>
           )}
-        </nav>
-
-        {/* Spacer mobile */}
-        <div className="flex-1 md:hidden" />
-
-        {/* Utilisateur + actions — desktop */}
-        <div className="hidden md:flex shrink-0 items-center gap-2">
           {user && (
             <button
               onClick={() => setShowChangePwd(true)}
