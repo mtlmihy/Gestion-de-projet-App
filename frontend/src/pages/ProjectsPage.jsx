@@ -455,6 +455,7 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
             })}
           </div>
 
+          {/* TODO: section drag-and-drop ordre des pages dans le modal (désactivée, disponible dans le menu directement)
           {estProprietaire && (
             <div className="mt-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-2">Ordre des pages dans le menu</p>
@@ -488,6 +489,7 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
               </div>
             </div>
           )}
+          */}
         </div>}
 
         {/* Actions */}

@@ -1,10 +1,11 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useProject } from '../context/ProjectContext'
 import ThemeToggleButton from './ThemeToggleButton'
 import ChangePasswordModal from './ChangePasswordModal'
 import Logo from './Logo'
+import { updateProjetOrdre } from '../api/projets'
 
 const LINKS = [
   { to: '/cdc',      label: 'Cahier des Charges', page: 'cdc'      },
@@ -31,10 +32,12 @@ function UserAvatar({ user }) {
 
 export default function NavBar() {
   const { logout, user, isAdmin, canAccess } = useAuth()
-  const { projet, clearProjet, canAccessPage } = useProject()
+  const { projet, setProjet, clearProjet, canAccessPage, estProprietaire } = useProject()
   const navigate = useNavigate()
   const [showChangePwd, setShowChangePwd] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const draggingPage = useRef(null)
+  const [dragOverPage, setDragOverPage] = useState(null)
 
   const handleLogout = async () => {
     setMobileOpen(false)
@@ -65,10 +68,41 @@ export default function NavBar() {
     ? [...filteredLinks].sort((a, b) => {
         const ia = pagesOrdre.indexOf(a.page)
         const ib = pagesOrdre.indexOf(b.page)
-        // pages absentes de l'ordre restent à la fin
         return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib)
       })
     : filteredLinks
+
+  const canReorder = estProprietaire && !!projet
+
+  const handleDragStart = useCallback((page) => {
+    draggingPage.current = page
+  }, [])
+
+  const handleDragOver = useCallback((e, page) => {
+    e.preventDefault()
+    if (!draggingPage.current || draggingPage.current === page || !projet) return
+    setDragOverPage(page)
+    const allKeys = LINKS.map((l) => l.page)
+    const currentOrdre = projet.pages_ordre?.length ? [...projet.pages_ordre] : [...allKeys]
+    const from = currentOrdre.indexOf(draggingPage.current)
+    const to   = currentOrdre.indexOf(page)
+    if (from === -1 || to === -1) return
+    currentOrdre.splice(from, 1)
+    currentOrdre.splice(to, 0, draggingPage.current)
+    setProjet({ ...projet, pages_ordre: currentOrdre })
+  }, [projet, setProjet])
+
+  const handleDragEnd = useCallback(async () => {
+    setDragOverPage(null)
+    draggingPage.current = null
+    if (!projet?.id || !projet?.pages_ordre) return
+    try {
+      const { data } = await updateProjetOrdre(projet.id, projet.pages_ordre)
+      setProjet({ ...projet, pages_ordre: data.pages_ordre })
+    } catch {
+      // silencieux
+    }
+  }, [projet, setProjet])
 
   return (
     <header className="sticky top-0 z-40 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 shadow-sm transition-colors">
@@ -105,20 +139,36 @@ export default function NavBar() {
 
         {/* Nav links — desktop uniquement */}
         <nav className="hidden md:flex items-center gap-0.5 flex-1">
-          {visibleLinks.map(({ to, label }) => (
-            <NavLink
+          {visibleLinks.map(({ to, label, page }) => (
+            <div
               key={to}
-              to={to}
-              className={({ isActive }) =>
-                `px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                  isActive
-                    ? 'bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400'
-                    : 'text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-slate-100'
-                }`
-              }
+              draggable={canReorder}
+              onDragStart={canReorder ? () => handleDragStart(page) : undefined}
+              onDragOver={canReorder ? (e) => handleDragOver(e, page) : undefined}
+              onDragEnd={canReorder ? handleDragEnd : undefined}
+              className={`relative rounded-lg transition-all ${
+                canReorder ? 'cursor-grab active:cursor-grabbing' : ''
+              } ${
+                dragOverPage === page ? 'ring-2 ring-blue-400 ring-offset-1' : ''
+              }`}
             >
-              {label}
-            </NavLink>
+              {canReorder && (
+                <span className="absolute -top-1 -left-0.5 w-1.5 h-1.5 rounded-full bg-blue-400 opacity-0 group-hover:opacity-100 pointer-events-none" />
+              )}
+              <NavLink
+                to={to}
+                draggable={false}
+                className={({ isActive }) =>
+                  `block px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                    isActive
+                      ? 'bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400'
+                      : 'text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-slate-100'
+                  }`
+                }
+              >
+                {label}
+              </NavLink>
+            </div>
           ))}
 
           {isAdmin && (
