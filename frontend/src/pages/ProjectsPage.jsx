@@ -5,7 +5,7 @@ import { useProject } from '../context/ProjectContext'
 import ThemeToggleButton from '../components/ThemeToggleButton'
 import ProjectWizard from '../components/ProjectWizard'
 import Logo from '../components/Logo'
-import { getProjets, createProjet, deleteProjet, cloturerProjet, reactiverProjet, updateStatutProjet, updateProjetPages, updateProjetSettings } from '../api/projets'
+import { getProjets, createProjet, deleteProjet, cloturerProjet, reactiverProjet, updateStatutProjet, updateProjetPages, updateProjetSettings, updateProjetOrdre } from '../api/projets'
 import { getMembres, addMembre, updateMembre, updateMembrePages, removeMembre, getUsersDisponibles } from '../api/users'
 
 // ── Épinglage (persistance locale par utilisateur) ───────────────────────────
@@ -98,6 +98,15 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
   const [addForm,    setAddForm]  = useState({ user_id: '', role: isAdmin ? 'Proprietaire' : 'Lecteur' })
   const [notif,      setNotif]    = useState({ msg: '', type: 'success' })
   const [pagesProjet, setPagesProjet] = useState(projet?.pages_visibles ?? null)
+  const pagesDispo = PAGES_DISPONIBLES.filter((p) => !p.onlyClient || projet?.type_projet === 'Client')
+  const [ordrePages, setOrdrePages] = useState(
+    () => {
+      const saved = projet?.pages_ordre
+      if (saved && saved.length) return saved
+      return pagesDispo.map((p) => p.key)
+    }
+  )
+  const [draggingPage, setDraggingPage] = useState(null)
   const [settingsForm, setSettingsForm] = useState({
     type_projet: projet?.type_projet ?? 'Interne',
     budget_prevu: projet?.budget_prevu == null ? '' : String(projet.budget_prevu),
@@ -128,6 +137,13 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
   useEffect(() => {
     setPagesProjet(projet?.pages_visibles ?? null)
   }, [projet?.pages_visibles])
+
+  // Sync ordre pages
+  useEffect(() => {
+    const saved = projet?.pages_ordre
+    const pDisp = PAGES_DISPONIBLES.filter((p) => !p.onlyClient || projet?.type_projet === 'Client')
+    setOrdrePages(saved && saved.length ? saved : pDisp.map((p) => p.key))
+  }, [projet?.pages_ordre, projet?.type_projet])
 
   // Sync paramètres budget/type sans déclencher rechargement membres
   useEffect(() => {
@@ -245,6 +261,32 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
       onProjetUpdated?.(data)
     } catch (err) {
       notify(err?.response?.data?.detail ?? 'Erreur lors de la mise à jour des paramètres projet.', 'error')
+    }
+  }
+
+  const handleDragStart = (key) => setDraggingPage(key)
+
+  const handleDragOver = (e, key) => {
+    e.preventDefault()
+    if (!draggingPage || draggingPage === key) return
+    setOrdrePages((prev) => {
+      const next = [...prev]
+      const from = next.indexOf(draggingPage)
+      const to   = next.indexOf(key)
+      if (from === -1 || to === -1) return prev
+      next.splice(from, 1)
+      next.splice(to, 0, draggingPage)
+      return next
+    })
+  }
+
+  const handleDragEnd = async () => {
+    setDraggingPage(null)
+    try {
+      const { data } = await updateProjetOrdre(projet.id, ordrePages)
+      onProjetUpdated?.(data)
+    } catch (err) {
+      notify(err?.response?.data?.detail ?? 'Erreur lors de la sauvegarde de l’ordre.', 'error')
     }
   }
 
@@ -412,6 +454,40 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
               )
             })}
           </div>
+
+          {estProprietaire && (
+            <div className="mt-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-2">Ordre des pages dans le menu</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500 mb-2">Glissez-déposez pour réordonner — sauvegarde automatique.</p>
+              <div className="flex flex-col gap-1">
+                {ordrePages.map((key) => {
+                  const page = PAGES_DISPONIBLES.find((p) => p.key === key)
+                  if (!page) return null
+                  const isDragged = draggingPage === key
+                  return (
+                    <div
+                      key={key}
+                      draggable
+                      onDragStart={() => handleDragStart(key)}
+                      onDragOver={(e) => handleDragOver(e, key)}
+                      onDragEnd={handleDragEnd}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg border cursor-grab select-none transition-all
+                        ${
+                          isDragged
+                            ? 'opacity-40 bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700'
+                            : 'bg-white dark:bg-slate-700 border-gray-200 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-600'
+                        }`}
+                    >
+                      <svg className="w-4 h-4 text-gray-400 dark:text-slate-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M4 8h16M4 16h16" strokeLinecap="round"/>
+                      </svg>
+                      <span className="text-sm text-gray-700 dark:text-slate-200 font-medium">{page.label}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>}
 
         {/* Actions */}

@@ -7,7 +7,7 @@ from app.db.pool import get_pool
 from app.projets import service as svc
 from app.projets.schemas import (
     MembreCreate, MembreRead, MembrePagesUpdate, MembreUpdate,
-    ProjetCreate, ProjetPagesUpdate, ProjetRead, ProjetSettingsUpdate, ProjetStatutUpdate, ProjetUpdate,
+    ProjetCreate, ProjetPagesUpdate, ProjetOrdreUpdate, ProjetRead, ProjetSettingsUpdate, ProjetStatutUpdate, ProjetUpdate,
     ROLES_VALIDES,
 )
 from app.security.audit import Action, log_event
@@ -134,6 +134,22 @@ async def update_projet_pages(
     await _check_owner_or_admin(projet_id, current_user, pool)
     async with pool.acquire() as conn:
         result = await svc.update_pages_visibles(conn, projet_id, payload.pages_visibles)
+    if not result:
+        raise HTTPException(status_code=404, detail="Projet introuvable.")
+    return result
+
+
+@router.patch("/{projet_id}/ordre", response_model=ProjetRead)
+async def update_projet_ordre(
+    projet_id: str,
+    payload: ProjetOrdreUpdate,
+    pool: Pool = Depends(get_pool),
+    current_user: dict = Depends(get_current_user),
+):
+    """Définit l'ordre des pages dans le menu. Réservé au Propriétaire ou admin."""
+    await _check_owner_or_admin(projet_id, current_user, pool)
+    async with pool.acquire() as conn:
+        result = await svc.update_pages_ordre(conn, projet_id, payload.pages_ordre)
     if not result:
         raise HTTPException(status_code=404, detail="Projet introuvable.")
     return result

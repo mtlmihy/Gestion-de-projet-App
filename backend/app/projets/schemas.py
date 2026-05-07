@@ -29,12 +29,17 @@ class ProjetRead(ProjetBase):
     mon_role: Optional[str] = None
     mes_pages: Optional[List[str]] = None
     pages_visibles: Optional[List[str]] = None
+    pages_ordre: Optional[List[str]] = None
     est_cloture: bool = False
     model_config = {"from_attributes": True}
 
 
 class ProjetPagesUpdate(BaseModel):
     pages_visibles: Optional[List[str]] = None
+
+
+class ProjetOrdreUpdate(BaseModel):
+    pages_ordre: Optional[List[str]] = None
 
 
 class ProjetSettingsUpdate(BaseModel):

@@ -57,9 +57,18 @@ export default function NavBar() {
     navigate('/projets', { replace: true })
   }
 
-  const visibleLinks = LINKS.filter(({ page, onlyClient }) =>
+  const filteredLinks = LINKS.filter(({ page, onlyClient }) =>
     canAccess(page) && canAccessPage(page) && (!onlyClient || projet?.type_projet === 'Client')
   )
+  const pagesOrdre = projet?.pages_ordre
+  const visibleLinks = pagesOrdre
+    ? [...filteredLinks].sort((a, b) => {
+        const ia = pagesOrdre.indexOf(a.page)
+        const ib = pagesOrdre.indexOf(b.page)
+        // pages absentes de l'ordre restent à la fin
+        return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib)
+      })
+    : filteredLinks
 
   return (
     <header className="sticky top-0 z-40 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 shadow-sm transition-colors">

@@ -9,3 +9,4 @@ export const updateProjetPages   = (id, pages)     => client.patch(`/projets/${i
 export const deleteProjet        = (id)            => client.delete(`/projets/${id}`)
 export const cloturerProjet      = (id)            => client.post(`/projets/${id}/cloturer`)
 export const reactiverProjet     = (id)            => client.post(`/projets/${id}/reactiver`)
+export const updateProjetOrdre   = (id, ordre)     => client.patch(`/projets/${id}/ordre`, { pages_ordre: ordre })

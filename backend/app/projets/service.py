@@ -5,7 +5,7 @@ from asyncpg import Connection
 
 async def get_all(conn: Connection) -> list[dict]:
     rows = await conn.fetch(
-        "SELECT id::text, nom, description, statut::text, type_projet, budget_prevu, devise, pages_visibles FROM projets ORDER BY date_creation"
+        "SELECT id::text, nom, description, statut::text, type_projet, budget_prevu, devise, pages_visibles, pages_ordre FROM projets ORDER BY date_creation"
     )
     return [dict(r) for r in rows]
 
@@ -17,7 +17,7 @@ async def get_accessible(conn: Connection, user_id: str, is_admin: bool) -> list
             """
                      SELECT p.id::text, p.nom, p.description, p.statut::text,
                          p.type_projet, p.budget_prevu, p.devise, p.est_cloture,
-                   p.pages_visibles,
+                   p.pages_visibles, p.pages_ordre,
                    pm.role::text AS mon_role, pm.pages_autorisees AS mes_pages
             FROM projets p
             LEFT JOIN projet_membres pm ON pm.projet_id = p.id AND pm.utilisateur_id = $1::uuid
@@ -30,7 +30,7 @@ async def get_accessible(conn: Connection, user_id: str, is_admin: bool) -> list
             """
                      SELECT p.id::text, p.nom, p.description, p.statut::text,
                          p.type_projet, p.budget_prevu, p.devise, p.est_cloture,
-                   p.pages_visibles,
+                   p.pages_visibles, p.pages_ordre,
                    pm.role::text AS mon_role, pm.pages_autorisees AS mes_pages
             FROM projets p
             JOIN projet_membres pm ON pm.projet_id = p.id AND pm.utilisateur_id = $1::uuid
@@ -43,7 +43,7 @@ async def get_accessible(conn: Connection, user_id: str, is_admin: bool) -> list
 
 async def get_by_id(conn: Connection, projet_id: str) -> dict | None:
     row = await conn.fetchrow(
-        "SELECT id::text, nom, description, statut::text, type_projet, budget_prevu, devise, pages_visibles FROM projets WHERE id=$1::uuid",
+        "SELECT id::text, nom, description, statut::text, type_projet, budget_prevu, devise, pages_visibles, pages_ordre FROM projets WHERE id=$1::uuid",
         projet_id,
     )
     return dict(row) if row else None
@@ -55,7 +55,7 @@ async def create(conn: Connection, data: dict, createur_id: str | None = None) -
         """
         INSERT INTO projets (id, nom, description, statut, type_projet, budget_prevu, devise, createur_id)
         VALUES ($1::uuid, $2, $3, $4::projet_statut, $5, $6, $7, $8::uuid)
-        RETURNING id::text, nom, description, statut::text, type_projet, budget_prevu, devise, pages_visibles
+        RETURNING id::text, nom, description, statut::text, type_projet, budget_prevu, devise, pages_visibles, pages_ordre
         """,
         new_id,
         data["nom"],
@@ -88,7 +88,7 @@ async def update(conn: Connection, projet_id: str, data: dict) -> dict | None:
         SET nom=$2, description=$3, statut=$4::projet_statut,
             type_projet=$5, budget_prevu=$6, devise=$7
         WHERE id=$1::uuid
-        RETURNING id::text, nom, description, statut::text, type_projet, budget_prevu, devise, pages_visibles
+        RETURNING id::text, nom, description, statut::text, type_projet, budget_prevu, devise, pages_visibles, pages_ordre
         """,
         projet_id,
         data["nom"],
@@ -105,7 +105,7 @@ async def update_statut(conn: Connection, projet_id: str, statut: str) -> dict |
     row = await conn.fetchrow(
         """
         UPDATE projets SET statut=$2::projet_statut WHERE id=$1::uuid
-        RETURNING id::text, nom, description, statut::text, type_projet, budget_prevu, devise, pages_visibles, est_cloture
+        RETURNING id::text, nom, description, statut::text, type_projet, budget_prevu, devise, pages_visibles, pages_ordre, est_cloture
         """,
         projet_id, statut,
     )
@@ -118,10 +118,24 @@ async def update_pages_visibles(conn: Connection, projet_id: str, pages: list | 
         UPDATE projets
         SET pages_visibles = $2
         WHERE id = $1::uuid
-        RETURNING id::text, nom, description, statut::text, type_projet, budget_prevu, devise, pages_visibles, est_cloture
+        RETURNING id::text, nom, description, statut::text, type_projet, budget_prevu, devise, pages_visibles, pages_ordre, est_cloture
         """,
         projet_id,
         pages,
+    )
+    return dict(row) if row else None
+
+
+async def update_pages_ordre(conn: Connection, projet_id: str, ordre: list | None) -> dict | None:
+    row = await conn.fetchrow(
+        """
+        UPDATE projets
+        SET pages_ordre = $2
+        WHERE id = $1::uuid
+        RETURNING id::text, nom, description, statut::text, type_projet, budget_prevu, devise, pages_visibles, pages_ordre, est_cloture
+        """,
+        projet_id,
+        ordre,
     )
     return dict(row) if row else None
 
@@ -140,7 +154,7 @@ async def update_settings(
             budget_prevu = $3,
             devise = $4
         WHERE id = $1::uuid
-        RETURNING id::text, nom, description, statut::text, type_projet, budget_prevu, devise, pages_visibles, est_cloture
+        RETURNING id::text, nom, description, statut::text, type_projet, budget_prevu, devise, pages_visibles, pages_ordre, est_cloture
         """,
         projet_id,
         type_projet,
@@ -161,7 +175,7 @@ async def cloturer(conn: Connection, projet_id: str) -> dict | None:
         UPDATE projets
         SET est_cloture = TRUE, date_cloture = NOW()
         WHERE id = $1::uuid
-        RETURNING id::text, nom, description, statut::text, type_projet, budget_prevu, devise, pages_visibles, est_cloture
+        RETURNING id::text, nom, description, statut::text, type_projet, budget_prevu, devise, pages_visibles, pages_ordre, est_cloture
         """,
         projet_id,
     )
@@ -174,7 +188,7 @@ async def reactiver(conn: Connection, projet_id: str) -> dict | None:
         UPDATE projets
         SET est_cloture = FALSE, date_cloture = NULL
         WHERE id = $1::uuid
-        RETURNING id::text, nom, description, statut::text, type_projet, budget_prevu, devise, pages_visibles, est_cloture
+        RETURNING id::text, nom, description, statut::text, type_projet, budget_prevu, devise, pages_visibles, pages_ordre, est_cloture
         """,
         projet_id,
     )
