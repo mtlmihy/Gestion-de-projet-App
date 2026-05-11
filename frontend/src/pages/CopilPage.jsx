@@ -22,8 +22,17 @@ function CopilForm({ initial, onSubmit, onCancel, saving }) {
     decisions: initial?.decisions ?? '',
     actions: initial?.actions ?? '',
   }))
+  const [showKickoffHelp, setShowKickoffHelp] = useState(false)
+  const [kickoff, setKickoff] = useState({
+    objectif: '',
+    perimetre: '',
+    jalons: '',
+    roles: '',
+    plan30j: '',
+  })
 
   const setF = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
+  const setKickoffF = (key) => (e) => setKickoff((k) => ({ ...k, [key]: e.target.value }))
 
   const buildDefaultTitle = (isoDate) => {
     if (!isoDate) return 'Réunion COPIL'
@@ -42,6 +51,66 @@ function CopilForm({ initial, onSubmit, onCancel, saving }) {
       notes: (form.notes ?? '').trim(),
     }
     onSubmit(normalized)
+  }
+
+  const buildKickoffTemplate = () => {
+    const objectif = (kickoff.objectif || 'A definir').trim()
+    const perimetre = (kickoff.perimetre || 'A preciser').trim()
+    const jalons = (kickoff.jalons || 'Jalon 1: cadrage\nJalon 2: execution\nJalon 3: validation').trim()
+    const roles = (kickoff.roles || 'Sponsor: ...\nChef(fe) de projet: ...\nReferents metier: ...').trim()
+    const plan30j = (kickoff.plan30j || 'S1: finaliser le cadrage\nS2: valider le planning\nS3: lancer les travaux\nS4: COPIL de suivi').trim()
+
+    const notes = [
+      'KICK-OFF - CANEVAS',
+      '',
+      '1) CONTEXTE ET OBJECTIF',
+      `- Objectif principal: ${objectif}`,
+      '- Enjeux:',
+      '- Indicateurs de succes:',
+      '',
+      '2) PERIMETRE',
+      `- Inclus: ${perimetre}`,
+      '- Hors perimetre:',
+      '- Hypotheses de depart:',
+      '',
+      '3) GOUVERNANCE ET ROLES',
+      roles,
+      '',
+      '4) JALONS ET CALENDRIER',
+      jalons,
+      '',
+      '5) PLAN 30 JOURS',
+      plan30j,
+      '',
+      '6) RISQUES INITIAUX',
+      '- Risque #1 / impact / mitigation',
+      '- Risque #2 / impact / mitigation',
+    ].join('\n')
+
+    const decisions = [
+      'DECISIONS DE KICK-OFF',
+      '- Gouvernance validee (Sponsor, COPIL, rythmes)',
+      '- Perimetre V1 valide',
+      '- Jalons et planning V1 valides',
+      '- Modalites de communication validees',
+    ].join('\n')
+
+    const actions = [
+      'ACTIONS A LANCER',
+      '- [CP] Finaliser planning detaille - Echeance: J+3',
+      '- [Sponsor] Valider arbitres budget/perimetre - Echeance: J+5',
+      '- [Equipe] Ouvrir les chantiers prioritaires - Echeance: J+7',
+      '- [CP] Mettre a jour RACI et diffusion - Echeance: J+7',
+      '- [COPIL] Programmer le prochain point de suivi - Echeance: J+10',
+    ].join('\n')
+
+    setForm((prev) => ({
+      ...prev,
+      titre: (prev.titre || '').trim() || `Kick-off projet - ${prev.date_reunion || ''}`,
+      notes,
+      decisions,
+      actions,
+    }))
   }
 
   const inp = 'w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-base sm:text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400'
@@ -72,6 +141,64 @@ function CopilForm({ initial, onSubmit, onCancel, saving }) {
         <label className={lbl}>Participants</label>
         <input className={inp} value={form.participants} onChange={setF('participants')} placeholder="Thalïa, Louis-Marie, Client X" />
       </div>
+
+      {isCreate && (
+        <section className="rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50/70 dark:bg-slate-900/30 p-3">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">Aide optionnelle</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-slate-200">Assistant Kick-off</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowKickoffHelp((v) => !v)}
+              className="text-xs px-2.5 py-1.5 rounded-md border border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 transition-colors"
+            >
+              {showKickoffHelp ? 'Masquer' : 'Activer'}
+            </button>
+          </div>
+
+          {showKickoffHelp && (
+            <div className="mt-3 space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className={lbl}>Objectif du projet</label>
+                  <input className={inp} value={kickoff.objectif} onChange={setKickoffF('objectif')} placeholder="Ex: Deployer un process de suivi unifie" />
+                </div>
+                <div>
+                  <label className={lbl}>Perimetre</label>
+                  <input className={inp} value={kickoff.perimetre} onChange={setKickoffF('perimetre')} placeholder="Ex: PMO + Equipe delivery" />
+                </div>
+              </div>
+
+              <div>
+                <label className={lbl}>Jalons principaux</label>
+                <textarea className={`${inp} min-h-16`} value={kickoff.jalons} onChange={setKickoffF('jalons')} placeholder="Un jalon par ligne" />
+              </div>
+
+              <div>
+                <label className={lbl}>Roles cles (RACI simplifie)</label>
+                <textarea className={`${inp} min-h-16`} value={kickoff.roles} onChange={setKickoffF('roles')} placeholder="Ex: Sponsor, CP, Referent metier..." />
+              </div>
+
+              <div>
+                <label className={lbl}>Plan d'action 30 jours</label>
+                <textarea className={`${inp} min-h-16`} value={kickoff.plan30j} onChange={setKickoffF('plan30j')} placeholder="Une action par ligne" />
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={buildKickoffTemplate}
+                  className="bg-blue-50 hover:bg-blue-100 dark:bg-blue-500/15 dark:hover:bg-blue-500/25 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
+                >
+                  Generer le canevas kick-off
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
       <div>
         <label className={lbl}>Notes de réunion {isCreate ? '*' : ''}</label>
