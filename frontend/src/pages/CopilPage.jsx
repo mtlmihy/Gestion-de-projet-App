@@ -7,14 +7,52 @@ import { createCopil, deleteCopil, getCopils, updateCopil } from '../api/copils'
 
 // ─── PHASES D'UN PROJET IT ─────────────────────────────────────────────────────
 const PROJECT_PHASES = [
-  { id: 'kickoff', nom: 'Kick-off', ordre: 1, color: 'bg-blue-500 dark:bg-blue-600', label: '01' },
-  { id: 'poc', nom: 'POC', ordre: 2, color: 'bg-cyan-500 dark:bg-cyan-600', label: '02' },
-  { id: 'dev', nom: 'Développement', ordre: 3, color: 'bg-emerald-500 dark:bg-emerald-600', label: '03' },
-  { id: 'uat', nom: 'Test & UAT', ordre: 4, color: 'bg-violet-500 dark:bg-violet-600', label: '04' },
-  { id: 'golive', nom: 'Go-live', ordre: 5, color: 'bg-rose-500 dark:bg-rose-600', label: '05' },
-  { id: 'postprod', nom: 'Post-Prod', ordre: 6, color: 'bg-amber-500 dark:bg-amber-600', label: '06' },
-  { id: 'clotureretex', nom: 'Clôture', ordre: 7, color: 'bg-slate-500 dark:bg-slate-600', label: '07' },
+  { id: 'kickoff', nom: 'Kick-off', ordre: 1, color: 'bg-blue-500 dark:bg-blue-600' },
+  { id: 'poc', nom: 'POC', ordre: 2, color: 'bg-cyan-500 dark:bg-cyan-600' },
+  { id: 'dev', nom: 'Développement', ordre: 3, color: 'bg-emerald-500 dark:bg-emerald-600' },
+  { id: 'uat', nom: 'Test & UAT', ordre: 4, color: 'bg-violet-500 dark:bg-violet-600' },
+  { id: 'golive', nom: 'Go-live', ordre: 5, color: 'bg-rose-500 dark:bg-rose-600' },
+  { id: 'postprod', nom: 'Post-Prod', ordre: 6, color: 'bg-amber-500 dark:bg-amber-600' },
+  { id: 'clotureretex', nom: 'Clôture', ordre: 7, color: 'bg-slate-500 dark:bg-slate-600' },
 ]
+
+const PHASE_ICONS = {
+  kickoff: (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <path d="M12 2v18m0 0l-6-6m6 6l6-6M3 12h18"/>
+    </svg>
+  ),
+  poc: (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+  ),
+  dev: (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+    </svg>
+  ),
+  uat: (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+  ),
+  golive: (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+    </svg>
+  ),
+  postprod: (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+    </svg>
+  ),
+  clotureretex: (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <path d="M11 3.055a9 9 0 1-9 9M20.59 13.41l-1.42-1.42M4.3 12.3L2.88 10.88m10.88 10.88l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+    </svg>
+  ),
+}
 
 const PHASE_TEMPLATES = {
   kickoff: {
@@ -391,14 +429,14 @@ function CopilForm({ initial, onSubmit, onCancel, saving }) {
                 key={phase.id}
                 type="button"
                 onClick={() => setSelectedPhase(selectedPhase === phase.id ? null : phase.id)}
-                className={`relative rounded-lg p-3 transition-all font-semibold text-white text-center group
+                className={`relative rounded-lg p-3 transition-all font-semibold text-white text-center group flex flex-col items-center gap-2
                   ${selectedPhase === phase.id
                     ? `${phase.color} shadow-lg ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-900 ring-gray-400`
                     : `${phase.color} opacity-75 hover:opacity-100`
                   }`}
               >
-                <div className="text-2xl font-bold leading-tight">{phase.label}</div>
-                <div className="text-[10px] font-semibold mt-0.5 leading-tight">{phase.nom}</div>
+                <div className="text-white">{PHASE_ICONS[phase.id]}</div>
+                <div className="text-[10px] font-semibold leading-tight">{phase.nom}</div>
               </button>
             ))}
           </div>
