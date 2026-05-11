@@ -7,13 +7,13 @@ import { createCopil, deleteCopil, getCopils, updateCopil } from '../api/copils'
 
 // ─── PHASES D'UN PROJET IT ─────────────────────────────────────────────────────
 const PROJECT_PHASES = [
-  { id: 'kickoff', nom: 'Kick-off', ordre: 1, emoji: '🚀' },
-  { id: 'poc', nom: 'POC', ordre: 2, emoji: '🧪' },
-  { id: 'dev', nom: 'Développement', ordre: 3, emoji: '⚙️' },
-  { id: 'uat', nom: 'Test & UAT', ordre: 4, emoji: '✅' },
-  { id: 'golive', nom: 'Go-live', ordre: 5, emoji: '🚁' },
-  { id: 'postprod', nom: 'Post-Prod', ordre: 6, emoji: '🔧' },
-  { id: 'clotureretex', nom: 'Clôture', ordre: 7, emoji: '🎯' },
+  { id: 'kickoff', nom: 'Kick-off', ordre: 1, color: 'bg-blue-500 dark:bg-blue-600', label: '01' },
+  { id: 'poc', nom: 'POC', ordre: 2, color: 'bg-cyan-500 dark:bg-cyan-600', label: '02' },
+  { id: 'dev', nom: 'Développement', ordre: 3, color: 'bg-emerald-500 dark:bg-emerald-600', label: '03' },
+  { id: 'uat', nom: 'Test & UAT', ordre: 4, color: 'bg-violet-500 dark:bg-violet-600', label: '04' },
+  { id: 'golive', nom: 'Go-live', ordre: 5, color: 'bg-rose-500 dark:bg-rose-600', label: '05' },
+  { id: 'postprod', nom: 'Post-Prod', ordre: 6, color: 'bg-amber-500 dark:bg-amber-600', label: '06' },
+  { id: 'clotureretex', nom: 'Clôture', ordre: 7, color: 'bg-slate-500 dark:bg-slate-600', label: '07' },
 ]
 
 const PHASE_TEMPLATES = {
@@ -380,31 +380,31 @@ function CopilForm({ initial, onSubmit, onCancel, saving }) {
       </div>
 
       {isCreate && (
-        <section className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-4 space-y-3">
+        <section className="rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 space-y-3">
           <div>
-            <p className="text-xs font-bold uppercase text-blue-700 dark:text-blue-300">🎯 Assistant - Sélectionnez une phase</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300">Phases du projet - Sélectionnez un canevas</p>
           </div>
 
-          <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+          <div className="grid grid-cols-4 md:grid-cols-7 gap-2">
             {PROJECT_PHASES.map((phase) => (
               <button
                 key={phase.id}
                 type="button"
                 onClick={() => setSelectedPhase(selectedPhase === phase.id ? null : phase.id)}
-                className={`py-2 px-2 rounded-lg border-2 text-center transition-all ${
-                  selectedPhase === phase.id
-                    ? 'border-blue-500 bg-blue-100 dark:bg-blue-900/40 shadow-md'
-                    : 'border-blue-300 dark:border-blue-700 hover:border-blue-400'
-                }`}
+                className={`relative rounded-lg p-3 transition-all font-semibold text-white text-center group
+                  ${selectedPhase === phase.id
+                    ? `${phase.color} shadow-lg ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-900 ring-gray-400`
+                    : `${phase.color} opacity-75 hover:opacity-100`
+                  }`}
               >
-                <div className="text-xl">{phase.emoji}</div>
-                <div className="text-xs font-semibold text-gray-800 dark:text-gray-100">{phase.nom}</div>
+                <div className="text-2xl font-bold leading-tight">{phase.label}</div>
+                <div className="text-[10px] font-semibold mt-0.5 leading-tight">{phase.nom}</div>
               </button>
             ))}
           </div>
 
           {selectedPhase && (
-            <div className="rounded-lg bg-white dark:bg-slate-700 border border-blue-300 dark:border-blue-700 p-3 space-y-2">
+            <div className="rounded-lg bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 p-3 space-y-2">
               {selectedPhase === 'kickoff' && (
                 <>
                   <input className={inp} value={phaseData.objectif} onChange={setPhaseDataF('objectif')} placeholder="Objectif du projet" />
@@ -422,9 +422,9 @@ function CopilForm({ initial, onSubmit, onCancel, saving }) {
               <button
                 type="button"
                 onClick={applyTemplate}
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition-colors"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded-lg transition-colors text-sm"
               >
-                ✨ Appliquer le canevas
+                Appliquer le canevas
               </button>
             </div>
           )}
