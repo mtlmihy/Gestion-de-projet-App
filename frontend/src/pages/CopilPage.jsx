@@ -5,6 +5,304 @@ import Modal from '../components/Modal'
 import { useProject } from '../context/ProjectContext'
 import { createCopil, deleteCopil, getCopils, updateCopil } from '../api/copils'
 
+// ─── PHASES D'UN PROJET IT ─────────────────────────────────────────────────────
+const PROJECT_PHASES = [
+  { id: 'kickoff', nom: 'Kick-off', ordre: 1, emoji: '🚀' },
+  { id: 'poc', nom: 'POC', ordre: 2, emoji: '🧪' },
+  { id: 'dev', nom: 'Développement', ordre: 3, emoji: '⚙️' },
+  { id: 'uat', nom: 'Test & UAT', ordre: 4, emoji: '✅' },
+  { id: 'golive', nom: 'Go-live', ordre: 5, emoji: '🚁' },
+  { id: 'postprod', nom: 'Post-Prod', ordre: 6, emoji: '🔧' },
+  { id: 'clotureretex', nom: 'Clôture', ordre: 7, emoji: '🎯' },
+]
+
+const PHASE_TEMPLATES = {
+  kickoff: {
+    notes: (data) => `KICK-OFF - LANCEMENT OFFICIEL
+
+1) CONTEXTE ET OBJECTIF
+- Objectif principal: ${data.objectif || 'À définir'}
+- Enjeux métier:
+- Vision produit:
+- Indicateurs de succès:
+
+2) PÉRIMÈTRE
+- Inclus: ${data.perimetre || 'À préciser'}
+- Hors périmètre:
+- Hypothèses de départ:
+- Contraintes techniques/métier:
+
+3) GOUVERNANCE ET ROLES (RACI)
+${data.roles || '- Sponsor / Executive Steering: [NOM]\n- Chef(fe) de projet: [NOM]\n- Referents métier: [NOMS]\n- Lead technique: [NOM]'}
+
+4) JALONS MAJEURS
+${data.jalons || '- Jalon 1: Cadrage - J+15\n- Jalon 2: Design - J+30\n- Jalon 3: Construction - J+60\n- Jalon 4: UAT - J+75\n- Jalon 5: Go-live - J+85'}
+
+5) PLAN 30 JOURS
+- S1: Cadrage détaillé et planning
+- S2: Validation architecture et design
+- S3: Lancement construction
+- S4: Premiers livrables + COPIL suivi
+
+6) RISQUES INITIAUX
+- Risque 1: [description] | Impact: [H/M/B] | Mitigation: [action]
+- Risque 2:`,
+    decisions: `DECISIONS DE KICK-OFF
+✓ Gouvernance validée (Sponsor, COPIL, fréquence)
+✓ Périmètre V1 validé et signé
+✓ Planning et jalons validés
+✓ Rôles RACI validés
+✓ Communication et escalade définies
+✓ Budget et ressources alloués`,
+    actions: `ACTIONS A LANCER
+- [CP] Finaliser planning détaillé - J+3
+- [Sponsor] Valider budget/périmètre - J+5
+- [Équipe] Mettre en place infrastructure - J+5
+- [Lead Tech] Présenter architecture - J+7
+- [CP] Diffuser RACI et ressources - J+7`,
+  },
+  poc: {
+    notes: (data) => `POINT POC - PROOF OF CONCEPT
+
+1) OBJECTIFS DU POC
+- Valider faisabilité technique de: ${data.objectif || 'À définir'}
+- Points de validation clés:
+- Critères d'acceptation POC:
+
+2) PERIMETRE DU POC
+- Inclus: ${data.perimetre || 'À préciser'}
+- Hors périmètre:
+- Environnement de test:
+
+3) RESULTATS TECHNIQUES
+- Composant/feature validé: [description + status]
+- Intégrations testées: [liste]
+- Performances mesurées: [chiffres]
+- Aspects non-fonctionnels: [sécurité, scalabilité, etc.]
+
+4) RISQUES TECHNIQUES IDENTIFIES
+- Risque technique 1: [description] | Impact: [solution]
+- Risque 2:
+
+5) DECISION: GO / NO-GO / GO AVEC CONDITIONS
+- Avis technique: [GO / CONDITIONNEL / NO-GO]
+- Conditions si applicables: [liste]`,
+    decisions: `DECISIONS POST-POC
+✓ Architecture POC approuvée
+✓ Stack technique validée
+✓ Risques techniques levés ou mitigations en place
+✓ DECISION FINALE: [GO / NO-GO / GO AVEC CONDITIONS]`,
+    actions: `ACTIONS POST-POC
+- [Lead Tech] Documenter POC et architecture cible - J+5
+- [Sponsor] Autoriser phase construction si GO - J+3
+- [Équipe] Préparer environnement dev - J+7`,
+  },
+  dev: {
+    notes: (data) => `POINT DE SUIVI DÉVELOPPEMENT
+
+1) AVANCEMENT GÉNÉRAL
+- % d'avancement global: [X%]
+- Itération/sprint: [N°]
+- Livrables cette semaine: [liste]
+
+2) LIVRABLES COMPLETES
+- Feature 1: [description + statut] ✓
+- Feature 2:
+- État du code: [master/stable]
+- Tests unitaires: [coverage %]
+
+3) EN COURS / BLOCAGES
+- Tâche 1: [% fait, blocages s'il y en a]
+- Tâche 2:
+- Dépendances externes:
+
+4) INDICATEURS QUALITÉ
+- Bugs critiques: [nombre]
+- Tests unitaires passants: [% / total]
+- Code coverage: [%]
+- Dépendances de sécurité: [OK / alertes]
+
+5) RISQUES ET BLOCAGES
+- Blocage 1: [description] | Impact: [X jours] | Mitigation: [action]`,
+    decisions: `DECISIONS DE SUIVI DEV
+✓ Livrables acceptés / à corriger
+✓ Qualité conforme / À améliorer
+✓ Planning maintenu / À réajuster
+✓ Autorisation de continuer dev`,
+    actions: `ACTIONS DE SUIVI DEV
+- [Lead Dev] Corriger bugs critiques - [date]
+- [Équipe] Augmenter coverage tests - [date]
+- [Sponsor] Approuver réajustement planning - [date]`,
+  },
+  uat: {
+    notes: (data) => `POINT DE SUIVI TEST ET UAT
+
+1) CAMPAGNES DE TEST
+- Test fonctionnel: [% avancement]
+- Test d'intégration: [% avancement]
+- Test utilisateur (UAT): [% avancement]
+- Test performance: [status]
+- Test sécurité: [status]
+
+2) RESULTATS GLOBAUX
+- Tests exécutés: [nombre]
+- Tests réussis: [%]
+- Défauts trouvés: [nombre]
+  - Critiques: [nombre]
+  - Majeurs: [nombre]
+  - Mineurs: [nombre]
+
+3) DEFAUTS CRITIQUES/MAJEURS
+- Défaut 1: [description] | Status: [ouvert/en cours/fermé]
+- Défaut 2:
+
+4) FEEDBACK UTILISATEURS
+- Points positifs:
+- Points d'amélioration:
+- Blocages pour les users:
+
+5) READINESS POUR GO-LIVE
+- État: [Go / Go conditionnel / Not ready]
+- Plan de retour arrière: [Défini/À définir]`,
+    decisions: `DECISIONS UAT
+✓ Campagnes de test: [Réussi / À continuer]
+✓ Défauts critiques: [Tous fermés / Acceptés]
+✓ Acceptation utilisateur: [Obtenue / Conditionnelle]
+✓ DECISION FINALE: [GO PROD / NON-GO]`,
+    actions: `ACTIONS DE SUIVI UAT
+- [QA Lead] Corriger défauts critiques - [date]
+- [Dev] Déployer corrections en test - [date]
+- [PO] Valider corrections - [date]`,
+  },
+  golive: {
+    notes: (data) => `POINT DE SUIVI GO-LIVE ET DEPLOYMENT
+
+1) STATUT DU DEPLOYMENT
+- Date/heure: ${data.dateGoLive || '[date/heure]'}
+- Status: [En cours / Réussi / Rollback]
+- Durée indisponibilité: [X minutes]
+
+2) CHECKLIST PRE-DEPLOYMENT
+- Backup données: ✓
+- Plan rollback: ✓
+- Support on-site: ✓
+- Monitoring activé: ✓
+- Tests smoke: [En attente/En cours/Réussi]
+
+3) INCIDENTS DURANT DEPLOYMENT
+- Incident 1: [description] | Sévérité: [C/M/B] | Status: [Résolu/En cours]
+- Incident 2:
+
+4) POST-DEPLOYMENT VALIDATION
+- Fonctionnalités critiques: [%]
+- Données intégrées: [oui/non]
+- Performance: [OK/À investiguer]
+- Accès utilisateurs: [oui/non]
+
+5) DECISION: GO LIVE REUSSI / ROLLBACK
+- Status final: [REUSSI / ROLLBACK]`,
+    decisions: `DECISIONS GO-LIVE
+✓ Deployment: [REUSSI / ROLLBACK EFFECTUE]
+✓ Systèmes: [OPERATIONNELS / DEGRADES]
+✓ Incidents critiques: [Aucun / Tous gérés]
+✓ Continuité: [Assurée / À restaurer]`,
+    actions: `ACTIONS POST GO-LIVE
+- [DevOps] Monitorer systèmes - 48h minimum
+- [Support] Traiter incidents users - Priorité critique
+- [Product] Communiquer stakeholders - Immédiat`,
+  },
+  postprod: {
+    notes: (data) => `POINT POST-PRODUCTION ET STABILISATION
+
+1) STATUS DE STABILISATION
+- Jours post-deployment: [J+X]
+- Uptime: [99.X%]
+- Incidents: [nombre]
+
+2) INCIDENTS TRAITES
+- Incident 1: [description] | Sévérité: [C/M/B] | Status: [Résolu]
+- Incident 2:
+
+3) INCIDENTS EN SUIVI
+- Incident critique: [description] | Depuis: [date] | ETA: [date]
+
+4) PERFORMANCES EN PRODUCTION
+- Temps réponse: [Xs]
+- Disponibilité: [99.X%]
+- Erreurs: [nombre]
+- Ressources: [OK / À optimiser]
+
+5) FEEDBACK UTILISATEURS
+- Adoption: [% actifs]
+- Satisfaction: [Score/10]
+- Points positifs:
+- Améliorations demandées:
+
+6) READINESS TRANSITION SUPPORT
+- Support IT formé: [oui/non]
+- Documentation: [oui/non]
+- Date transition: [date]`,
+    decisions: `DECISIONS POST-PROD
+✓ Solution stable pour support: [OUI / NON]
+✓ Incidents critiques résolus: [OUI / NON]
+✓ Performance acceptable: [OUI / À optimiser]
+✓ Satisfaction users: [Acceptable / À améliorer]
+✓ Transition support IT: [OUI / NON]`,
+    actions: `ACTIONS DE STABILISATION
+- [Support Prod] Monitoring intensif - J+14
+- [Dev] Hotfixes si critiques - On-demand
+- [Product] Collecter feedback users - Permanent`,
+  },
+  clotureretex: {
+    notes: (data) => `BILAN ET CLÔTURE DU PROJET
+
+1) ATTEINTE DES OBJECTIFS
+- Objectif 1: [Atteint / Partiellement / Non atteint]
+- Objectif 2:
+- Indicateurs de succès mesurés: [résultats]
+
+2) LIVRABLES ACCEPTES
+- Livrable 1: [description] ✓
+- Livrable 2:
+
+3) INDICATEURS PROJET
+- Délai: [À l'heure / Retard X jours / Avance]
+- Budget: [Respecté / Dépensé / Sous-utilisé X%]
+- Qualité: [Score / métrique]
+- Satisfaction users: [Score/10]
+
+4) LESSONS LEARNED - POINTS POSITIFS
+- Point positif 1: [description]
+- À reconduire:
+
+5) LESSONS LEARNED - POINTS D'AMÉLIORATION
+- Amélioration 1: [description + recommandation]
+- À éviter:
+
+6) RESSOURCES ET CONTINUITÉ
+- Support transition: [Oui/Non - date]
+- Maintenance: [Oui/Non - coûts]
+- Évolutions futures: [Oui/Non - liste]
+
+7) CLÔTURE ADMINISTRATIVE
+- Contrats honorés: [Oui/Non]
+- Docs archivées: [Oui/Non]`,
+    decisions: `DECISIONS FINALES DE CLÔTURE
+✓ Objectifs: [ATTEINTS / PARTIELS / NON ATTEINTS]
+✓ Livrables: [ACCEPTES / RESERVES]
+✓ Bilan financier: [APPROUVE]
+✓ Lessons learned: [CAPITALISEES]
+✓ PROJET CLOS
+✓ Prochaines étapes: [PLANIFIEES]`,
+    actions: `ACTIONS DE CLÔTURE
+- [CP] Rapport clôture / lessons learned - [date]
+- [PMO] Archiver documentation - [date]
+- [RH] Libérer ressources - [date]
+- [Finance] Clôturer budgets - [date]
+- [Sponsor] Approver clôture - [date]`,
+  },
+}
+
 function Notification({ msg, type }) {
   if (!msg) return null
   const bg = type === 'error' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-green-50 text-green-700 border-green-200'
@@ -22,96 +320,37 @@ function CopilForm({ initial, onSubmit, onCancel, saving }) {
     decisions: initial?.decisions ?? '',
     actions: initial?.actions ?? '',
   }))
-  const [showKickoffHelp, setShowKickoffHelp] = useState(false)
-  const [kickoff, setKickoff] = useState({
-    objectif: '',
-    perimetre: '',
-    jalons: '',
-    roles: '',
-    plan30j: '',
-  })
+  const [selectedPhase, setSelectedPhase] = useState(null)
+  const [phaseData, setPhaseData] = useState({ objectif: '', perimetre: '', roles: '', jalons: '', dateGoLive: '' })
 
   const setF = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
-  const setKickoffF = (key) => (e) => setKickoff((k) => ({ ...k, [key]: e.target.value }))
-
-  const buildDefaultTitle = (isoDate) => {
-    if (!isoDate) return 'Réunion COPIL'
-    const d = new Date(`${isoDate}T00:00:00`)
-    const fmt = Number.isNaN(d.getTime())
-      ? isoDate
-      : d.toLocaleDateString('fr-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
-    return `Réunion COPIL - ${fmt}`
-  }
+  const setPhaseDataF = (key) => (e) => setPhaseData((p) => ({ ...p, [key]: e.target.value }))
 
   const handleSubmit = (e) => {
     e.preventDefault()
     const normalized = {
       ...form,
-      titre: (form.titre ?? '').trim() || buildDefaultTitle(form.date_reunion),
+      titre: (form.titre ?? '').trim() || `Réunion COPIL - ${form.date_reunion || ''}`,
       notes: (form.notes ?? '').trim(),
     }
     onSubmit(normalized)
   }
 
-  const buildKickoffTemplate = () => {
-    const objectif = (kickoff.objectif || 'A definir').trim()
-    const perimetre = (kickoff.perimetre || 'A preciser').trim()
-    const jalons = (kickoff.jalons || 'Jalon 1: cadrage\nJalon 2: execution\nJalon 3: validation').trim()
-    const roles = (kickoff.roles || 'Sponsor: ...\nChef(fe) de projet: ...\nReferents metier: ...').trim()
-    const plan30j = (kickoff.plan30j || 'S1: finaliser le cadrage\nS2: valider le planning\nS3: lancer les travaux\nS4: COPIL de suivi').trim()
-
-    const notes = [
-      'KICK-OFF - CANEVAS',
-      '',
-      '1) CONTEXTE ET OBJECTIF',
-      `- Objectif principal: ${objectif}`,
-      '- Enjeux:',
-      '- Indicateurs de succes:',
-      '',
-      '2) PERIMETRE',
-      `- Inclus: ${perimetre}`,
-      '- Hors perimetre:',
-      '- Hypotheses de depart:',
-      '',
-      '3) GOUVERNANCE ET ROLES',
-      roles,
-      '',
-      '4) JALONS ET CALENDRIER',
-      jalons,
-      '',
-      '5) PLAN 30 JOURS',
-      plan30j,
-      '',
-      '6) RISQUES INITIAUX',
-      '- Risque #1 / impact / mitigation',
-      '- Risque #2 / impact / mitigation',
-    ].join('\n')
-
-    const decisions = [
-      'DECISIONS DE KICK-OFF',
-      '- Gouvernance validee (Sponsor, COPIL, rythmes)',
-      '- Perimetre V1 valide',
-      '- Jalons et planning V1 valides',
-      '- Modalites de communication validees',
-    ].join('\n')
-
-    const actions = [
-      'ACTIONS A LANCER',
-      '- [CP] Finaliser planning detaille - Echeance: J+3',
-      '- [Sponsor] Valider arbitres budget/perimetre - Echeance: J+5',
-      '- [Equipe] Ouvrir les chantiers prioritaires - Echeance: J+7',
-      '- [CP] Mettre a jour RACI et diffusion - Echeance: J+7',
-      '- [COPIL] Programmer le prochain point de suivi - Echeance: J+10',
-    ].join('\n')
-
+  const applyTemplate = () => {
+    if (!selectedPhase) return
+    const template = PHASE_TEMPLATES[selectedPhase]
+    if (!template) return
+    const phaseName = PROJECT_PHASES.find((p) => p.id === selectedPhase)?.nom || 'Réunion'
     setForm((prev) => ({
       ...prev,
-      titre: (prev.titre || '').trim() || `Kick-off projet - ${prev.date_reunion || ''}`,
-      notes,
-      decisions,
-      actions,
+      titre: (prev.titre || '').trim() || `${phaseName} - ${prev.date_reunion || ''}`,
+      notes: template.notes(phaseData),
+      decisions: template.decisions,
+      actions: template.actions,
     }))
+    setSelectedPhase(null)
   }
+
 
   const inp = 'w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-base sm:text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400'
   const lbl = 'block text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-1'
@@ -129,12 +368,10 @@ function CopilForm({ initial, onSubmit, onCancel, saving }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div>
-          <label className={lbl}>Titre (optionnel)</label>
-          <input className={inp} maxLength={200} value={form.titre} onChange={setF('titre')} placeholder="COPIL #12 - Suivi mensuel" />
-          <p className="mt-1 text-[11px] text-gray-400 dark:text-slate-500">Si vide, un titre sera généré automatiquement à partir de la date.</p>
-        </div>
+      <div>
+        <label className={lbl}>Titre (optionnel)</label>
+        <input className={inp} maxLength={200} value={form.titre} onChange={setF('titre')} placeholder="COPIL #12 - Suivi mensuel" />
+        <p className="mt-1 text-[11px] text-gray-400 dark:text-slate-500">Si vide, généré automatiquement.</p>
       </div>
 
       <div>
@@ -143,58 +380,52 @@ function CopilForm({ initial, onSubmit, onCancel, saving }) {
       </div>
 
       {isCreate && (
-        <section className="rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50/70 dark:bg-slate-900/30 p-3">
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">Aide optionnelle</p>
-              <p className="text-sm font-medium text-gray-700 dark:text-slate-200">Assistant Kick-off</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowKickoffHelp((v) => !v)}
-              className="text-xs px-2.5 py-1.5 rounded-md border border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 transition-colors"
-            >
-              {showKickoffHelp ? 'Masquer' : 'Activer'}
-            </button>
+        <section className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-4 space-y-3">
+          <div>
+            <p className="text-xs font-bold uppercase text-blue-700 dark:text-blue-300">🎯 Assistant - Sélectionnez une phase</p>
           </div>
 
-          {showKickoffHelp && (
-            <div className="mt-3 space-y-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className={lbl}>Objectif du projet</label>
-                  <input className={inp} value={kickoff.objectif} onChange={setKickoffF('objectif')} placeholder="Ex: Deployer un process de suivi unifie" />
-                </div>
-                <div>
-                  <label className={lbl}>Perimetre</label>
-                  <input className={inp} value={kickoff.perimetre} onChange={setKickoffF('perimetre')} placeholder="Ex: PMO + Equipe delivery" />
-                </div>
-              </div>
+          <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+            {PROJECT_PHASES.map((phase) => (
+              <button
+                key={phase.id}
+                type="button"
+                onClick={() => setSelectedPhase(selectedPhase === phase.id ? null : phase.id)}
+                className={`py-2 px-2 rounded-lg border-2 text-center transition-all ${
+                  selectedPhase === phase.id
+                    ? 'border-blue-500 bg-blue-100 dark:bg-blue-900/40 shadow-md'
+                    : 'border-blue-300 dark:border-blue-700 hover:border-blue-400'
+                }`}
+              >
+                <div className="text-xl">{phase.emoji}</div>
+                <div className="text-xs font-semibold text-gray-800 dark:text-gray-100">{phase.nom}</div>
+              </button>
+            ))}
+          </div>
 
-              <div>
-                <label className={lbl}>Jalons principaux</label>
-                <textarea className={`${inp} min-h-16`} value={kickoff.jalons} onChange={setKickoffF('jalons')} placeholder="Un jalon par ligne" />
-              </div>
+          {selectedPhase && (
+            <div className="rounded-lg bg-white dark:bg-slate-700 border border-blue-300 dark:border-blue-700 p-3 space-y-2">
+              {selectedPhase === 'kickoff' && (
+                <>
+                  <input className={inp} value={phaseData.objectif} onChange={setPhaseDataF('objectif')} placeholder="Objectif du projet" />
+                  <input className={inp} value={phaseData.perimetre} onChange={setPhaseDataF('perimetre')} placeholder="Périmètre" />
+                  <textarea className={`${inp} min-h-12`} value={phaseData.jalons} onChange={setPhaseDataF('jalons')} placeholder="Jalons (un par ligne)" />
+                </>
+              )}
+              {selectedPhase === 'poc' && (
+                <input className={inp} value={phaseData.objectif} onChange={setPhaseDataF('objectif')} placeholder="Objectif du POC" />
+              )}
+              {selectedPhase === 'golive' && (
+                <input className={inp} type="datetime-local" value={phaseData.dateGoLive} onChange={setPhaseDataF('dateGoLive')} placeholder="Date/heure go-live" />
+              )}
 
-              <div>
-                <label className={lbl}>Roles cles (RACI simplifie)</label>
-                <textarea className={`${inp} min-h-16`} value={kickoff.roles} onChange={setKickoffF('roles')} placeholder="Ex: Sponsor, CP, Referent metier..." />
-              </div>
-
-              <div>
-                <label className={lbl}>Plan d'action 30 jours</label>
-                <textarea className={`${inp} min-h-16`} value={kickoff.plan30j} onChange={setKickoffF('plan30j')} placeholder="Une action par ligne" />
-              </div>
-
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={buildKickoffTemplate}
-                  className="bg-blue-50 hover:bg-blue-100 dark:bg-blue-500/15 dark:hover:bg-blue-500/25 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
-                >
-                  Generer le canevas kick-off
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={applyTemplate}
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition-colors"
+              >
+                ✨ Appliquer le canevas
+              </button>
             </div>
           )}
         </section>
