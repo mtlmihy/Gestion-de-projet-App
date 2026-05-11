@@ -398,6 +398,7 @@ function CopilForm({ initial, onSubmit, onCancel, saving, projet, projectContext
     actions: initial?.actions ?? '',
   }))
   const [selectedPhase, setSelectedPhase] = useState(null)
+  const [showAdvancedTemplate, setShowAdvancedTemplate] = useState(false)
   const [phaseData, setPhaseData] = useState(() => ({
     objectif: autoData.objectif || '',
     perimetre: autoData.perimetre || '',
@@ -494,8 +495,8 @@ function CopilForm({ initial, onSubmit, onCancel, saving, projet, projectContext
       {isCreate && (
         <section className="rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 space-y-3">
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300">Phases du projet - Sélectionnez un canevas</p>
-            <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-1">Les champs sont préremplis automatiquement avec les données Projet, CDC, Équipe, Tâches et Risques.</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300">Assistant COPIL - Choisissez une phase</p>
+            <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-1">Préremplissage automatique pour gagner du temps.</p>
           </div>
 
           <div className="grid grid-cols-4 md:grid-cols-7 gap-2">
@@ -516,28 +517,40 @@ function CopilForm({ initial, onSubmit, onCancel, saving, projet, projectContext
             ))}
           </div>
 
-          <button
-            type="button"
-            onClick={refreshAutoData}
-            className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-          >
-            Réinjecter les données du projet
-          </button>
-
           {selectedPhase && (
             <div className="rounded-lg bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 p-3 space-y-2">
-              {selectedPhase === 'kickoff' && (
+              <button
+                type="button"
+                onClick={() => setShowAdvancedTemplate((v) => !v)}
+                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              >
+                {showAdvancedTemplate ? 'Masquer les options avancées' : 'Afficher les options avancées'}
+              </button>
+
+              {showAdvancedTemplate && (
                 <>
-                  <input className={inp} value={phaseData.objectif} onChange={setPhaseDataF('objectif')} placeholder="Objectif du projet" />
-                  <input className={inp} value={phaseData.perimetre} onChange={setPhaseDataF('perimetre')} placeholder="Périmètre" />
-                  <textarea className={`${inp} min-h-12`} value={phaseData.jalons} onChange={setPhaseDataF('jalons')} placeholder="Jalons (un par ligne)" />
+                  <button
+                    type="button"
+                    onClick={refreshAutoData}
+                    className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    Réinjecter les données projet
+                  </button>
+
+                  {selectedPhase === 'kickoff' && (
+                    <>
+                      <input className={inp} value={phaseData.objectif} onChange={setPhaseDataF('objectif')} placeholder="Objectif du projet" />
+                      <input className={inp} value={phaseData.perimetre} onChange={setPhaseDataF('perimetre')} placeholder="Périmètre" />
+                      <textarea className={`${inp} min-h-12`} value={phaseData.jalons} onChange={setPhaseDataF('jalons')} placeholder="Jalons (un par ligne)" />
+                    </>
+                  )}
+                  {selectedPhase === 'poc' && (
+                    <input className={inp} value={phaseData.objectif} onChange={setPhaseDataF('objectif')} placeholder="Objectif du POC" />
+                  )}
+                  {selectedPhase === 'golive' && (
+                    <input className={inp} type="datetime-local" value={phaseData.dateGoLive} onChange={setPhaseDataF('dateGoLive')} placeholder="Date/heure go-live" />
+                  )}
                 </>
-              )}
-              {selectedPhase === 'poc' && (
-                <input className={inp} value={phaseData.objectif} onChange={setPhaseDataF('objectif')} placeholder="Objectif du POC" />
-              )}
-              {selectedPhase === 'golive' && (
-                <input className={inp} type="datetime-local" value={phaseData.dateGoLive} onChange={setPhaseDataF('dateGoLive')} placeholder="Date/heure go-live" />
               )}
 
               <button
@@ -545,7 +558,7 @@ function CopilForm({ initial, onSubmit, onCancel, saving, projet, projectContext
                 onClick={applyTemplate}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded-lg transition-colors text-sm"
               >
-                Appliquer le canevas
+                Préremplir la réunion
               </button>
             </div>
           )}
@@ -578,6 +591,7 @@ function CopilForm({ initial, onSubmit, onCancel, saving, projet, projectContext
 export default function CopilPage() {
   const { projet, estLecteur } = useProject()
   const [items, setItems] = useState([])
+  const [expandedCopilId, setExpandedCopilId] = useState(null)
   const [projectContext, setProjectContext] = useState({ cdc: {}, equipe: [], taches: [], risques: [] })
   const [notesByCopil, setNotesByCopil] = useState({})
   const [noteDraftByCopil, setNoteDraftByCopil] = useState({})
@@ -612,17 +626,6 @@ export default function CopilPage() {
         taches: tachesRes.data || [],
         risques: risquesRes.data || [],
       })
-      const notesEntries = await Promise.all(
-        copilItems.map(async (it) => {
-          try {
-            const { data } = await getCopilNotes(it.id)
-            return [it.id, data || []]
-          } catch {
-            return [it.id, []]
-          }
-        }),
-      )
-      setNotesByCopil(Object.fromEntries(notesEntries))
     } catch {
       notify('Erreur lors du chargement des réunions COPIL.', 'error')
     } finally {
@@ -697,6 +700,29 @@ export default function CopilPage() {
     }
   }
 
+  const loadNotesForCopil = async (copilId) => {
+    try {
+      const { data } = await getCopilNotes(copilId)
+      setNotesByCopil((prev) => ({ ...prev, [copilId]: data || [] }))
+    } catch {
+      notify('Erreur lors du chargement des notes.', 'error')
+    }
+  }
+
+  const toggleDetails = async (copilId) => {
+    const next = expandedCopilId === copilId ? null : copilId
+    setExpandedCopilId(next)
+    if (next && !notesByCopil[copilId]) {
+      await loadNotesForCopil(copilId)
+    }
+  }
+
+  const preview = (text) => {
+    const val = (text || '').trim()
+    if (!val) return '—'
+    return val.length > 90 ? `${val.slice(0, 90)}...` : val
+  }
+
   const handleDeleteNote = async (copilId, noteId) => {
     setSavingNote(true)
     try {
@@ -746,15 +772,35 @@ export default function CopilPage() {
                   <h3 className="text-base font-semibold text-gray-900 dark:text-slate-100">{it.titre}</h3>
                   {it.participants && <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Participants : {it.participants}</p>}
                 </div>
-                {!estLecteur && (
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => setEditItem(it)} className="text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-1 rounded-lg hover:bg-blue-50 transition-colors">Modifier</button>
-                    <button onClick={() => setDeleteItem(it)} className="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-1 rounded-lg hover:bg-red-50 transition-colors">Supprimer</button>
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  <button onClick={() => toggleDetails(it.id)} className="text-xs text-gray-600 hover:text-gray-800 font-medium px-2 py-1 rounded-lg hover:bg-gray-50 transition-colors">{expandedCopilId === it.id ? 'Fermer' : 'Ouvrir'}</button>
+                  {!estLecteur && (
+                    <>
+                      <button onClick={() => setEditItem(it)} className="text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-1 rounded-lg hover:bg-blue-50 transition-colors">Modifier</button>
+                      <button onClick={() => setDeleteItem(it)} className="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-1 rounded-lg hover:bg-red-50 transition-colors">Supprimer</button>
+                    </>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                <section className="rounded-lg border border-gray-100 dark:border-slate-700 p-3 min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-1">Synthèse</p>
+                  <p className="text-gray-700 dark:text-slate-300 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{preview(it.notes)}</p>
+                </section>
+                <section className="rounded-lg border border-gray-100 dark:border-slate-700 p-3 min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-1">Décisions</p>
+                  <p className="text-gray-700 dark:text-slate-300 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{preview(it.decisions)}</p>
+                </section>
+                <section className="rounded-lg border border-gray-100 dark:border-slate-700 p-3 min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-1">Actions</p>
+                  <p className="text-gray-700 dark:text-slate-300 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{preview(it.actions)}</p>
+                </section>
+              </div>
+
+              {expandedCopilId === it.id && (
+                <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm mt-3">
                 <section className="rounded-lg border border-gray-100 dark:border-slate-700 p-3 min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-1">Notes</p>
                   <p className="text-gray-700 dark:text-slate-300 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{it.notes || '—'}</p>
@@ -817,6 +863,8 @@ export default function CopilPage() {
                   </div>
                 )}
               </section>
+                </>
+              )}
             </div>
           ))}
         </div>
