@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { RocketLaunch, Lightbulb, Code, CheckCircle, FlashOn, Lock, GpsFixed } from '@mui/icons-material'
 
 import ConfirmDialog from '../components/ConfirmDialog'
 import Modal from '../components/Modal'
@@ -17,41 +18,13 @@ const PROJECT_PHASES = [
 ]
 
 const PHASE_ICONS = {
-  kickoff: (
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <path d="M12 2v18m0 0l-6-6m6 6l6-6M3 12h18"/>
-    </svg>
-  ),
-  poc: (
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-    </svg>
-  ),
-  dev: (
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
-    </svg>
-  ),
-  uat: (
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-    </svg>
-  ),
-  golive: (
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
-    </svg>
-  ),
-  postprod: (
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-    </svg>
-  ),
-  clotureretex: (
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <path d="M11 3.055a9 9 0 1-9 9M20.59 13.41l-1.42-1.42M4.3 12.3L2.88 10.88m10.88 10.88l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
-    </svg>
-  ),
+  kickoff: <RocketLaunch sx={{ fontSize: 32, color: 'white' }} />,
+  poc: <Lightbulb sx={{ fontSize: 32, color: 'white' }} />,
+  dev: <Code sx={{ fontSize: 32, color: 'white' }} />,
+  uat: <CheckCircle sx={{ fontSize: 32, color: 'white' }} />,
+  golive: <FlashOn sx={{ fontSize: 32, color: 'white' }} />,
+  postprod: <Lock sx={{ fontSize: 32, color: 'white' }} />,
+  clotureretex: <GpsFixed sx={{ fontSize: 32, color: 'white' }} />,
 }
 
 const PHASE_TEMPLATES = {
@@ -435,7 +408,7 @@ function CopilForm({ initial, onSubmit, onCancel, saving }) {
                     : `${phase.color} opacity-75 hover:opacity-100`
                   }`}
               >
-                <div className="text-white">{PHASE_ICONS[phase.id]}</div>
+                {PHASE_ICONS[phase.id]}
                 <div className="text-[10px] font-semibold leading-tight">{phase.nom}</div>
               </button>
             ))}
