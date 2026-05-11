@@ -4,7 +4,19 @@ import { RocketLaunch, Lightbulb, Code, CheckCircle, FlashOn, Lock, GpsFixed } f
 import ConfirmDialog from '../components/ConfirmDialog'
 import Modal from '../components/Modal'
 import { useProject } from '../context/ProjectContext'
-import { createCopil, deleteCopil, getCopils, updateCopil } from '../api/copils'
+import {
+  createCopil,
+  createCopilNote,
+  deleteCopil,
+  deleteCopilNote,
+  getCopilNotes,
+  getCopils,
+  updateCopil,
+} from '../api/copils'
+import { getCdc } from '../api/cdc'
+import { getEquipe } from '../api/equipe'
+import { getRisques } from '../api/risques'
+import { getTaches } from '../api/taches'
 
 // ─── PHASES D'UN PROJET IT ─────────────────────────────────────────────────────
 const PROJECT_PHASES = [
@@ -18,13 +30,66 @@ const PROJECT_PHASES = [
 ]
 
 const PHASE_ICONS = {
-  kickoff: <RocketLaunch sx={{ fontSize: 32, color: 'white' }} />,
-  poc: <Lightbulb sx={{ fontSize: 32, color: 'white' }} />,
-  dev: <Code sx={{ fontSize: 32, color: 'white' }} />,
-  uat: <CheckCircle sx={{ fontSize: 32, color: 'white' }} />,
-  golive: <FlashOn sx={{ fontSize: 32, color: 'white' }} />,
-  postprod: <Lock sx={{ fontSize: 32, color: 'white' }} />,
-  clotureretex: <GpsFixed sx={{ fontSize: 32, color: 'white' }} />,
+  kickoff: <RocketLaunch sx={{ fontSize: 32 }} />,
+  poc: <Lightbulb sx={{ fontSize: 32 }} />,
+  dev: <Code sx={{ fontSize: 32 }} />,
+  uat: <CheckCircle sx={{ fontSize: 32 }} />,
+  golive: <FlashOn sx={{ fontSize: 32 }} />,
+  postprod: <Lock sx={{ fontSize: 32 }} />,
+  clotureretex: <GpsFixed sx={{ fontSize: 32 }} />,
+}
+
+function parseCdcContent(data) {
+  try {
+    const raw = typeof data?.contenu === 'string' ? JSON.parse(data.contenu) : (data?.contenu ?? {})
+    return raw && typeof raw === 'object' ? raw : {}
+  } catch {
+    return {}
+  }
+}
+
+function normalizeJalons(cdc) {
+  const rows = Array.isArray(cdc?.jalons) ? cdc.jalons : []
+  return rows
+    .map((j) => {
+      if (Array.isArray(j)) return { nom: (j[0] || '').trim(), date: (j[1] || '').trim(), detail: (j[2] || '').trim() }
+      return { nom: (j?.nom || '').trim(), date: (j?.date || '').trim(), detail: (j?.description || '').trim() }
+    })
+    .filter((j) => j.nom || j.date || j.detail)
+}
+
+function buildAutoPhaseData({ projet, cdc, equipe, taches, risques }) {
+  const jalons = normalizeJalons(cdc)
+  const jalonsText = jalons.slice(0, 5).map((j) => `- ${j.nom || 'Jalon'}${j.date ? ` - ${j.date}` : ''}`).join('\n')
+  const managers = [...new Set((equipe || []).flatMap((m) => (m.manager || '').split(';').map((x) => x.trim()).filter(Boolean)))].slice(0, 3)
+  const topMembers = (equipe || []).slice(0, 6).map((m) => m.collaborateur).filter(Boolean)
+  const roles = [
+    cdc?.sponsor ? `- Sponsor / Executive Steering: ${cdc.sponsor}` : '- Sponsor / Executive Steering: [NOM]',
+    projet?.chef_projet ? `- Chef(fe) de projet: ${projet.chef_projet}` : '- Chef(fe) de projet: [NOM]',
+    managers.length ? `- Referents métier: ${managers.join(', ')}` : '- Referents métier: [NOMS]',
+    '- Lead technique: [NOM]',
+  ].join('\n')
+
+  const maybeGoLive = jalons.find((j) => /go\s*-?\s*live|mise en prod|production/i.test(j.nom || ''))
+  const dateGoLive = maybeGoLive?.date ? `${maybeGoLive.date}T09:00` : ''
+  const objectif = (cdc?.objectifs || projet?.description || '').trim()
+  const perimetre = (cdc?.perimetre || '').trim()
+  const participants = topMembers.join(', ')
+  const risquesOuverts = (risques || []).filter((r) => r.statut !== 'Fermé').slice(0, 3)
+  const risquesText = risquesOuverts.map((r) => `- ${r.identifiant || 'Risque'} | ${r.responsable || 'N/A'} | ${r.statut || 'Ouvert'}`).join('\n')
+  const tachesCritiques = (taches || []).filter((t) => t.importance === 'Critique' || (t.avancement || 0) < 100).slice(0, 3)
+  const tachesText = tachesCritiques.map((t) => `- ${t.nom || 'Tâche'} | ${t.assigne || 'Non assigné'} | ${t.avancement || 0}%`).join('\n')
+
+  return {
+    objectif,
+    perimetre,
+    roles,
+    jalons: jalonsText,
+    dateGoLive,
+    participants,
+    risquesText,
+    tachesText,
+  }
 }
 
 const PHASE_TEMPLATES = {
@@ -320,19 +385,28 @@ function Notification({ msg, type }) {
   return <div className={`mb-4 px-4 py-2.5 rounded-lg border text-sm font-medium ${bg}`}>{msg}</div>
 }
 
-function CopilForm({ initial, onSubmit, onCancel, saving }) {
+function CopilForm({ initial, onSubmit, onCancel, saving, projet, projectContext }) {
   const isCreate = !initial
+  const autoData = buildAutoPhaseData({ projet, ...projectContext })
   const [form, setForm] = useState(() => ({
     date_reunion: initial?.date_reunion ?? new Date().toISOString().slice(0, 10),
     heure_reunion: initial?.heure_reunion ?? '',
     titre: initial?.titre ?? '',
-    participants: initial?.participants ?? '',
+    participants: initial?.participants ?? (isCreate ? autoData.participants : ''),
     notes: initial?.notes ?? '',
     decisions: initial?.decisions ?? '',
     actions: initial?.actions ?? '',
   }))
   const [selectedPhase, setSelectedPhase] = useState(null)
-  const [phaseData, setPhaseData] = useState({ objectif: '', perimetre: '', roles: '', jalons: '', dateGoLive: '' })
+  const [phaseData, setPhaseData] = useState(() => ({
+    objectif: autoData.objectif || '',
+    perimetre: autoData.perimetre || '',
+    roles: autoData.roles || '',
+    jalons: autoData.jalons || '',
+    dateGoLive: autoData.dateGoLive || '',
+    risquesText: autoData.risquesText || '',
+    tachesText: autoData.tachesText || '',
+  }))
 
   const setF = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
   const setPhaseDataF = (key) => (e) => setPhaseData((p) => ({ ...p, [key]: e.target.value }))
@@ -352,14 +426,41 @@ function CopilForm({ initial, onSubmit, onCancel, saving }) {
     const template = PHASE_TEMPLATES[selectedPhase]
     if (!template) return
     const phaseName = PROJECT_PHASES.find((p) => p.id === selectedPhase)?.nom || 'Réunion'
+    const mergedData = {
+      ...autoData,
+      ...phaseData,
+      objectif: (phaseData.objectif || autoData.objectif || '').trim(),
+      perimetre: (phaseData.perimetre || autoData.perimetre || '').trim(),
+      roles: (phaseData.roles || autoData.roles || '').trim(),
+      jalons: (phaseData.jalons || autoData.jalons || '').trim(),
+      dateGoLive: (phaseData.dateGoLive || autoData.dateGoLive || '').trim(),
+    }
     setForm((prev) => ({
       ...prev,
       titre: (prev.titre || '').trim() || `${phaseName} - ${prev.date_reunion || ''}`,
-      notes: template.notes(phaseData),
+      participants: (prev.participants || '').trim() || autoData.participants || '',
+      notes: template.notes(mergedData),
       decisions: template.decisions,
       actions: template.actions,
     }))
     setSelectedPhase(null)
+  }
+
+  const refreshAutoData = () => {
+    setPhaseData((prev) => ({
+      ...prev,
+      objectif: prev.objectif || autoData.objectif || '',
+      perimetre: prev.perimetre || autoData.perimetre || '',
+      roles: prev.roles || autoData.roles || '',
+      jalons: prev.jalons || autoData.jalons || '',
+      dateGoLive: prev.dateGoLive || autoData.dateGoLive || '',
+      risquesText: prev.risquesText || autoData.risquesText || '',
+      tachesText: prev.tachesText || autoData.tachesText || '',
+    }))
+    setForm((prev) => ({
+      ...prev,
+      participants: prev.participants || autoData.participants || '',
+    }))
   }
 
 
@@ -394,6 +495,7 @@ function CopilForm({ initial, onSubmit, onCancel, saving }) {
         <section className="rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 space-y-3">
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300">Phases du projet - Sélectionnez un canevas</p>
+            <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-1">Les champs sont préremplis automatiquement avec les données Projet, CDC, Équipe, Tâches et Risques.</p>
           </div>
 
           <div className="grid grid-cols-4 md:grid-cols-7 gap-2">
@@ -402,7 +504,7 @@ function CopilForm({ initial, onSubmit, onCancel, saving }) {
                 key={phase.id}
                 type="button"
                 onClick={() => setSelectedPhase(selectedPhase === phase.id ? null : phase.id)}
-                className={`relative rounded-lg p-3 transition-all font-semibold text-white text-center group flex flex-col items-center gap-2
+                className={`relative rounded-lg p-3 transition-all font-semibold text-slate-900 dark:text-slate-100 text-center group flex flex-col items-center gap-2
                   ${selectedPhase === phase.id
                     ? `${phase.color} shadow-lg ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-900 ring-gray-400`
                     : `${phase.color} opacity-75 hover:opacity-100`
@@ -413,6 +515,14 @@ function CopilForm({ initial, onSubmit, onCancel, saving }) {
               </button>
             ))}
           </div>
+
+          <button
+            type="button"
+            onClick={refreshAutoData}
+            className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+          >
+            Réinjecter les données du projet
+          </button>
 
           {selectedPhase && (
             <div className="rounded-lg bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 p-3 space-y-2">
@@ -468,8 +578,12 @@ function CopilForm({ initial, onSubmit, onCancel, saving }) {
 export default function CopilPage() {
   const { projet, estLecteur } = useProject()
   const [items, setItems] = useState([])
+  const [projectContext, setProjectContext] = useState({ cdc: {}, equipe: [], taches: [], risques: [] })
+  const [notesByCopil, setNotesByCopil] = useState({})
+  const [noteDraftByCopil, setNoteDraftByCopil] = useState({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [savingNote, setSavingNote] = useState(false)
   const [notif, setNotif] = useState({ msg: '', type: 'ok' })
   const [addOpen, setAddOpen] = useState(false)
   const [editItem, setEditItem] = useState(null)
@@ -483,8 +597,32 @@ export default function CopilPage() {
   const load = async () => {
     setLoading(true)
     try {
-      const { data } = await getCopils(projet.id)
-      setItems(data)
+      const [copilsRes, cdcRes, equipeRes, tachesRes, risquesRes] = await Promise.all([
+        getCopils(projet.id),
+        getCdc(projet.id).catch(() => ({ data: {} })),
+        getEquipe(projet.id).catch(() => ({ data: [] })),
+        getTaches(projet.id).catch(() => ({ data: [] })),
+        getRisques(projet.id).catch(() => ({ data: [] })),
+      ])
+      const copilItems = copilsRes.data || []
+      setItems(copilItems)
+      setProjectContext({
+        cdc: parseCdcContent(cdcRes.data),
+        equipe: equipeRes.data || [],
+        taches: tachesRes.data || [],
+        risques: risquesRes.data || [],
+      })
+      const notesEntries = await Promise.all(
+        copilItems.map(async (it) => {
+          try {
+            const { data } = await getCopilNotes(it.id)
+            return [it.id, data || []]
+          } catch {
+            return [it.id, []]
+          }
+        }),
+      )
+      setNotesByCopil(Object.fromEntries(notesEntries))
     } catch {
       notify('Erreur lors du chargement des réunions COPIL.', 'error')
     } finally {
@@ -495,6 +633,7 @@ export default function CopilPage() {
   useEffect(() => { load() }, [projet.id])
 
   const fmtDate = (iso) => new Date(iso).toLocaleDateString('fr-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  const fmtDateTimeTs = (iso) => new Date(iso).toLocaleString('fr-CH', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
   const fmtDateTime = (item) => {
     const date = fmtDate(item.date_reunion)
     if (!item.heure_reunion) return `${date} · --:--`
@@ -540,6 +679,33 @@ export default function CopilPage() {
       notify('Erreur lors de la suppression.', 'error')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleAddNote = async (copilId) => {
+    const contenu = (noteDraftByCopil[copilId] || '').trim()
+    if (!contenu) return
+    setSavingNote(true)
+    try {
+      const { data } = await createCopilNote(copilId, { contenu })
+      setNotesByCopil((prev) => ({ ...prev, [copilId]: [data, ...(prev[copilId] || [])] }))
+      setNoteDraftByCopil((prev) => ({ ...prev, [copilId]: '' }))
+    } catch {
+      notify('Erreur lors de l\'ajout de la note.', 'error')
+    } finally {
+      setSavingNote(false)
+    }
+  }
+
+  const handleDeleteNote = async (copilId, noteId) => {
+    setSavingNote(true)
+    try {
+      await deleteCopilNote(noteId)
+      setNotesByCopil((prev) => ({ ...prev, [copilId]: (prev[copilId] || []).filter((n) => n.id !== noteId) }))
+    } catch {
+      notify('Erreur lors de la suppression de la note.', 'error')
+    } finally {
+      setSavingNote(false)
     }
   }
 
@@ -602,6 +768,55 @@ export default function CopilPage() {
                   <p className="text-gray-700 dark:text-slate-300 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{it.actions || '—'}</p>
                 </section>
               </div>
+
+              <section className="mt-3 rounded-lg border border-gray-100 dark:border-slate-700 p-3 min-w-0">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500">Journal de notes</p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500">{(notesByCopil[it.id] || []).length} note(s)</p>
+                </div>
+
+                {!estLecteur && (
+                  <div className="flex flex-col sm:flex-row gap-2 mb-3">
+                    <textarea
+                      className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400 min-h-16"
+                      value={noteDraftByCopil[it.id] || ''}
+                      onChange={(e) => setNoteDraftByCopil((prev) => ({ ...prev, [it.id]: e.target.value }))}
+                      placeholder="Ajouter une note rapide de réunion..."
+                    />
+                    <button
+                      type="button"
+                      disabled={savingNote}
+                      onClick={() => handleAddNote(it.id)}
+                      className="shrink-0 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white rounded-lg px-3 py-2 text-sm font-semibold transition-colors"
+                    >
+                      Ajouter
+                    </button>
+                  </div>
+                )}
+
+                {(notesByCopil[it.id] || []).length === 0 ? (
+                  <p className="text-sm text-gray-500 dark:text-slate-400">Aucune note pour cette réunion.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {(notesByCopil[it.id] || []).map((note) => (
+                      <div key={note.id} className="rounded-md border border-gray-200 dark:border-slate-700 p-2">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <p className="text-xs text-gray-400 dark:text-slate-500">{fmtDateTimeTs(note.created_at)}</p>
+                          {!estLecteur && (
+                            <button
+                              onClick={() => handleDeleteNote(it.id, note.id)}
+                              className="text-xs text-red-500 hover:text-red-700"
+                            >
+                              Supprimer
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-700 dark:text-slate-300 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{note.contenu}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
             </div>
           ))}
         </div>
@@ -609,13 +824,27 @@ export default function CopilPage() {
 
       {addOpen && (
         <Modal open={addOpen} title="Nouvelle réunion COPIL" onClose={() => setAddOpen(false)}>
-          <CopilForm initial={null} onSubmit={handleAdd} onCancel={() => setAddOpen(false)} saving={saving} />
+          <CopilForm
+            initial={null}
+            onSubmit={handleAdd}
+            onCancel={() => setAddOpen(false)}
+            saving={saving}
+            projet={projet}
+            projectContext={projectContext}
+          />
         </Modal>
       )}
 
       {editItem && (
         <Modal open={!!editItem} title="Modifier la réunion COPIL" onClose={() => setEditItem(null)}>
-          <CopilForm initial={editItem} onSubmit={handleEdit} onCancel={() => setEditItem(null)} saving={saving} />
+          <CopilForm
+            initial={editItem}
+            onSubmit={handleEdit}
+            onCancel={() => setEditItem(null)}
+            saving={saving}
+            projet={projet}
+            projectContext={projectContext}
+          />
         </Modal>
       )}
 

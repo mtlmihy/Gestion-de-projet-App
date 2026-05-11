@@ -34,3 +34,22 @@ class CopilRead(BaseModel):
     derniere_maj: datetime
 
     model_config = {"from_attributes": True}
+
+
+class CopilNoteCreate(BaseModel):
+    contenu: str = Field(..., min_length=1, max_length=5000)
+
+
+class CopilNoteUpdate(CopilNoteCreate):
+    pass
+
+
+class CopilNoteRead(BaseModel):
+    id: str
+    copil_id: str
+    auteur_id: Optional[str] = None
+    contenu: str
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}

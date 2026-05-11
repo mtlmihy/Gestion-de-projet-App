@@ -12,6 +12,15 @@ def _row(r) -> dict:
     return d
 
 
+def _note_row(r) -> dict:
+    d = dict(r)
+    d["id"] = str(d["id"])
+    d["copil_id"] = str(d["copil_id"])
+    if d.get("auteur_id") is not None:
+        d["auteur_id"] = str(d["auteur_id"])
+    return d
+
+
 async def get_all(conn: Connection, projet_id: str) -> list[dict]:
     rows = await conn.fetch(
         """
@@ -81,5 +90,57 @@ async def delete(conn: Connection, copil_id: str) -> bool:
     result = await conn.execute(
         "DELETE FROM copil_reunions WHERE id = $1::uuid",
         copil_id,
+    )
+    return result == "DELETE 1"
+
+
+async def get_notes(conn: Connection, copil_id: str) -> list[dict]:
+    rows = await conn.fetch(
+        """
+        SELECT id, copil_id, auteur_id, contenu, created_at, updated_at
+        FROM copil_reunion_notes
+        WHERE copil_id = $1::uuid
+        ORDER BY created_at DESC
+        """,
+        copil_id,
+    )
+    return [_note_row(r) for r in rows]
+
+
+async def create_note(conn: Connection, copil_id: str, contenu: str, user_id: str | None) -> dict | None:
+    row = await conn.fetchrow(
+        """
+        INSERT INTO copil_reunion_notes (copil_id, auteur_id, contenu)
+        SELECT id, $2::uuid, $3
+        FROM copil_reunions
+        WHERE id = $1::uuid
+        RETURNING id, copil_id, auteur_id, contenu, created_at, updated_at
+        """,
+        copil_id,
+        user_id,
+        contenu,
+    )
+    return _note_row(row) if row else None
+
+
+async def update_note(conn: Connection, note_id: str, contenu: str) -> dict | None:
+    row = await conn.fetchrow(
+        """
+        UPDATE copil_reunion_notes
+        SET contenu = $2,
+            updated_at = NOW()
+        WHERE id = $1::uuid
+        RETURNING id, copil_id, auteur_id, contenu, created_at, updated_at
+        """,
+        note_id,
+        contenu,
+    )
+    return _note_row(row) if row else None
+
+
+async def delete_note(conn: Connection, note_id: str) -> bool:
+    result = await conn.execute(
+        "DELETE FROM copil_reunion_notes WHERE id = $1::uuid",
+        note_id,
     )
     return result == "DELETE 1"
