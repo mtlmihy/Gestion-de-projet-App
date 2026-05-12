@@ -7,12 +7,10 @@ from pydantic import BaseModel, Field
 
 class CopilCreate(BaseModel):
     date_reunion: date
-    heure_reunion: Optional[time] = None
+    heure_reunion: time
     titre: str = Field(..., min_length=3, max_length=200)
     participants: Optional[str] = None
     notes: Optional[str] = None
-    decisions: Optional[str] = None
-    actions: Optional[str] = None
 
 
 class CopilUpdate(CopilCreate):
@@ -27,9 +25,8 @@ class CopilRead(BaseModel):
     titre: str
     participants: Optional[str] = None
     notes: Optional[str] = None
-    decisions: Optional[str] = None
-    actions: Optional[str] = None
     createur_id: Optional[str] = None
+    createur_nom: Optional[str] = None
     date_creation: datetime
     derniere_maj: datetime
 
@@ -48,6 +45,7 @@ class CopilNoteRead(BaseModel):
     id: str
     copil_id: str
     auteur_id: Optional[str] = None
+    auteur_nom: Optional[str] = None
     contenu: str
     created_at: datetime
     updated_at: datetime
