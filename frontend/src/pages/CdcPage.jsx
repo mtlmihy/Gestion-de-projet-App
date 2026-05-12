@@ -26,6 +26,49 @@ function escH(s) {
   return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
+function jalonDateKey(raw) {
+  const s = String(raw || '').trim()
+  if (!s) return Number.POSITIVE_INFINITY
+
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (iso) {
+    const y = Number(iso[1])
+    const m = Number(iso[2]) - 1
+    const d = Number(iso[3])
+    return Date.UTC(y, m, d)
+  }
+
+  const fr = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
+  if (fr) {
+    const d = Number(fr[1])
+    const m = Number(fr[2]) - 1
+    const y = Number(fr[3])
+    return Date.UTC(y, m, d)
+  }
+
+  const parsed = Date.parse(s)
+  return Number.isNaN(parsed) ? Number.POSITIVE_INFINITY : parsed
+}
+
+function formatJalonDate(raw) {
+  const s = String(raw || '').trim()
+  if (!s) return '—'
+
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (iso) {
+    return `${iso[3]}/${iso[2]}/${iso[1]}`
+  }
+
+  const fr = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
+  if (fr) {
+    return s
+  }
+
+  const d = new Date(s)
+  if (Number.isNaN(d.getTime())) return s
+  return d.toLocaleDateString('fr-FR')
+}
+
 function pvTextBlock(text) {
   const hasText = text && text.trim()
   const bLeft   = hasText ? '#2563eb' : '#e2e8f0'
@@ -51,8 +94,11 @@ function buildPrintViewHtml(cdc, includeBudget = true) {
     </tr>`
   }).join('') || '<tr><td colspan="4" style="padding:12px;border:1px solid #e9eef5;color:#94a3b8;text-align:center;">Aucune version renseignée</td></tr>'
 
-  const jalonRows = [...(cdc.jalons || [])].sort((a,b)=>{ if(!a[1]&&!b[1])return 0; if(!a[1])return 1; if(!b[1])return -1; return new Date(a[1])-new Date(b[1]) }).filter(r => r[0] || r[1] || r[2]).map(row => {
-    const d = row[1] ? new Date(row[1]).toLocaleDateString('fr-FR') : '—'
+  const jalonRows = [...(cdc.jalons || [])]
+    .sort((a, b) => jalonDateKey(a[1]) - jalonDateKey(b[1]))
+    .filter((r) => r[0] || r[1] || r[2])
+    .map((row) => {
+    const d = formatJalonDate(row[1])
     return `<tr>
       <td style="padding:6px 10px;border:1px solid #e9eef5;font-weight:600;color:#1e293b;">${escH(dv(row[0]))}</td>
       <td style="padding:6px 10px;border:1px solid #e9eef5;color:#2563eb;font-weight:500;-webkit-print-color-adjust:exact;print-color-adjust:exact;">${escH(d)}</td>
@@ -157,8 +203,11 @@ function buildCharterHtml(cdc, dark = false, includeBudget = true) {
   const td  = 'padding:7px 10px;border:1px solid #e9eef5;'
   const tdL = td + 'font-weight:600;color:#1e293b;background:#f8fafc;'
 
-  const jalonRows = [...(cdc.jalons || [])].sort((a,b)=>{ if(!a[1]&&!b[1])return 0; if(!a[1])return 1; if(!b[1])return -1; return new Date(a[1])-new Date(b[1]) }).filter(r => r[0] || r[1] || r[2]).map(row => {
-    const d = row[1] ? new Date(row[1]).toLocaleDateString('fr-FR') : '—'
+  const jalonRows = [...(cdc.jalons || [])]
+    .sort((a, b) => jalonDateKey(a[1]) - jalonDateKey(b[1]))
+    .filter((r) => r[0] || r[1] || r[2])
+    .map((row) => {
+    const d = formatJalonDate(row[1])
     return `<tr><td style="${td}font-weight:600;color:#1e293b;">${escH(row[0] || '—')}</td><td style="${td}">${escH(d)}</td><td style="${td}">${escH(row[2] || '')}</td></tr>`
   }).join('') || `<tr><td colspan="3" style="${td}color:#94a3b8;text-align:center;">Aucun jalon renseigné</td></tr>`
 
@@ -546,10 +595,15 @@ function closeViewer(){
   )
 
   const history = cdc.history ?? []
-  // ⚠️ Pas de tri à l'écran : l'index de ligne doit rester aligné sur cdc.jalons
-  // pour que setCell('jalons', ri, ...) modifie la bonne ligne. Le tri par date
-  // est appliqué uniquement dans les exports PDF.
-  const jalons  = cdc.jalons ?? []
+  // Tri par date cible tout en conservant l'index d'origine pour éditer/supprimer
+  // la bonne ligne dans cdc.jalons.
+  const jalons = (cdc.jalons ?? [])
+    .map((row, originalIndex) => ({ row, originalIndex }))
+    .sort((a, b) => {
+      const diff = jalonDateKey(a.row[1]) - jalonDateKey(b.row[1])
+      if (diff !== 0) return diff
+      return a.originalIndex - b.originalIndex
+    })
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
@@ -713,13 +767,13 @@ function closeViewer(){
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-slate-700">
-              {jalons.map((row, ri) => (
-                <tr key={ri} className="group">
-                  <td className="py-2 pr-3 w-[34%]"><input className={rowIn} value={row[0] ?? ''} onChange={setCell('jalons', ri, 0)} placeholder="Ex : Lancement" disabled={estLecteur} /></td>
-                  <td className="py-2 pr-3 w-32"><input className={rowIn} type="date" value={row[1] ?? ''} onChange={setCell('jalons', ri, 1)} disabled={estLecteur} /></td>
-                  <td className="py-2 pr-3"><input className={rowIn} value={row[2] ?? ''} onChange={setCell('jalons', ri, 2)} placeholder="Description du livrable" disabled={estLecteur} /></td>
+              {jalons.map(({ row, originalIndex }) => (
+                <tr key={originalIndex} className="group">
+                  <td className="py-2 pr-3 w-[34%]"><input className={rowIn} value={row[0] ?? ''} onChange={setCell('jalons', originalIndex, 0)} placeholder="Ex : Lancement" disabled={estLecteur} /></td>
+                  <td className="py-2 pr-3 w-32"><input className={rowIn} type="date" value={row[1] ?? ''} onChange={setCell('jalons', originalIndex, 1)} disabled={estLecteur} /></td>
+                  <td className="py-2 pr-3"><input className={rowIn} value={row[2] ?? ''} onChange={setCell('jalons', originalIndex, 2)} placeholder="Description du livrable" disabled={estLecteur} /></td>
                   <td className="py-2 w-8 text-center">
-                    {!estLecteur && <button onClick={removeRow('jalons', ri)} className="text-gray-200 hover:text-red-400 transition-colors text-sm">✕</button>}
+                    {!estLecteur && <button onClick={removeRow('jalons', originalIndex)} className="text-gray-200 hover:text-red-400 transition-colors text-sm">✕</button>}
                   </td>
                 </tr>
               ))}
