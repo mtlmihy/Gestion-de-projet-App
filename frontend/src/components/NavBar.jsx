@@ -6,7 +6,7 @@ import ThemeToggleButton from './ThemeToggleButton'
 import ChangePasswordModal from './ChangePasswordModal'
 import Logo from './Logo'
 import { updateProjetOrdre } from '../api/projets'
-import { PROJECT_NAV_LINKS } from '../config/navigation'
+import { PROJECT_NAV_LINKS, getOrderedVisibleProjectNavLinks } from '../config/navigation'
 
 function UserAvatar({ user }) {
   if (!user) return null
@@ -49,17 +49,7 @@ export default function NavBar() {
     navigate('/projets', { replace: true })
   }
 
-  const filteredLinks = PROJECT_NAV_LINKS.filter(({ page, onlyClient }) =>
-    canAccess(page) && canAccessPage(page) && (!onlyClient || projet?.type_projet === 'Client')
-  )
-  const pagesOrdre = projet?.pages_ordre
-  const visibleLinks = pagesOrdre
-    ? [...filteredLinks].sort((a, b) => {
-        const ia = pagesOrdre.indexOf(a.page)
-        const ib = pagesOrdre.indexOf(b.page)
-        return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib)
-      })
-    : filteredLinks
+  const visibleLinks = getOrderedVisibleProjectNavLinks({ projet, canAccess, canAccessPage })
 
   const canReorder = estProprietaire && !!projet
 

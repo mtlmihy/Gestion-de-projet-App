@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react'
 import NavBar from './NavBar'
 import { useProject } from '../context/ProjectContext'
 import { useAuth } from '../context/AuthContext'
-import { PROJECT_NAV_LINKS } from '../config/navigation'
+import { PROJECT_NAV_LINKS, getOrderedVisibleProjectNavLinks } from '../config/navigation'
 
 const APP_NAME = 'QimProject'
 const PAGE_TITLES = {
@@ -27,23 +27,16 @@ export default function Layout() {
   const touchStartX = useRef(null)
   const swipeLocked = useRef(false)
 
-  const orderedVisiblePages = useMemo(() => {
-    const filtered = PROJECT_NAV_LINKS.filter(({ page, onlyClient }) => (
-      canAccess(page) && canAccessPage(page) && (!onlyClient || projet?.type_projet === 'Client')
-    ))
+  const orderedVisiblePages = useMemo(
+    () => getOrderedVisibleProjectNavLinks({ projet, canAccess, canAccessPage }),
+    [projet, canAccess, canAccessPage]
+  )
 
-    if (!projet?.pages_ordre?.length) return filtered
-
-    return [...filtered].sort((a, b) => {
-      const ia = projet.pages_ordre.indexOf(a.page)
-      const ib = projet.pages_ordre.indexOf(b.page)
-      return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib)
-    })
-  }, [canAccess, canAccessPage, projet?.pages_ordre, projet?.type_projet])
+  const currentPath = `/${pathname.split('/')[1] || ''}`
 
   const currentIndex = useMemo(
-    () => orderedVisiblePages.findIndex(({ to }) => pathname.startsWith(to)),
-    [orderedVisiblePages, pathname]
+    () => orderedVisiblePages.findIndex(({ to }) => to === currentPath),
+    [orderedVisiblePages, currentPath]
   )
 
   const previousPage = currentIndex > 0 ? orderedVisiblePages[currentIndex - 1] : null
