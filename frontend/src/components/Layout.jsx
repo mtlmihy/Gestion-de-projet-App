@@ -14,6 +14,8 @@ const PAGE_TITLES = {
 
 const SWIPE_THRESHOLD = 60
 const SWIPE_HORIZONTAL_RATIO = 1.2
+const WHEEL_THRESHOLD = 120
+const WHEEL_COOLDOWN_MS = 350
 
 function isInteractiveElement(target) {
   if (!target || !(target instanceof Element)) return false
@@ -29,6 +31,8 @@ export default function Layout() {
   const touchStartY = useRef(null)
   const touchEndX = useRef(null)
   const touchEndY = useRef(null)
+  const wheelAccumX = useRef(0)
+  const lastWheelNavAt = useRef(0)
 
   const orderedVisiblePages = useMemo(
     () => getOrderedVisibleProjectNavLinks({ projet, canAccess, canAccessPage }),
@@ -91,6 +95,35 @@ export default function Layout() {
     touchEndY.current = null
   }, [goToSiblingPage])
 
+  const handleWheel = useCallback((e) => {
+    if (!isSwipeEnabled) return
+    if (isInteractiveElement(e.target)) return
+
+    const now = Date.now()
+    if (now - lastWheelNavAt.current < WHEEL_COOLDOWN_MS) return
+
+    const dx = e.deltaX
+    const dy = e.deltaY
+    const absDx = Math.abs(dx)
+    const absDy = Math.abs(dy)
+
+    // Ignore le scroll vertical classique du trackpad.
+    if (absDx <= absDy * SWIPE_HORIZONTAL_RATIO) {
+      wheelAccumX.current = 0
+      return
+    }
+
+    wheelAccumX.current += dx
+
+    if (Math.abs(wheelAccumX.current) < WHEEL_THRESHOLD) return
+
+    if (wheelAccumX.current > 0) goToSiblingPage('next')
+    else goToSiblingPage('prev')
+
+    lastWheelNavAt.current = now
+    wheelAccumX.current = 0
+  }, [goToSiblingPage, isSwipeEnabled])
+
   useEffect(() => {
     const match = Object.keys(PAGE_TITLES).find((p) => pathname.startsWith(p))
     const page = match ? PAGE_TITLES[match] : null
@@ -103,33 +136,12 @@ export default function Layout() {
       <NavBar />
       <main
         className="max-w-screen-xl mx-auto px-3 sm:px-4 py-4 sm:py-6"
+        onWheel={handleWheel}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchEnd}
       >
-        {currentIndex >= 0 && (
-          <div className="mb-3 flex items-center justify-between gap-2">
-            <button
-              type="button"
-              onClick={() => goToSiblingPage('prev')}
-              disabled={!previousPage}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              <span aria-hidden="true">←</span>
-              <span>Page précédente</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => goToSiblingPage('next')}
-              disabled={!nextPage}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              <span>Page suivante</span>
-              <span aria-hidden="true">→</span>
-            </button>
-          </div>
-        )}
         <Outlet />
       </main>
     </div>
