@@ -6,18 +6,7 @@ import ThemeToggleButton from './ThemeToggleButton'
 import ChangePasswordModal from './ChangePasswordModal'
 import Logo from './Logo'
 import { updateProjetOrdre } from '../api/projets'
-
-const LINKS = [
-  { to: '/cdc',      label: 'Cahier des Charges', page: 'cdc'      },
-  { to: '/planning', label: 'Planning',            page: 'planning' },
-  { to: '/copil',    label: 'COPIL',               page: 'copil'    },
-  { to: '/risques',  label: 'Risques',             page: 'risques'  },
-  { to: '/taches',   label: 'Tâches',              page: 'taches'   },
-  { to: '/raci',     label: 'RACI',                page: 'raci'     },
-  { to: '/equipe',   label: 'Équipe',              page: 'equipe'   },
-  { to: '/aide',     label: 'Aide',                page: 'aide'     },
-  { to: '/budget',   label: 'Budget',              page: 'budget',  onlyClient: true },
-]
+import { PROJECT_NAV_LINKS } from '../config/navigation'
 
 function UserAvatar({ user }) {
   if (!user) return null
@@ -60,7 +49,7 @@ export default function NavBar() {
     navigate('/projets', { replace: true })
   }
 
-  const filteredLinks = LINKS.filter(({ page, onlyClient }) =>
+  const filteredLinks = PROJECT_NAV_LINKS.filter(({ page, onlyClient }) =>
     canAccess(page) && canAccessPage(page) && (!onlyClient || projet?.type_projet === 'Client')
   )
   const pagesOrdre = projet?.pages_ordre
@@ -82,7 +71,7 @@ export default function NavBar() {
     e.preventDefault()
     if (!draggingPage.current || draggingPage.current === page || !projet) return
     setDragOverPage(page)
-    const allKeys = LINKS.map((l) => l.page)
+    const allKeys = PROJECT_NAV_LINKS.map((l) => l.page)
     const currentOrdre = projet.pages_ordre?.length ? [...projet.pages_ordre] : [...allKeys]
     const from = currentOrdre.indexOf(draggingPage.current)
     const to   = currentOrdre.indexOf(page)

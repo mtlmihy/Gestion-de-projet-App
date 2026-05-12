@@ -3,34 +3,16 @@ import { useCallback, useEffect, useMemo, useRef } from 'react'
 import NavBar from './NavBar'
 import { useProject } from '../context/ProjectContext'
 import { useAuth } from '../context/AuthContext'
+import { PROJECT_NAV_LINKS } from '../config/navigation'
 
 const APP_NAME = 'QimProject'
 const PAGE_TITLES = {
-  '/cdc':      'Cahier des charges',
-  '/planning': 'Planning',
-  '/copil':    'COPIL',
-  '/risques':  'Risques',
-  '/taches':   'Tâches',
-  '/equipe':   'Équipe',
-  '/raci':     'Matrice RACI',
-  '/aide':     'Aide',
   '/admin':    'Administration',
   '/projets':  'Projets',
-  '/budget':   'Budget',
+  ...Object.fromEntries(PROJECT_NAV_LINKS.map((item) => [item.to, item.title])),
 }
 
 const SWIPE_THRESHOLD = 60
-const NAV_PAGES = [
-  { to: '/cdc', page: 'cdc' },
-  { to: '/planning', page: 'planning' },
-  { to: '/copil', page: 'copil' },
-  { to: '/risques', page: 'risques' },
-  { to: '/taches', page: 'taches' },
-  { to: '/raci', page: 'raci' },
-  { to: '/equipe', page: 'equipe' },
-  { to: '/aide', page: 'aide' },
-  { to: '/budget', page: 'budget', onlyClient: true },
-]
 
 function isInteractiveElement(target) {
   if (!target || !(target instanceof Element)) return false
@@ -46,7 +28,7 @@ export default function Layout() {
   const swipeLocked = useRef(false)
 
   const orderedVisiblePages = useMemo(() => {
-    const filtered = NAV_PAGES.filter(({ page, onlyClient }) => (
+    const filtered = PROJECT_NAV_LINKS.filter(({ page, onlyClient }) => (
       canAccess(page) && canAccessPage(page) && (!onlyClient || projet?.type_projet === 'Client')
     ))
 
