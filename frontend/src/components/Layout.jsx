@@ -15,7 +15,8 @@ const PAGE_TITLES = {
 const SWIPE_THRESHOLD = 60
 const SWIPE_HORIZONTAL_RATIO = 1.2
 const WHEEL_THRESHOLD = 120
-const WHEEL_GESTURE_IDLE_MS = 180
+const WHEEL_GESTURE_IDLE_MS = 260
+const NAV_HARD_LOCK_MS = 700
 
 function isInteractiveElement(target) {
   if (!target || !(target instanceof Element)) return false
@@ -34,6 +35,7 @@ export default function Layout() {
   const wheelAccumX = useRef(0)
   const wheelNavigatedInGesture = useRef(false)
   const wheelIdleTimer = useRef(null)
+  const lastAnyNavAt = useRef(0)
 
   const orderedVisiblePages = useMemo(
     () => getOrderedVisibleProjectNavLinks({ projet, canAccess, canAccessPage }),
@@ -79,6 +81,9 @@ export default function Layout() {
   const handleTouchEnd = useCallback(() => {
     if (touchStartX.current == null || touchStartY.current == null) return
 
+    const now = Date.now()
+    if (now - lastAnyNavAt.current < NAV_HARD_LOCK_MS) return
+
     const dx = (touchEndX.current ?? touchStartX.current) - touchStartX.current
     const dy = (touchEndY.current ?? touchStartY.current) - touchStartY.current
     const absDx = Math.abs(dx)
@@ -88,6 +93,7 @@ export default function Layout() {
     if (isHorizontalSwipe) {
       if (dx < 0) goToSiblingPage('next')
       else goToSiblingPage('prev')
+      lastAnyNavAt.current = now
     }
 
     touchStartX.current = null
@@ -99,6 +105,9 @@ export default function Layout() {
   const handleWheel = useCallback((e) => {
     if (!isSwipeEnabled) return
     if (isInteractiveElement(e.target)) return
+
+    const now = Date.now()
+    if (now - lastAnyNavAt.current < NAV_HARD_LOCK_MS) return
 
     const dx = e.deltaX
     const dy = e.deltaY
@@ -131,6 +140,7 @@ export default function Layout() {
 
     wheelNavigatedInGesture.current = true
     wheelAccumX.current = 0
+    lastAnyNavAt.current = now
   }, [goToSiblingPage, isSwipeEnabled])
 
   useEffect(() => {
