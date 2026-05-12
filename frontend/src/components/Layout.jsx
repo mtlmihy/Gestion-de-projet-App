@@ -13,6 +13,7 @@ const PAGE_TITLES = {
 }
 
 const SWIPE_THRESHOLD = 60
+const SWIPE_HORIZONTAL_RATIO = 1.2
 
 function isInteractiveElement(target) {
   if (!target || !(target instanceof Element)) return false
@@ -25,7 +26,9 @@ export default function Layout() {
   const { projet, canAccessPage } = useProject()
   const { canAccess } = useAuth()
   const touchStartX = useRef(null)
-  const swipeLocked = useRef(false)
+  const touchStartY = useRef(null)
+  const touchEndX = useRef(null)
+  const touchEndY = useRef(null)
 
   const orderedVisiblePages = useMemo(
     () => getOrderedVisibleProjectNavLinks({ projet, canAccess, canAccessPage }),
@@ -56,29 +59,37 @@ export default function Layout() {
     if (!isSwipeEnabled) return
     if (isInteractiveElement(e.target)) return
     touchStartX.current = e.touches[0]?.clientX ?? null
-    swipeLocked.current = false
+    touchStartY.current = e.touches[0]?.clientY ?? null
+    touchEndX.current = touchStartX.current
+    touchEndY.current = touchStartY.current
   }, [isSwipeEnabled])
 
   const handleTouchMove = useCallback((e) => {
-    if (!isSwipeEnabled || swipeLocked.current) return
-    if (touchStartX.current == null) return
-    const currentX = e.touches[0]?.clientX
-    if (typeof currentX !== 'number') return
-    const delta = currentX - touchStartX.current
-
-    if (Math.abs(delta) < SWIPE_THRESHOLD) return
-
-    if (delta < 0) goToSiblingPage('next')
-    else goToSiblingPage('prev')
-
-    swipeLocked.current = true
-    touchStartX.current = null
-  }, [goToSiblingPage, isSwipeEnabled])
+    if (!isSwipeEnabled) return
+    if (touchStartX.current == null || touchStartY.current == null) return
+    touchEndX.current = e.touches[0]?.clientX ?? touchEndX.current
+    touchEndY.current = e.touches[0]?.clientY ?? touchEndY.current
+  }, [isSwipeEnabled])
 
   const handleTouchEnd = useCallback(() => {
+    if (touchStartX.current == null || touchStartY.current == null) return
+
+    const dx = (touchEndX.current ?? touchStartX.current) - touchStartX.current
+    const dy = (touchEndY.current ?? touchStartY.current) - touchStartY.current
+    const absDx = Math.abs(dx)
+    const absDy = Math.abs(dy)
+
+    const isHorizontalSwipe = absDx >= SWIPE_THRESHOLD && absDx > absDy * SWIPE_HORIZONTAL_RATIO
+    if (isHorizontalSwipe) {
+      if (dx < 0) goToSiblingPage('next')
+      else goToSiblingPage('prev')
+    }
+
     touchStartX.current = null
-    swipeLocked.current = false
-  }, [])
+    touchStartY.current = null
+    touchEndX.current = null
+    touchEndY.current = null
+  }, [goToSiblingPage])
 
   useEffect(() => {
     const match = Object.keys(PAGE_TITLES).find((p) => pathname.startsWith(p))
