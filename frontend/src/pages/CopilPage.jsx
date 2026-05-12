@@ -11,6 +11,7 @@ import {
   getCopilNotes,
   getCopils,
   updateCopil,
+  updateCopilNote,
 } from '../api/copils'
 
 function Notification({ msg, type }) {
@@ -63,18 +64,18 @@ function CopilForm({ initial, onSubmit, onCancel, saving }) {
 
       <div>
         <label className={lbl}>Titre de la note (optionnel)</label>
-        <input className={inp} maxLength={200} value={form.titre} onChange={setF('titre')} placeholder="COPIL - Arbitrages sprint 8" />
+        <input className={inp} maxLength={200} value={form.titre} onChange={setF('titre')} placeholder="Titre descriptif (ex: Suivi mensuel, Clôture phase, Arbitrage)" />
         <p className="mt-1 text-[11px] text-gray-400 dark:text-slate-500">Si vide, généré automatiquement.</p>
       </div>
 
       <div>
         <label className={lbl}>Participants</label>
-        <input className={inp} value={form.participants} onChange={setF('participants')} placeholder="Thalïa, Louis-Marie, Client X" />
+        <input className={inp} value={form.participants} onChange={setF('participants')} placeholder="Liste des participants séparés par des virgules" />
       </div>
 
       <div>
         <label className={lbl}>Notes de la réunion *</label>
-        <textarea className={`${inp} min-h-28`} required value={form.notes} onChange={setF('notes')} placeholder="Contexte, décisions prises, points de vigilance..." />
+        <textarea className={`${inp} min-h-28`} required value={form.notes} onChange={setF('notes')} placeholder="Détaillez le contenu de la réunion : sujets abordés, décisions, actions, blocages..." />
       </div>
 
       <div className="flex gap-2 pt-2">
@@ -89,6 +90,8 @@ export default function CopilPage() {
   const { projet, estLecteur } = useProject()
   const [items, setItems] = useState([])
   const [expandedCopilId, setExpandedCopilId] = useState(null)
+  const [editingNoteId, setEditingNoteId] = useState(null)
+  const [editingNoteContent, setEditingNoteContent] = useState('')
   const [notesByCopil, setNotesByCopil] = useState({})
   const [noteDraftByCopil, setNoteDraftByCopil] = useState({})
   const [loading, setLoading] = useState(true)
@@ -219,6 +222,38 @@ export default function CopilPage() {
     }
   }
 
+  const startEditingNote = (note) => {
+    setEditingNoteId(note.id)
+    setEditingNoteContent(note.contenu)
+  }
+
+  const cancelEditingNote = () => {
+    setEditingNoteId(null)
+    setEditingNoteContent('')
+  }
+
+  const saveEditingNote = async (copilId) => {
+    const content = editingNoteContent.trim()
+    if (!content) return
+    setSavingNote(true)
+    try {
+      await updateCopilNote(editingNoteId, { contenu: content })
+      setNotesByCopil((prev) => ({
+        ...prev,
+        [copilId]: (prev[copilId] || []).map((n) =>
+          n.id === editingNoteId ? { ...n, contenu: content } : n
+        ),
+      }))
+      setEditingNoteId(null)
+      setEditingNoteContent('')
+      notify('Note mise à jour.')
+    } catch {
+      notify('Erreur lors de la mise à jour de la note.', 'error')
+    } finally {
+      setSavingNote(false)
+    }
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -269,7 +304,7 @@ export default function CopilPage() {
               </div>
 
               <div className="grid grid-cols-1 gap-3 text-sm">
-                <section className="rounded-lg border border-gray-100 dark:border-slate-700 p-3 min-w-0">
+                <section className="rounded-lg border border-gray-100 dark:border-slate-700 p-3 min-w-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors" onClick={() => toggleDetails(it.id)}>
                   <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-1">Aperçu</p>
                   <p className="text-gray-700 dark:text-slate-300 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{preview(it.notes)}</p>
                 </section>
@@ -296,7 +331,7 @@ export default function CopilPage() {
                       className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400 min-h-16"
                       value={noteDraftByCopil[it.id] || ''}
                       onChange={(e) => setNoteDraftByCopil((prev) => ({ ...prev, [it.id]: e.target.value }))}
-                      placeholder="Ajouter une note rapide de réunion..."
+                      placeholder="Ajouter une note rapide..."
                     />
                     <button
                       type="button"
@@ -312,24 +347,62 @@ export default function CopilPage() {
                 {(notesByCopil[it.id] || []).length === 0 ? (
                   <p className="text-sm text-gray-500 dark:text-slate-400">Aucune note pour cette réunion.</p>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {(notesByCopil[it.id] || []).map((note) => (
-                      <div key={note.id} className="rounded-md border border-gray-200 dark:border-slate-700 p-2">
-                        <div className="flex items-center justify-between gap-2 mb-1">
-                          <div>
-                            <p className="text-xs text-gray-400 dark:text-slate-500">{fmtDateTimeTs(note.created_at)}</p>
-                            <p className="text-xs text-gray-400 dark:text-slate-500">Par : {note.auteur_nom || 'Utilisateur inconnu'}</p>
-                          </div>
-                          {!estLecteur && (
-                            <button
-                              onClick={() => handleDeleteNote(it.id, note.id)}
-                              className="text-xs text-red-500 hover:text-red-700"
-                            >
-                              Supprimer
-                            </button>
-                          )}
-                        </div>
-                        <p className="text-sm text-gray-700 dark:text-slate-300 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{note.contenu}</p>
+                      <div key={note.id} className="rounded-md border border-gray-200 dark:border-slate-700 p-3 bg-gray-50 dark:bg-slate-700/30">
+                        {editingNoteId === note.id ? (
+                          <>
+                            <textarea
+                              className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400 min-h-32"
+                              value={editingNoteContent}
+                              onChange={(e) => setEditingNoteContent(e.target.value)}
+                            />
+                            <div className="flex gap-2 mt-2">
+                              <button
+                                type="button"
+                                disabled={savingNote}
+                                onClick={() => saveEditingNote(it.id)}
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white rounded-lg px-3 py-2 text-xs font-semibold transition-colors"
+                              >
+                                Enregistrer
+                              </button>
+                              <button
+                                type="button"
+                                disabled={savingNote}
+                                onClick={cancelEditingNote}
+                                className="flex-1 border border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-300 rounded-lg px-3 py-2 text-xs font-medium hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors"
+                              >
+                                Annuler
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                              <div>
+                                <p className="text-xs text-gray-400 dark:text-slate-500">{fmtDateTimeTs(note.created_at)}</p>
+                                <p className="text-xs text-gray-400 dark:text-slate-500">Par : {note.auteur_nom || 'Utilisateur inconnu'}</p>
+                              </div>
+                              {!estLecteur && (
+                                <div className="flex gap-1">
+                                  <button
+                                    onClick={() => startEditingNote(note)}
+                                    className="text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-1 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                                  >
+                                    Modifier
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteNote(it.id, note.id)}
+                                    className="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                                  >
+                                    Supprimer
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-700 dark:text-slate-300 whitespace-pre-wrap break-words [overflow-wrap:anywhere] mt-2">{note.contenu}</p>
+                          </>
+                        )}
                       </div>
                     ))}
                   </div>
