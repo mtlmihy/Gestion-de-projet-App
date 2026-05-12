@@ -15,7 +15,7 @@ const PAGE_TITLES = {
 const SWIPE_THRESHOLD = 60
 const SWIPE_HORIZONTAL_RATIO = 1.2
 const WHEEL_THRESHOLD = 120
-const WHEEL_COOLDOWN_MS = 350
+const WHEEL_GESTURE_IDLE_MS = 180
 
 function isInteractiveElement(target) {
   if (!target || !(target instanceof Element)) return false
@@ -32,7 +32,8 @@ export default function Layout() {
   const touchEndX = useRef(null)
   const touchEndY = useRef(null)
   const wheelAccumX = useRef(0)
-  const lastWheelNavAt = useRef(0)
+  const wheelNavigatedInGesture = useRef(false)
+  const wheelIdleTimer = useRef(null)
 
   const orderedVisiblePages = useMemo(
     () => getOrderedVisibleProjectNavLinks({ projet, canAccess, canAccessPage }),
@@ -99,9 +100,6 @@ export default function Layout() {
     if (!isSwipeEnabled) return
     if (isInteractiveElement(e.target)) return
 
-    const now = Date.now()
-    if (now - lastWheelNavAt.current < WHEEL_COOLDOWN_MS) return
-
     const dx = e.deltaX
     const dy = e.deltaY
     const absDx = Math.abs(dx)
@@ -113,6 +111,17 @@ export default function Layout() {
       return
     }
 
+    // Tant que les événements se succèdent, on reste dans le même geste.
+    if (wheelIdleTimer.current) clearTimeout(wheelIdleTimer.current)
+    wheelIdleTimer.current = setTimeout(() => {
+      wheelAccumX.current = 0
+      wheelNavigatedInGesture.current = false
+      wheelIdleTimer.current = null
+    }, WHEEL_GESTURE_IDLE_MS)
+
+    // Un geste trackpad ne doit déclencher qu'une seule navigation.
+    if (wheelNavigatedInGesture.current) return
+
     wheelAccumX.current += dx
 
     if (Math.abs(wheelAccumX.current) < WHEEL_THRESHOLD) return
@@ -120,9 +129,15 @@ export default function Layout() {
     if (wheelAccumX.current > 0) goToSiblingPage('next')
     else goToSiblingPage('prev')
 
-    lastWheelNavAt.current = now
+    wheelNavigatedInGesture.current = true
     wheelAccumX.current = 0
   }, [goToSiblingPage, isSwipeEnabled])
+
+  useEffect(() => {
+    return () => {
+      if (wheelIdleTimer.current) clearTimeout(wheelIdleTimer.current)
+    }
+  }, [])
 
   useEffect(() => {
     const match = Object.keys(PAGE_TITLES).find((p) => pathname.startsWith(p))
