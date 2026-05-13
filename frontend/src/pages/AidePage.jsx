@@ -170,7 +170,7 @@ export default function AidePage() {
                       {lien.libelle}
                     </a>
                     <p className="text-xs text-gray-500 dark:text-slate-400 truncate">
-                      {meta.label} Â· {lien.url}
+                      {meta.label} · {lien.url}
                       {lien.url && lien.url.toLowerCase().includes('sharepoint') && (
                         <span className="ml-2 text-[11px] text-gray-400 italic">(Faites une copie, ne modifiez pas l'original)</span>
                       )}
