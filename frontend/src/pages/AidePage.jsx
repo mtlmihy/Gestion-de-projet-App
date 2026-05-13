@@ -111,6 +111,9 @@ export default function AidePage() {
   // Pour les autres : seulement s'il y a au moins un lien visible.
   const visibleLiens  = liens.filter((l) => l.visible)
   const liensAffiches = estProprietaire ? liens : visibleLiens
+  const hasSharePointLink = liensAffiches.some((l) =>
+    typeof l.url === 'string' && l.url.toLowerCase().includes('sharepoint')
+  )
 
   return (
     <div>
@@ -121,9 +124,16 @@ export default function AidePage() {
 
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm p-5">
         <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-slate-100">
-            Liens externes du projet
-          </h2>
+          <div>
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-slate-100">
+              Liens externes du projet
+            </h2>
+            {hasSharePointLink && (
+              <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">
+                Liens SharePoint : pensez a faire une copie avant modification.
+              </p>
+            )}
+          </div>
           {estProprietaire && (
             <button
               onClick={openCreate}
@@ -169,11 +179,8 @@ export default function AidePage() {
                     >
                       {lien.libelle}
                     </a>
-                    <p className="text-xs text-gray-500 dark:text-slate-400">
+                    <p className="text-xs text-gray-500 dark:text-slate-400 truncate">
                       {meta.label} · {lien.url}
-                      {lien.url && lien.url.toLowerCase().includes('sharepoint') && (
-                        <span className="ml-2 text-[11px] text-gray-400 italic">(Faites une copie, ne modifiez pas l'original)</span>
-                      )}
                     </p>
                   </div>
                   {estProprietaire && (
