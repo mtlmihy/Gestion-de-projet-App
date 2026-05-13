@@ -273,23 +273,23 @@
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
       <div>
         <label class="field-label" for="nom_projet">Nom / Code projet</label>
-        <input class="field-input" id="nom_projet" type="text" placeholder="Ex : PROJ-2026-001" />
+        <input class="field-input" id="nom_projet" type="text" placeholder="Nom du projet" />
       </div>
       <div>
         <label class="field-label" for="reference">Référence (Stratégie)</label>
-        <input class="field-input" id="reference" type="text" placeholder="Ex : STRAT-2026-A" />
+        <input class="field-input" id="reference" type="text" placeholder="Reference" />
       </div>
       <div>
         <label class="field-label" for="chef_projet">Chef de projet</label>
-        <input class="field-input" id="chef_projet" type="text" placeholder="Prénom Nom" />
+        <input class="field-input" id="chef_projet" type="text" placeholder="Nom complet" />
       </div>
       <div>
         <label class="field-label" for="service">Service / Organisation</label>
-        <input class="field-input" id="service" type="text" placeholder="Ex : DSI, Direction Commerciale…" />
+        <input class="field-input" id="service" type="text" placeholder="Service" />
       </div>
       <div>
         <label class="field-label" for="sponsor">Sponsor du projet</label>
-        <input class="field-input" id="sponsor" type="text" placeholder="Prénom Nom — Direction / Rôle" />
+        <input class="field-input" id="sponsor" type="text" placeholder="Nom complet" />
       </div>
       <div>
         <label class="field-label" for="date_debut">Date de début du projet</label>
@@ -331,9 +331,9 @@
         </thead>
         <tbody id="history-body">
           <tr>
-            <td class="hist-td"><input class="hist-input" type="text" value="1.0" placeholder="1.0" /></td>
-            <td class="hist-td"><input class="hist-input" type="text" placeholder="Auteur" /></td>
-            <td class="hist-td"><input class="hist-input" type="text" placeholder="Version initiale" /></td>
+            <td class="hist-td"><input class="hist-input" type="text" value="1.0" placeholder="Version" /></td>
+            <td class="hist-td"><input class="hist-input" type="text" placeholder="Nom" /></td>
+            <td class="hist-td"><input class="hist-input" type="text" placeholder="Description" /></td>
             <td class="hist-td"><input class="hist-input" type="date" /></td>
             <td class="hist-td no-print" style="text-align:center;">
               <button onclick="removeRow(this)" style="background:none;border:none;cursor:pointer;color:#cbd5e1;font-size:.9rem;" onmouseover="this.style.color='#f87171'" onmouseout="this.style.color='#cbd5e1'">✕</button>
@@ -351,7 +351,7 @@
       <span style="font-size:.95rem;font-weight:600;color:var(--text-section);">Contexte du projet</span>
     </div>
     <p class="field-help">Situez ici le projet dans son contexte. Décrivez comment ce projet est né, les besoins initiaux de l'entreprise, les avantages ou bénéfices espérés, le contexte technique, les aspects légaux si applicable.</p>
-    <textarea class="field-textarea" id="contexte" placeholder="Décrivez le contexte du projet…"></textarea>
+    <textarea class="field-textarea" id="contexte" placeholder="Saisissez le contexte"></textarea>
   </div>
 
   <!-- ── Section 2 : Objectifs ── -->
@@ -361,7 +361,7 @@
       <span style="font-size:.95rem;font-weight:600;color:var(--text-section);">Objectifs du projet</span>
     </div>
     <p class="field-help">Exprimez les bénéfices attendus justifiant votre investissement (augmentation des ventes, réduction de coûts, obligation légale, etc.). Soyez aussi complet que possible.</p>
-    <textarea class="field-textarea" id="objectifs" placeholder="Décrivez les objectifs du projet…"></textarea>
+    <textarea class="field-textarea" id="objectifs" placeholder="Saisissez les objectifs"></textarea>
   </div>
 
   <!-- ── Section 3 : Périmètre ── -->
@@ -371,7 +371,7 @@
       <span style="font-size:.95rem;font-weight:600;color:var(--text-section);">Périmètre du projet</span>
     </div>
     <p class="field-help">Quelles sont les limites de votre projet ? En quoi consiste-t-il ? Où commence-t-il et où s'arrête-t-il ? Qui est impliqué ? Y a-t-il une limite géographique ? Définir ce qui sort des limites est aussi important.</p>
-    <textarea class="field-textarea" id="perimetre" placeholder="Décrivez le périmètre du projet…"></textarea>
+    <textarea class="field-textarea" id="perimetre" placeholder="Saisissez le perimetre"></textarea>
   </div>
 
   <!-- ── Section 4 : Aspects fonctionnels ── -->
@@ -381,7 +381,7 @@
       <span style="font-size:.95rem;font-weight:600;color:var(--text-section);">Aspects fonctionnels</span>
     </div>
     <p class="field-help">Définissez chacun de vos objectifs et découpez-les en livrables ou fonctionnalités.</p>
-    <textarea class="field-textarea" id="fonctionnel" placeholder="Décrivez les aspects fonctionnels…"></textarea>
+    <textarea class="field-textarea" id="fonctionnel" placeholder="Saisissez les aspects fonctionnels"></textarea>
   </div>
 
   <!-- ── Section 5 : Aspects techniques ── -->
@@ -391,7 +391,7 @@
       <span style="font-size:.95rem;font-weight:600;color:var(--text-section);">Aspects techniques</span>
     </div>
     <p class="field-help">Y a-t-il des contraintes techniques ? Nouveau progiciel ? Nouveaux équipements ? Réseau ? Compétences internes ?</p>
-    <textarea class="field-textarea" id="technique" placeholder="Décrivez les contraintes techniques…"></textarea>
+    <textarea class="field-textarea" id="technique" placeholder="Saisissez les aspects techniques"></textarea>
   </div>
 
   <!-- ── Section 6 : Ressources ── -->
@@ -401,7 +401,7 @@
       <span style="font-size:.95rem;font-weight:600;color:var(--text-section);">Ressources</span>
     </div>
     <p class="field-help">Définir le besoin en ressources (qui, quand, combien de temps, expertise) pour délivrer le projet dans les délais.</p>
-    <textarea class="field-textarea" id="ressources" placeholder="Décrivez les ressources nécessaires…"></textarea>
+    <textarea class="field-textarea" id="ressources" placeholder="Saisissez les ressources"></textarea>
   </div>
 
   <!-- ── Section 6b : Risques identifiés ── -->
@@ -411,7 +411,7 @@
       <span style="font-size:.95rem;font-weight:600;color:var(--text-section);">Risques identifiés</span>
     </div>
     <p class="field-help">Listez les risques connus (1 par ligne). Ex : Dépassement budgétaire, Manque de ressources, Résistance au changement…</p>
-    <textarea class="field-textarea" id="risques" placeholder="Un risque par ligne…" style="min-height:100px;"></textarea>
+    <textarea class="field-textarea" id="risques" placeholder="Un element par ligne" style="min-height:100px;"></textarea>
   </div>
 
   <!-- ── Section 7 : Jalons ── -->
@@ -439,9 +439,9 @@
         </thead>
         <tbody id="jalons-body">
           <tr>
-            <td class="hist-td"><input class="hist-input" type="text" placeholder="Ex : Lancement" /></td>
+            <td class="hist-td"><input class="hist-input" type="text" placeholder="Nom du jalon" /></td>
             <td class="hist-td"><input class="hist-input" type="date" /></td>
-            <td class="hist-td"><input class="hist-input" type="text" placeholder="Description du livrable" /></td>
+            <td class="hist-td"><input class="hist-input" type="text" placeholder="Description" /></td>
             <td class="hist-td no-print" style="text-align:center;"><button onclick="removeRow(this)" style="background:none;border:none;cursor:pointer;color:#cbd5e1;font-size:.9rem;" onmouseover="this.style.color='#f87171'" onmouseout="this.style.color='#cbd5e1'">✕</button></td>
           </tr>
         </tbody>
@@ -456,7 +456,7 @@
       <span style="font-size:.95rem;font-weight:600;color:var(--text-section);">Budget</span>
     </div>
     <p class="field-help">Montant des investissements, prestataires, hébergement, coût des ressources, maintenance, licences, éléments techniques, etc.</p>
-    <textarea class="field-textarea" id="budget" placeholder="Décrivez le budget du projet…"></textarea>
+    <textarea class="field-textarea" id="budget" placeholder="Saisissez le budget"></textarea>
   </div>
 
   <!-- ── Barre d'actions ── -->
@@ -644,9 +644,9 @@
     const v = Array.isArray(values) ? values : ['','',''];
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td class="hist-td"><input class="hist-input" type="text" value="${esc(v[0])}" placeholder="Ex : Lancement" /></td>
+      <td class="hist-td"><input class="hist-input" type="text" value="${esc(v[0])}" placeholder="Nom du jalon" /></td>
       <td class="hist-td"><input class="hist-input" type="date" value="${esc(v[1])}" onchange="sortJalons();saveData();" /></td>
-      <td class="hist-td"><input class="hist-input" type="text" value="${esc(v[2])}" placeholder="Description du livrable" /></td>
+      <td class="hist-td"><input class="hist-input" type="text" value="${esc(v[2])}" placeholder="Description" /></td>
       <td class="hist-td no-print" style="text-align:center;"><button onclick="removeRow(this)" style="background:none;border:none;cursor:pointer;color:#cbd5e1;font-size:.9rem;" onmouseover="this.style.color='#f87171'" onmouseout="this.style.color='#cbd5e1'">✕</button></td>
     `;
     document.getElementById('jalons-body').appendChild(tr);
@@ -657,8 +657,8 @@
     const v = Array.isArray(values) ? values : ['','','',''];
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td class="hist-td"><input class="hist-input" type="text" value="${esc(v[0])}" placeholder="1.0" /></td>
-      <td class="hist-td"><input class="hist-input" type="text" value="${esc(v[1])}" placeholder="Auteur" /></td>
+      <td class="hist-td"><input class="hist-input" type="text" value="${esc(v[0])}" placeholder="Version" /></td>
+      <td class="hist-td"><input class="hist-input" type="text" value="${esc(v[1])}" placeholder="Nom" /></td>
       <td class="hist-td"><input class="hist-input" type="text" value="${esc(v[2])}" placeholder="Description" /></td>
       <td class="hist-td"><input class="hist-input" type="date" value="${esc(v[3])}" /></td>
       <td class="hist-td no-print" style="text-align:center;">

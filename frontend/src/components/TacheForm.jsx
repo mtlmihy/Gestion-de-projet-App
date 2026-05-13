@@ -65,7 +65,7 @@ export default function TacheForm({ initial, onSubmit, onCancel, loading, jalons
               {jalonsOptions.map((j) => <option key={j} value={j}>{j}</option>)}
             </select>
           ) : (
-            <input className={cls.input} value={form.jalon} onChange={set('jalon')} placeholder="Ex : Livrable 1" />
+            <input className={cls.input} value={form.jalon} onChange={set('jalon')} placeholder="Nom du jalon" />
           )}
         </div>
 

@@ -209,9 +209,9 @@ function UsersTab({ currentUser }) {
       {modal === 'create' && (
         <Modal title="Nouvel utilisateur" onClose={() => setModal(null)}>
           <form onSubmit={handleCreate} className="space-y-3">
-            <div><label className={lbl}>E-mail *</label><input className={inp} type="email" required value={form.email} onChange={setF('email')} placeholder="prenom.nom@domaine.fr" /></div>
-            <div><label className={lbl}>Nom</label><input className={inp} value={form.nom} onChange={setF('nom')} placeholder="Prénom Nom" /></div>
-            <div><label className={lbl}>Poste</label><input className={inp} value={form.poste} onChange={setF('poste')} placeholder="Chef de projet…" /></div>
+            <div><label className={lbl}>E-mail *</label><input className={inp} type="email" required value={form.email} onChange={setF('email')} placeholder="nom@domaine.com" /></div>
+            <div><label className={lbl}>Nom</label><input className={inp} value={form.nom} onChange={setF('nom')} placeholder="Nom complet" /></div>
+            <div><label className={lbl}>Poste</label><input className={inp} value={form.poste} onChange={setF('poste')} placeholder="Fonction" /></div>
             <div>
               <label className={lbl}>Mot de passe *</label>
               <input className={inp} type="password" required minLength={12} value={form.password} onChange={setF('password')} autoComplete="new-password" />
@@ -567,7 +567,7 @@ function PermissionsTab() {
               type="text"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              placeholder="Rechercher un utilisateur…"
+              placeholder="Rechercher un utilisateur"
               className="text-sm border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-1.5 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <label className="flex items-center gap-2 text-xs text-gray-600 dark:text-slate-400 cursor-pointer whitespace-nowrap">

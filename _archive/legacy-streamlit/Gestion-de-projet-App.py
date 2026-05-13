@@ -760,7 +760,7 @@ if page_active == "Registre des Risques":
             f_stat = st.multiselect("Statut", STATUTS, default=STATUTS)
         with fc4:
             f_prio = st.multiselect("Priorité", PRIORITES, default=PRIORITES)
-        f_identifiant = st.text_input("Recherche identifiant", placeholder="Ex: Budget, RISK-001...")
+        f_identifiant = st.text_input("Recherche identifiant", placeholder="Rechercher")
 
     df_filtre = df[
         df["Probabilité"].isin(f_prob) & df["Impact"].isin(f_imp)
@@ -963,7 +963,7 @@ if page_active == "Suivi des Tâches":
     with st.expander("Filtres"):
         tf1, tf2, tf3 = st.columns(3)
         with tf1:
-            t_search = st.text_input("Recherche par nom", placeholder="Ex: Rédiger, Sprint…")
+            t_search = st.text_input("Recherche par nom", placeholder="Rechercher")
         with tf2:
             t_f_imp = st.multiselect("Importance", IMPORTANCES, default=IMPORTANCES)
         with tf3:

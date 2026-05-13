@@ -650,11 +650,11 @@ function closeViewer(){
       <Card>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[
-            ['nom_projet',  'Nom / Code projet',        'Ex : PROJ-2026-001'],
-            ['reference',   'Référence (Stratégie)',     'Ex : STRAT-2026-A'],
-            ['chef_projet', 'Chef de projet',            'Prénom Nom'],
-            ['service',     'Service / Organisation',    'Ex : DSI, Direction Commerciale…'],
-            ['sponsor',     'Sponsor du projet',         'Prénom Nom — Direction / Rôle'],
+            ['nom_projet',  'Nom / Code projet',        'Nom du projet'],
+            ['reference',   'Référence (Stratégie)',     'Reference'],
+            ['chef_projet', 'Chef de projet',            'Nom complet'],
+            ['service',     'Service / Organisation',    'Service'],
+            ['sponsor',     'Sponsor du projet',         'Nom complet'],
           ].map(([field, label, placeholder]) => (
             <div key={field}>
               <label className={lbl}>{label}</label>
@@ -698,8 +698,8 @@ function closeViewer(){
             <tbody className="divide-y divide-gray-50 dark:divide-slate-700">
               {history.map((row, ri) => (
                 <tr key={ri} className="group">
-                  <td className="py-2 pr-3 w-24"><input className={rowIn} value={row[0] ?? ''} onChange={setCell('history', ri, 0)} placeholder="1.0" disabled={estLecteur} /></td>
-                  <td className="py-2 pr-3 w-36"><input className={rowIn} value={row[1] ?? ''} onChange={setCell('history', ri, 1)} placeholder="Auteur" disabled={estLecteur} /></td>
+                  <td className="py-2 pr-3 w-24"><input className={rowIn} value={row[0] ?? ''} onChange={setCell('history', ri, 0)} placeholder="Version" disabled={estLecteur} /></td>
+                  <td className="py-2 pr-3 w-36"><input className={rowIn} value={row[1] ?? ''} onChange={setCell('history', ri, 1)} placeholder="Nom" disabled={estLecteur} /></td>
                   <td className="py-2 pr-3"><input className={rowIn} value={row[2] ?? ''} onChange={setCell('history', ri, 2)} placeholder="Description" disabled={estLecteur} /></td>
                   <td className="py-2 pr-3 w-36"><input className={rowIn} type="date" value={row[3] ?? ''} onChange={setCell('history', ri, 3)} disabled={estLecteur} /></td>
                   <td className="py-2 w-8 text-center">
@@ -715,17 +715,17 @@ function closeViewer(){
       {/* ── Sections 1-6 (textareas) ───────────────────────────────────── */}
       {[
         ['1', 'Contexte du projet',    'contexte',     'Situez ici le projet dans son contexte. Décrivez comment ce projet est né, les besoins initiaux, les avantages espérés, le contexte technique, les aspects légaux si applicable.',
-          'Décrivez le contexte du projet…'],
+          'Saisissez le contexte'],
         ['2', 'Objectifs du projet',   'objectifs',    'Exprimez les bénéfices attendus justifiant votre investissement (augmentation des ventes, réduction de coûts, obligation légale, etc.). Soyez aussi complet que possible.',
-          'Décrivez les objectifs du projet…'],
+          'Saisissez les objectifs'],
         ['3', 'Périmètre du projet',   'perimetre',    "Quelles sont les limites de votre projet ? En quoi consiste-t-il ? Où commence-t-il et où s'arrête-t-il ? Définir ce qui sort des limites est aussi important.",
-          'Décrivez le périmètre du projet…'],
+          'Saisissez le perimetre'],
         ['4', 'Aspects fonctionnels',  'fonctionnel',  "Définissez chacun de vos objectifs et découpez-les en livrables ou fonctionnalités.",
-          'Décrivez les aspects fonctionnels…'],
+          'Saisissez les aspects fonctionnels'],
         ['5', 'Aspects techniques',    'technique',    "Y a-t-il des contraintes techniques ? Nouveau progiciel ? Nouveaux équipements ? Réseau ? Compétences internes ?",
-          'Décrivez les contraintes techniques…'],
+          'Saisissez les aspects techniques'],
         ['6', 'Ressources',            'ressources',   "Définir le besoin en ressources (qui, quand, combien de temps, expertise) pour délivrer le projet dans les délais.",
-          'Décrivez les ressources nécessaires…'],
+          'Saisissez les ressources'],
       ].map(([n, title, field, helpText, placeholder]) => (
         <Card key={field}>
           <SectionHeader n={n} title={title} />
@@ -738,7 +738,7 @@ function closeViewer(){
       <Card>
         <SectionHeader n="R" title="Risques identifiés" color="red" />
         <p className={help}>Listez les risques connus (1 par ligne). Ex : Dépassement budgétaire, Manque de ressources, Résistance au changement…</p>
-        <textarea className={`${ta} min-h-[100px]`} value={cdc.risques ?? ''} onChange={set('risques')} placeholder="Un risque par ligne…" disabled={estLecteur} />
+        <textarea className={`${ta} min-h-[100px]`} value={cdc.risques ?? ''} onChange={set('risques')} placeholder="Un element par ligne" disabled={estLecteur} />
       </Card>
 
       {/* ── Jalons & Planning ──────────────────────────────────────────── */}
@@ -769,9 +769,9 @@ function closeViewer(){
             <tbody className="divide-y divide-gray-50 dark:divide-slate-700">
               {jalons.map(({ row, originalIndex }) => (
                 <tr key={originalIndex} className="group">
-                  <td className="py-2 pr-3 w-[34%]"><input className={rowIn} value={row[0] ?? ''} onChange={setCell('jalons', originalIndex, 0)} placeholder="Ex : Lancement" disabled={estLecteur} /></td>
+                  <td className="py-2 pr-3 w-[34%]"><input className={rowIn} value={row[0] ?? ''} onChange={setCell('jalons', originalIndex, 0)} placeholder="Nom du jalon" disabled={estLecteur} /></td>
                   <td className="py-2 pr-3 w-32"><input className={rowIn} type="date" value={row[1] ?? ''} onChange={setCell('jalons', originalIndex, 1)} disabled={estLecteur} /></td>
-                  <td className="py-2 pr-3"><input className={rowIn} value={row[2] ?? ''} onChange={setCell('jalons', originalIndex, 2)} placeholder="Description du livrable" disabled={estLecteur} /></td>
+                  <td className="py-2 pr-3"><input className={rowIn} value={row[2] ?? ''} onChange={setCell('jalons', originalIndex, 2)} placeholder="Description" disabled={estLecteur} /></td>
                   <td className="py-2 w-8 text-center">
                     {!estLecteur && <button onClick={removeRow('jalons', originalIndex)} className="text-gray-200 hover:text-red-400 transition-colors text-sm">✕</button>}
                   </td>
@@ -787,7 +787,7 @@ function closeViewer(){
         <Card>
           <SectionHeader n="8" title={`Budget (${deviseSymbole})`} />
           <p className={help}>Valeur initiale reprise depuis la création du projet. Vous pouvez ensuite la compléter ou la détailler. Symbole utilisé: {deviseSymbole}</p>
-          <textarea className={ta} value={cdc.budget ?? ''} onChange={set('budget')} placeholder={`Décrivez le budget du projet… (ex: 25000 ${deviseSymbole})`} disabled={estLecteur} />
+          <textarea className={ta} value={cdc.budget ?? ''} onChange={set('budget')} placeholder={`Saisissez le budget (ex: 5000 ${deviseSymbole})`} disabled={estLecteur} />
         </Card>
       )}
 

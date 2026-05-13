@@ -235,7 +235,7 @@ export default function AidePage() {
               maxLength={100}
               value={form.libelle}
               onChange={(e) => setForm((f) => ({ ...f, libelle: e.target.value }))}
-              placeholder="ex: Tableau Jira du projet"
+              placeholder="Nom du lien"
               className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -249,7 +249,7 @@ export default function AidePage() {
               type="url"
               value={form.url}
               onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))}
-              placeholder="https://â€¦"
+              placeholder="https://exemple.com"
               className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>

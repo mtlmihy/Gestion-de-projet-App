@@ -277,7 +277,7 @@ export default function ProjectWizard({ onClose, onCreated }) {
               </p>
               <div>
                 <label className={lbl}>Nom du projet *</label>
-                <input className={inp} required value={form.nom} onChange={setField('nom')} placeholder="Ex. Refonte du portail client" autoFocus />
+                <input className={inp} required value={form.nom} onChange={setField('nom')} placeholder="Nom du projet" autoFocus />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -295,7 +295,7 @@ export default function ProjectWizard({ onClose, onCreated }) {
                         className={inp}
                         value={form.budget_prevu}
                         onChange={setField('budget_prevu')}
-                        placeholder="Ex. 25000"
+                        placeholder="Montant"
                         inputMode="decimal"
                       />
                     </div>
@@ -312,7 +312,7 @@ export default function ProjectWizard({ onClose, onCreated }) {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={lbl}>Référence</label>
-                  <input className={inp} value={form.reference} onChange={setField('reference')} placeholder="Ex. PRJ-2026-001" />
+                  <input className={inp} value={form.reference} onChange={setField('reference')} placeholder="Reference" />
                 </div>
                 <div>
                   <label className={lbl}>Date de début *</label>
@@ -321,16 +321,16 @@ export default function ProjectWizard({ onClose, onCreated }) {
               </div>
               <div>
                 <label className={lbl}>Chef de projet</label>
-                <input className={inp} value={form.chef_projet} onChange={setField('chef_projet')} placeholder="Prénom NOM" />
+                <input className={inp} value={form.chef_projet} onChange={setField('chef_projet')} placeholder="Nom complet" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={lbl}>Service</label>
-                  <input className={inp} value={form.service} onChange={setField('service')} placeholder="Ex. Direction des systèmes d'information" />
+                  <input className={inp} value={form.service} onChange={setField('service')} placeholder="Service" />
                 </div>
                 <div>
                   <label className={lbl}>Sponsor</label>
-                  <input className={inp} value={form.sponsor} onChange={setField('sponsor')} placeholder="Prénom NOM" />
+                  <input className={inp} value={form.sponsor} onChange={setField('sponsor')} placeholder="Nom complet" />
                 </div>
               </div>
             </div>
@@ -348,7 +348,7 @@ export default function ProjectWizard({ onClose, onCreated }) {
                   rows={4}
                   value={form.contexte}
                   onChange={setField('contexte')}
-                  placeholder="Pourquoi ce projet ? Quelle est la situation actuelle, le besoin métier ?"
+                  placeholder="Decrivez votre besoin"
                 />
                 <p className={help}>Décrivez l'origine du besoin et l'environnement du projet.</p>
               </div>
@@ -359,7 +359,7 @@ export default function ProjectWizard({ onClose, onCreated }) {
                   rows={4}
                   value={form.objectifs}
                   onChange={setField('objectifs')}
-                  placeholder="• Objectif 1&#10;• Objectif 2&#10;• Objectif 3"
+                  placeholder="Listez les objectifs"
                 />
                 <p className={help}>Listez les résultats attendus, idéalement mesurables.</p>
               </div>
@@ -370,7 +370,7 @@ export default function ProjectWizard({ onClose, onCreated }) {
                   rows={3}
                   value={form.perimetre}
                   onChange={setField('perimetre')}
-                  placeholder="Ce qui est inclus et exclu du projet."
+                  placeholder="Decrivez le perimetre"
                 />
                 <p className={help}>Optionnel — vous pourrez le compléter plus tard.</p>
               </div>
@@ -391,7 +391,7 @@ export default function ProjectWizard({ onClose, onCreated }) {
                         className={inp}
                         value={j.label}
                         onChange={(e) => updateJalon(i, 'label', e.target.value)}
-                        placeholder="Ex. Recette utilisateur"
+                        placeholder="Nom du jalon"
                       />
                     </div>
                     <div className="col-span-3">
@@ -409,7 +409,7 @@ export default function ProjectWizard({ onClose, onCreated }) {
                         className={inp}
                         value={j.description}
                         onChange={(e) => updateJalon(i, 'description', e.target.value)}
-                        placeholder="Optionnel"
+                        placeholder="Champ optionnel"
                       />
                     </div>
                     <div className="col-span-1 flex justify-end">

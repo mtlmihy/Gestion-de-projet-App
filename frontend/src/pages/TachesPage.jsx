@@ -194,7 +194,7 @@ export default function TachesPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-gray-600 dark:text-slate-400">Recherche</label>
-                <input className="border border-gray-300 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="Nom, assigné, jalon…" value={fSearch} onChange={(e) => setFSearch(e.target.value)} />
+                <input className="border border-gray-300 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="Rechercher" value={fSearch} onChange={(e) => setFSearch(e.target.value)} />
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-gray-600 dark:text-slate-400">Importance</label>

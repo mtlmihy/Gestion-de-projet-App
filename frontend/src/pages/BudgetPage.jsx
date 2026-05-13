@@ -72,13 +72,13 @@ function DepenseModal({ open, initial, devise, onSave, onClose }) {
         <div>
           <label className="block text-xs font-medium text-gray-600 dark:text-slate-400 mb-1">Description</label>
           <input type="text" value={form.description} onChange={e => set('description', e.target.value)} maxLength={200}
-            placeholder="Libellé de la dépense…"
+            placeholder="Description"
             className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-600 dark:text-slate-400 mb-1">Montant ({devise}) *</label>
           <input type="number" min="0" step="0.01" value={form.montant} onChange={e => set('montant', e.target.value)} required
-            placeholder="0.00"
+            placeholder="Montant"
             className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}

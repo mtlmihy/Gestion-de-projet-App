@@ -57,7 +57,7 @@ export default function MembreForm({ initial, onSubmit, onCancel, loading }) {
             className={`${cls.input} ${selfManager ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
             value={form.manager}
             onChange={set('manager')}
-            placeholder="Prénom NOM ; Prénom NOM"
+            placeholder="Nom complet ; Nom complet"
             aria-invalid={selfManager || undefined}
           />
           <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">

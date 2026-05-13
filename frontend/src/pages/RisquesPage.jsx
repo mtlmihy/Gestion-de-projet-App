@@ -169,7 +169,7 @@ export default function RisquesPage() {
               <label className={selLabel}>Recherche</label>
               <input
                 className="border border-gray-300 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                placeholder="Identifiant…"
+                placeholder="Rechercher"
                 value={fSearch}
                 onChange={(e) => setFSearch(e.target.value)}
               />

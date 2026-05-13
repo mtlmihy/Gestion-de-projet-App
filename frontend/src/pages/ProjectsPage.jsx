@@ -374,7 +374,7 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
                 <input
                   type="text"
                   inputMode="decimal"
-                  placeholder="Budget prévu"
+                  placeholder="Montant"
                   value={settingsForm.budget_prevu}
                   onChange={(e) => setSettingsForm((prev) => ({ ...prev, budget_prevu: e.target.value }))}
                   className="text-sm border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -686,7 +686,7 @@ function CreateModal({ onClose, onCreated }) {
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label className={lbl}>Nom du projet *</label>
-            <input className={inp} required value={form.nom} onChange={setF('nom')} placeholder="Mon projet…" autoFocus />
+            <input className={inp} required value={form.nom} onChange={setF('nom')} placeholder="Nom du projet" autoFocus />
           </div>
           <div>
             <label className={lbl}>Description</label>
@@ -695,7 +695,7 @@ function CreateModal({ onClose, onCreated }) {
               rows={3}
               value={form.description}
               onChange={setF('description')}
-              placeholder="Décrivez brièvement ce projet…"
+              placeholder="Description du projet"
             />
           </div>
           <div>
@@ -720,7 +720,7 @@ function CreateModal({ onClose, onCreated }) {
                     className={inp}
                     value={form.budget_prevu}
                     onChange={setF('budget_prevu')}
-                    placeholder="Ex. 25000"
+                    placeholder="Montant"
                     inputMode="decimal"
                   />
                 </div>

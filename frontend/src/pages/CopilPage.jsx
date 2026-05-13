@@ -64,18 +64,18 @@ function CopilForm({ initial, onSubmit, onCancel, saving }) {
 
       <div>
         <label className={lbl}>Titre de la note (optionnel)</label>
-        <input className={inp} maxLength={200} value={form.titre} onChange={setF('titre')} placeholder="Titre descriptif (ex: Suivi mensuel, Clôture phase, Arbitrage)" />
+        <input className={inp} maxLength={200} value={form.titre} onChange={setF('titre')} placeholder="Titre" />
         <p className="mt-1 text-[11px] text-gray-400 dark:text-slate-500">Si vide, généré automatiquement.</p>
       </div>
 
       <div>
         <label className={lbl}>Participants</label>
-        <input className={inp} value={form.participants} onChange={setF('participants')} placeholder="Liste des participants séparés par des virgules" />
+        <input className={inp} value={form.participants} onChange={setF('participants')} placeholder="Participants" />
       </div>
 
       <div>
         <label className={lbl}>Notes de la réunion *</label>
-        <textarea className={`${inp} min-h-28`} required value={form.notes} onChange={setF('notes')} placeholder="Détaillez le contenu de la réunion : sujets abordés, décisions, actions, blocages..." />
+        <textarea className={`${inp} min-h-28`} required value={form.notes} onChange={setF('notes')} placeholder="Notes" />
       </div>
 
       <div className="flex gap-2 pt-2">
@@ -331,7 +331,7 @@ export default function CopilPage() {
                       className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400 min-h-16"
                       value={noteDraftByCopil[it.id] || ''}
                       onChange={(e) => setNoteDraftByCopil((prev) => ({ ...prev, [it.id]: e.target.value }))}
-                      placeholder="Ajouter une note rapide..."
+                      placeholder="Saisir une note"
                     />
                     <button
                       type="button"
