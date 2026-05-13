@@ -111,9 +111,6 @@ export default function AidePage() {
   // Pour les autres : seulement s'il y a au moins un lien visible.
   const visibleLiens  = liens.filter((l) => l.visible)
   const liensAffiches = estProprietaire ? liens : visibleLiens
-  const hasSharePointLink = liensAffiches.some((l) =>
-    typeof l.url === 'string' && l.url.toLowerCase().includes('sharepoint')
-  )
 
   return (
     <div>
@@ -128,11 +125,6 @@ export default function AidePage() {
             <h2 className="text-sm font-semibold text-gray-900 dark:text-slate-100">
               Liens externes du projet
             </h2>
-            {hasSharePointLink && (
-              <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">
-                Liens SharePoint : pensez a faire une copie avant modification.
-              </p>
-            )}
           </div>
           {estProprietaire && (
             <button
@@ -163,6 +155,7 @@ export default function AidePage() {
             {liensAffiches.map((lien) => {
               const meta = TYPE_META[lien.type] ?? TYPE_META.autre
               const masque = !lien.visible
+              const isSharePoint = typeof lien.url === 'string' && lien.url.toLowerCase().includes('sharepoint')
               return (
                 <li
                   key={lien.id}
@@ -182,6 +175,9 @@ export default function AidePage() {
                     <p className="text-xs text-gray-500 dark:text-slate-400 truncate">
                       {meta.label} · {lien.url}
                     </p>
+                    {isSharePoint && (
+                      <p className="text-[11px] text-red-600 dark:text-red-400">Copier avant modification.</p>
+                    )}
                   </div>
                   {estProprietaire && (
                     <div className="flex items-center gap-1 shrink-0">
