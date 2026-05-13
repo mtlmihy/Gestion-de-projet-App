@@ -176,7 +176,7 @@ export default function AidePage() {
                       {meta.label} · {lien.url}
                     </p>
                     {isSharePoint && (
-                      <p className="text-[11px] text-red-600 dark:text-red-400">Copier avant modification.</p>
+                      <p className="text-[11px] text-red-600 dark:text-red-400">Copier et modifier en local !!!!!!!!.</p>
                     )}
                   </div>
                   {estProprietaire && (
