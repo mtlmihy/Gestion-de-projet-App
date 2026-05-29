@@ -785,7 +785,7 @@ function ProjetCard({ projet, onSelect, onGererAcces, isAdmin, isPinned, onToggl
             className={`shrink-0 mt-0.5 p-1 rounded-md transition-all ${
               isPinned
                 ? 'text-amber-500 dark:text-amber-400 hover:text-amber-600 dark:hover:text-amber-300'
-                : 'text-gray-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 hover:text-amber-500 dark:hover:text-amber-400 focus:opacity-100'
+                : 'text-gray-400 dark:text-slate-500 hover:text-amber-500 dark:hover:text-amber-400'
             }`}
           >
             {isPinned ? (
