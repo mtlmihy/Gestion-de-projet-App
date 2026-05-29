@@ -15,7 +15,14 @@ from slowapi.util import get_remote_address
 from app.auth import service as auth_service
 from app.auth.csrf import CSRF_COOKIE_NAME, generate_csrf_token
 from app.auth.dependencies import get_current_user
-from app.auth.schemas import ChangePasswordRequest, LoginRequest, MeResponse, TokenResponse
+from app.auth.schemas import (
+    ChangePasswordRequest,
+    LoginRequest,
+    MeResponse,
+    PinnedProjectsResponse,
+    PinnedProjectsUpdateRequest,
+    TokenResponse,
+)
 from app.config import settings
 from app.db.pool import get_pool
 from app.security.audit import Action, log_event
@@ -135,6 +142,41 @@ async def login(
 async def me(current_user: dict = Depends(get_current_user)):
     """Retourne les informations de l'utilisateur connecté."""
     return current_user
+
+
+@router.get("/pinned-projects", response_model=PinnedProjectsResponse)
+async def get_pinned_projects(
+    current_user: dict = Depends(get_current_user),
+    pool: Pool = Depends(get_pool),
+):
+    """Retourne la liste des projets épinglés pour l'utilisateur connecté."""
+    async with pool.acquire() as conn:
+        projet_ids = await conn.fetchval(
+            "SELECT projets_epingles FROM utilisateurs WHERE id=$1::uuid",
+            current_user["id"],
+        )
+    return PinnedProjectsResponse(projet_ids=projet_ids or [])
+
+
+@router.put("/pinned-projects", response_model=PinnedProjectsResponse)
+async def update_pinned_projects(
+    payload: PinnedProjectsUpdateRequest,
+    current_user: dict = Depends(get_current_user),
+    pool: Pool = Depends(get_pool),
+):
+    """Met à jour la liste des projets épinglés pour l'utilisateur connecté."""
+    projet_ids = list(dict.fromkeys(
+        projet_id.strip()
+        for projet_id in payload.projet_ids
+        if isinstance(projet_id, str) and projet_id.strip()
+    ))
+    async with pool.acquire() as conn:
+        await conn.execute(
+            "UPDATE utilisateurs SET projets_epingles=$2 WHERE id=$1::uuid",
+            current_user["id"],
+            projet_ids,
+        )
+    return PinnedProjectsResponse(projet_ids=projet_ids)
 
 
 @router.post("/logout", status_code=204)

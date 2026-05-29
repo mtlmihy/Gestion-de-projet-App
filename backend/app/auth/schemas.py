@@ -25,6 +25,14 @@ class MeResponse(BaseModel):
     pages_autorisees: Optional[list[str]] = None
 
 
+class PinnedProjectsResponse(BaseModel):
+    projet_ids: list[str] = []
+
+
+class PinnedProjectsUpdateRequest(BaseModel):
+    projet_ids: list[str]
+
+
 class ChangePasswordRequest(BaseModel):
     """Changement de mot de passe par l'utilisateur lui-même."""
     current_password: str

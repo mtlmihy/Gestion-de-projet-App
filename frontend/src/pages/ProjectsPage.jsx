@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, Fragment } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useProject } from '../context/ProjectContext'
+import { getPinnedProjects, updatePinnedProjects } from '../api/auth'
 import ThemeToggleButton from '../components/ThemeToggleButton'
 import ProjectWizard from '../components/ProjectWizard'
 import Logo from '../components/Logo'
@@ -17,6 +18,7 @@ const loadPins = (userId) => {
 const savePins = (userId, set) => {
   try { localStorage.setItem(pinKey(userId), JSON.stringify([...set])) } catch { /* quota / privée */ }
 }
+const toPinnedSet = (value) => new Set(Array.isArray(value) ? value.filter(Boolean) : [])
 
 // ── Couleur par statut ────────────────────────────────────────────────────────
 const STATUT_STYLE = {
@@ -848,16 +850,50 @@ export default function ProjectsPage() {
   const [filtre,     setFiltre]     = useState('tous') // 'tous' | 'actifs' | 'clotures'
   const [pinned,     setPinned]     = useState(() => loadPins(user?.id))
 
-  useEffect(() => { setPinned(loadPins(user?.id)) }, [user?.id])
+  useEffect(() => {
+    let cancelled = false
 
-  const togglePin = useCallback((projetId) => {
+    const syncPinned = async () => {
+      if (!user?.id) {
+        setPinned(loadPins(user?.id))
+        return
+      }
+      try {
+        const { data } = await getPinnedProjects()
+        if (cancelled) return
+        const next = toPinnedSet(data?.projet_ids)
+        setPinned(next)
+        savePins(user.id, next)
+      } catch {
+        if (cancelled) return
+        setPinned(loadPins(user?.id))
+      }
+    }
+
+    syncPinned()
+    return () => { cancelled = true }
+  }, [user?.id])
+
+  const togglePin = useCallback(async (projetId) => {
+    let previous = null
+    let next = null
     setPinned((prev) => {
-      const next = new Set(prev)
+      previous = new Set(prev)
+      next = new Set(prev)
       if (next.has(projetId)) next.delete(projetId)
       else next.add(projetId)
       savePins(user?.id, next)
       return next
     })
+    if (!next || !user?.id) return
+    try {
+      await updatePinnedProjects([...next])
+    } catch {
+      if (!previous) return
+      setPinned(previous)
+      savePins(user?.id, previous)
+      setError('Impossible de synchroniser les projets épinglés.')
+    }
   }, [user?.id])
 
   const load = useCallback(async () => {
