@@ -875,26 +875,25 @@ export default function ProjectsPage() {
   }, [user?.id])
 
   const togglePin = useCallback(async (projetId) => {
-    let previous = null
-    let next = null
-    setPinned((prev) => {
-      previous = new Set(prev)
-      next = new Set(prev)
-      if (next.has(projetId)) next.delete(projetId)
-      else next.add(projetId)
-      savePins(user?.id, next)
-      return next
-    })
-    if (!next || !user?.id) return
+    const previous = new Set(pinned)
+    const next = new Set(pinned)
+
+    if (next.has(projetId)) next.delete(projetId)
+    else next.add(projetId)
+
+    setPinned(next)
+    savePins(user?.id, next)
+
+    if (!user?.id) return
+
     try {
       await updatePinnedProjects([...next])
     } catch {
-      if (!previous) return
       setPinned(previous)
       savePins(user?.id, previous)
       setError('Impossible de synchroniser les projets épinglés.')
     }
-  }, [user?.id])
+  }, [pinned, user?.id])
 
   const load = useCallback(async () => {
     setLoading(true)
