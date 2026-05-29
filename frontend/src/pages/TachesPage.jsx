@@ -34,6 +34,14 @@ export default function TachesPage() {
   const [fJalon,     setFJalon]     = useState(jalonFromUrl || ALL)
   const [showFilters,setShowFilters]= useState(Boolean(jalonFromUrl))
   const [jalonsOptions, setJalonsOptions] = useState([])
+  const addInitial = useMemo(() => ({
+    nom: '',
+    description: '',
+    importance: 'Moyenne',
+    avancement: 0,
+    assigne: '',
+    jalon: fJalon !== ALL ? fJalon : '',
+  }), [fJalon])
 
   // Si l'URL reçoit un nouveau ?jalon=..., synchroniser le filtre
   useEffect(() => {
@@ -285,7 +293,7 @@ export default function TachesPage() {
       </div>
 
       <Modal open={addOpen} title="Ajouter une tâche" onClose={() => setAddOpen(false)} size="lg">
-        <TacheForm onSubmit={handleAdd} onCancel={() => setAddOpen(false)} loading={saving} jalonsOptions={jalonsOptions} />
+        <TacheForm initial={addInitial} onSubmit={handleAdd} onCancel={() => setAddOpen(false)} loading={saving} jalonsOptions={jalonsOptions} />
       </Modal>
 
       <Modal open={!!editItem} title="Modifier la tâche" onClose={() => setEditItem(null)} size="lg">
