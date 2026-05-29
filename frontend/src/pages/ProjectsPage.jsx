@@ -813,11 +813,11 @@ function ProjetCard({ projet, onSelect, onGererAcces, isAdmin, isPinned, onToggl
       {/* Footer */}
       <div className="flex items-center justify-between mt-auto pt-1">
         <RoleBadge role={projet.mon_role} />
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1">
           {estProprietaire && (
             <button
               onClick={(e) => { e.stopPropagation(); onGererAcces(projet) }}
-              className="text-blue-500 hover:text-blue-700 p-1.5 rounded-lg transition-colors"
+              className="text-gray-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 p-1.5 rounded-lg transition-colors"
               title="Paramètres du projet"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">
