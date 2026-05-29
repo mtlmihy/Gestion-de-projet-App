@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 
 const IMPORTANCES = ['Faible', 'Moyenne', 'Élevée', 'Critique']
 
@@ -16,6 +16,11 @@ const cls = {
 
 export default function TacheForm({ initial, onSubmit, onCancel, loading, jalonsOptions = [] }) {
   const [form, setForm] = useState(initial ?? EMPTY)
+  const jalonsSelectOptions = useMemo(() => {
+    const values = new Set(jalonsOptions.filter(Boolean))
+    if (form.jalon) values.add(form.jalon)
+    return Array.from(values)
+  }, [jalonsOptions, form.jalon])
 
   useEffect(() => { setForm(initial ?? EMPTY) }, [initial])
 
@@ -59,10 +64,10 @@ export default function TacheForm({ initial, onSubmit, onCancel, loading, jalons
         {/* Jalon */}
         <div>
           <label className={cls.label}>Jalon</label>
-          {jalonsOptions.length > 0 ? (
+          {jalonsSelectOptions.length > 0 ? (
             <select className={cls.select} value={form.jalon} onChange={set('jalon')}>
               <option value="">(Sans jalon)</option>
-              {jalonsOptions.map((j) => <option key={j} value={j}>{j}</option>)}
+              {jalonsSelectOptions.map((j) => <option key={j} value={j}>{j}</option>)}
             </select>
           ) : (
             <input className={cls.input} value={form.jalon} onChange={set('jalon')} placeholder="Nom du jalon" />
