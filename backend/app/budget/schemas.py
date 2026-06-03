@@ -11,6 +11,7 @@ class DepenseCreate(BaseModel):
     categorie: str = 'Autre'
     description: str = ''
     montant: float = Field(..., ge=0)
+    assigne: Optional[str] = None
 
 
 class DepenseUpdate(DepenseCreate):

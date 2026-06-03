@@ -145,11 +145,27 @@ function TimelineSVG({ jalons, startDate, endDate, onSelect }) {
   )
 }
 
+// ── Bannière d'alerte inline ──────────────────────────────────────────────────
+function AlertBanner({ icon, children, level = 'error' }) {
+  const styles = {
+    error:   'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700 text-red-700 dark:text-red-300',
+    warning: 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-300',
+    info:    'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300',
+  }
+  return (
+    <div className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold ${styles[level]}`}>
+      <span className="flex-shrink-0">{icon}</span>
+      <span>{children}</span>
+    </div>
+  )
+}
+
 // ── Panneau 1 : Avancement calendaire ────────────────────────────────────────
-function PanelAvancement({ progressPct, startDate, endDate, enrichedJalons }) {
+function PanelAvancement({ progressPct, taskPct, startDate, endDate, enrichedJalons }) {
   const daysLeft = Math.max(0, Math.round((endDate - TODAY) / 86400000))
   const daysPast = Math.max(0, Math.round((TODAY - startDate) / 86400000))
   const nextJalon = enrichedJalons.find((j) => j.date > TODAY)
+  const retardAlert = progressPct > (taskPct ?? progressPct) + 15
 
   const col = progressPct >= 100 ? '#16a34a' : '#2563eb'
   const barBg = progressPct >= 100
@@ -197,6 +213,13 @@ function PanelAvancement({ progressPct, startDate, endDate, enrichedJalons }) {
           <div className="text-[.62rem] text-gray-400 dark:text-slate-500 mt-0.5">restants</div>
         </div>
       </div>
+
+      {/* Alerte retard */}
+      {retardAlert && (
+        <AlertBanner icon="⚠️" level="warning">
+          Retard détecté — le calendrier avance plus vite que la réalisation des tâches ({progressPct}% vs {taskPct}%).
+        </AlertBanner>
+      )}
 
       {/* Prochain jalon */}
       {nextJalon && (
@@ -335,6 +358,13 @@ function PanelRisques({ risques }) {
           </div>
         ))}
       </div>
+
+      {/* Alerte P1 */}
+      {p1Count > 0 && (
+        <AlertBanner icon="🔴" level="error">
+          {p1Count} risque{p1Count > 1 ? 's' : ''} critique{p1Count > 1 ? 's' : ''} (P1) actif{p1Count > 1 ? 's' : ''} — action immédiate requise.
+        </AlertBanner>
+      )}
 
       {total === 0 ? (
         <div className="flex flex-col items-center justify-center py-6 text-gray-300 dark:text-slate-600 gap-2">
@@ -482,6 +512,23 @@ function PanelBudget({ projet, depenses, taskPct, progressPct }) {
         </div>
         <span className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500">Pilotage budgétaire</span>
       </div>
+
+      {/* Alertes budget */}
+      {cpi !== null && cpi < 0.8 && (
+        <AlertBanner icon="🔴" level="error">
+          Dépassement budgétaire — CPI à {cpi.toFixed(2)} (chaque CHF dépensé produit {fmtCurrency(ev / ac, devise)} de valeur).
+        </AlertBanner>
+      )}
+      {cpi !== null && cpi >= 0.8 && cpi < 0.95 && (
+        <AlertBanner icon="⚠️" level="warning">
+          Attention budget — CPI à {cpi.toFixed(2)}, légèrement en dessous de l'objectif.
+        </AlertBanner>
+      )}
+      {pctConsomme >= 90 && cpi === null && (
+        <AlertBanner icon="⚠️" level="warning">
+          Budget consommé à {pctConsomme.toFixed(0)} % — surveiller les dépenses restantes.
+        </AlertBanner>
+      )}
 
       {/* CPI + SPI badges */}
       <div className="grid grid-cols-2 gap-3">
@@ -731,6 +778,7 @@ export default function PlanningPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <PanelAvancement
           progressPct={progressPct}
+          taskPct={taskPct}
           startDate={startDate}
           endDate={endDate}
           enrichedJalons={enrichedJalons}
@@ -750,7 +798,7 @@ export default function PlanningPage() {
 
       {/* ── Courbe S ───────────────────────────────────────────────────── */}
       {points && points.length > 1 && (
-        <SCurve points={points} startDate={startDate} endDate={endDate} />
+        <SCurve points={points} startDate={startDate} endDate={endDate} projectName={meta.nom} />
       )}
 
       {/* ── Timeline SVG ───────────────────────────────────────────────── */}

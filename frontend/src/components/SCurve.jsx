@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 
 function weightOf(importance) {
   switch ((importance || '').toLowerCase()) {
@@ -10,7 +10,7 @@ function weightOf(importance) {
   }
 }
 
-export default function SCurve({ points = [], startDate, endDate }) {
+export default function SCurve({ points = [], startDate, endDate, projectName = '' }) {
   const W = 900, H = 260, PL = 60, PR = 60, PT = 20, PB = 36
   const TW = W - PL - PR
 
@@ -21,6 +21,22 @@ export default function SCurve({ points = [], startDate, endDate }) {
 
   const totalPlanned = points[points.length - 1].planned || 0
   const latestCompleted = points[points.length - 1].completed || 0
+  const ecart = latestCompleted - totalPlanned
+  const rendement = totalPlanned > 0 ? (latestCompleted / totalPlanned) * 100 : null
+
+  const exportCSV = useCallback(() => {
+    const header = 'Date,Prévu,Réalisé\n'
+    const rows = points.map((p) =>
+      `${p.date.toLocaleDateString('fr-CH')},${p.planned},${p.completed}`
+    ).join('\n')
+    const blob = new Blob([header + rows], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `courbe-s${projectName ? '-' + projectName : ''}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }, [points, projectName])
 
   function xOf(d) { return PL + (d - startDate) / (endDate - startDate) * TW }
   function yOf(v) { return PT + (H - PT - PB) * (1 - (v / maxY)) }
@@ -35,7 +51,19 @@ export default function SCurve({ points = [], startDate, endDate }) {
 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm px-6 py-5 overflow-x-auto scrollbar-hidden">
-      <div className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-3">Courbe S — Charge prévue vs restante</div>
+      <div className="flex items-center justify-between mb-3">
+        <div className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500">Courbe S — Charge prévue vs restante</div>
+        <button
+          onClick={exportCSV}
+          className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 border border-gray-200 dark:border-slate-600 rounded-lg px-2.5 py-1 transition-colors"
+          title="Exporter les données CSV"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          CSV
+        </button>
+      </div>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" xmlns="http://www.w3.org/2000/svg">
         {/* grid lines */}
         {[0,0.25,0.5,0.75,1].map((t) => (
@@ -82,10 +110,18 @@ export default function SCurve({ points = [], startDate, endDate }) {
         </g>
       </svg>
 
-      <div className="mt-3 flex gap-6 text-sm text-gray-600 dark:text-slate-400">
+      <div className="mt-3 flex flex-wrap gap-4 text-sm text-gray-600 dark:text-slate-400">
         <div><strong>Total prévu :</strong> {totalPlanned}</div>
         <div><strong>Réalisé :</strong> {Math.round(latestCompleted)}</div>
         <div><strong>Restant :</strong> {Math.round(Math.max(0, totalPlanned - latestCompleted))}</div>
+        <div className={ecart >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
+          <strong>Écart :</strong> {ecart >= 0 ? '+' : ''}{Math.round(ecart)}
+        </div>
+        {rendement !== null && (
+          <div className={rendement >= 100 ? 'text-green-600 dark:text-green-400' : rendement >= 80 ? 'text-orange-500 dark:text-orange-400' : 'text-red-600 dark:text-red-400'}>
+            <strong>Rendement :</strong> {rendement.toFixed(1)} %
+          </div>
+        )}
       </div>
     </div>
   )

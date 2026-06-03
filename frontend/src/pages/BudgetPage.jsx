@@ -4,6 +4,8 @@ import KpiCard from '../components/KpiCard'
 import Modal from '../components/Modal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { getDepenses, createDepense, updateDepense, deleteDepense } from '../api/budget'
+import DonutChart from '../components/DonutChart'
+import { exportCSV } from '../utils/export'
 
 const CATEGORIES = ['Prestation', 'Matériel', 'Déplacement', 'Formation', 'Sous-traitance', 'Autre']
 
@@ -16,7 +18,16 @@ const CAT_COLORS = {
   'Autre':           'bg-gray-100   text-gray-700   dark:bg-slate-700     dark:text-slate-300',
 }
 
-const EMPTY_FORM = { date: new Date().toISOString().slice(0, 10), categorie: 'Autre', description: '', montant: '' }
+const CAT_HEX = {
+  'Prestation':     '#2563eb',
+  'Matériel':       '#eab308',
+  'Déplacement':    '#9333ea',
+  'Formation':      '#16a34a',
+  'Sous-traitance': '#ea580c',
+  'Autre':          '#94a3b8',
+}
+
+const EMPTY_FORM = { date: new Date().toISOString().slice(0, 10), categorie: 'Autre', description: '', montant: '', assigne: '' }
 
 function fmt(n, devise = 'CHF') {
   return new Intl.NumberFormat('fr-CH', { style: 'currency', currency: devise }).format(n)
@@ -30,7 +41,7 @@ function DepenseModal({ open, initial, devise, onSave, onClose }) {
   useEffect(() => {
     if (open) {
       setForm(initial
-        ? { date: initial.date, categorie: initial.categorie, description: initial.description, montant: String(initial.montant) }
+        ? { date: initial.date, categorie: initial.categorie, description: initial.description, montant: String(initial.montant), assigne: initial.assigne || '' }
         : { ...EMPTY_FORM, date: new Date().toISOString().slice(0, 10) }
       )
       setError('')
@@ -75,11 +86,19 @@ function DepenseModal({ open, initial, devise, onSave, onClose }) {
             placeholder="Description"
             className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-slate-400 mb-1">Montant ({devise}) *</label>
-          <input type="number" min="0" step="0.01" value={form.montant} onChange={e => set('montant', e.target.value)} required
-            placeholder="Montant"
-            className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 dark:text-slate-400 mb-1">Montant ({devise}) *</label>
+            <input type="number" min="0" step="0.01" value={form.montant} onChange={e => set('montant', e.target.value)} required
+              placeholder="Montant"
+              className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 dark:text-slate-400 mb-1">Assigné à</label>
+            <input type="text" value={form.assigne} onChange={e => set('assigne', e.target.value)} maxLength={100}
+              placeholder="Nom ou équipe"
+              className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
         </div>
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         <div className="flex justify-end gap-3 pt-2">
@@ -105,6 +124,7 @@ export default function BudgetPage() {
   const [modal, setModal]   = useState({ open: false, item: null })
   const [confirm, setConfirm] = useState({ open: false, id: null })
   const [filterCat, setFilterCat] = useState('Toutes')
+  const [filterAssigne, setFilterAssigne] = useState('Tous')
 
   const devise = projet?.devise || 'CHF'
 
@@ -142,7 +162,20 @@ export default function BudgetPage() {
   const solde        = budgetPrevu - totalDepense
   const pct          = budgetPrevu > 0 ? Math.min(100, (totalDepense / budgetPrevu) * 100) : null
 
-  const visible = filterCat === 'Toutes' ? lignes : lignes.filter(l => l.categorie === filterCat)
+  const donutSlices = CATEGORIES
+    .map((cat) => ({
+      label: cat,
+      value: lignes.filter((l) => l.categorie === cat).reduce((s, l) => s + Number(l.montant), 0),
+      color: CAT_HEX[cat] || '#94a3b8',
+    }))
+    .filter((s) => s.value > 0)
+
+  const assignesListe = ['Tous', ...Array.from(new Set(lignes.map((l) => l.assigne).filter(Boolean))).sort()]
+  const visible = lignes.filter((l) => {
+    if (filterCat !== 'Toutes' && l.categorie !== filterCat) return false
+    if (filterAssigne !== 'Tous' && l.assigne !== filterAssigne) return false
+    return true
+  })
 
   async function handleSave(data) {
     if (modal.item) {
@@ -172,6 +205,26 @@ export default function BudgetPage() {
         <KpiCard label="Lignes" value={lignes.length} />
       </div>
 
+      {/* Répartition par catégorie */}
+      {donutSlices.length > 0 && (
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm px-5 py-4 flex items-center gap-6">
+          <div className="w-20 flex-shrink-0">
+            <DonutChart slices={donutSlices} title={String(donutSlices.length)} size={80} />
+          </div>
+          <div className="flex flex-wrap gap-x-5 gap-y-2">
+            {donutSlices.map((s) => (
+              <div key={s.label} className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: s.color }} />
+                <span className="text-sm text-gray-700 dark:text-slate-300">
+                  <strong>{fmt(s.value, devise)}</strong> <span className="text-gray-400 dark:text-slate-500">{s.label}</span>
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="ml-auto text-[.65rem] text-gray-300 dark:text-slate-600 italic flex-shrink-0">Par catégorie</div>
+        </div>
+      )}
+
       {/* Barre de progression */}
       {pct !== null && (
         <div>
@@ -190,7 +243,7 @@ export default function BudgetPage() {
 
       {/* Barre d'actions */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex flex-wrap gap-2 items-center">
           {['Toutes', ...CATEGORIES].map(c => (
             <button key={c} onClick={() => setFilterCat(c)}
               className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors
@@ -200,13 +253,46 @@ export default function BudgetPage() {
               {c}
             </button>
           ))}
+          {assignesListe.length > 1 && (
+            <select
+              value={filterAssigne}
+              onChange={(e) => setFilterAssigne(e.target.value)}
+              className="border border-gray-300 dark:border-slate-600 rounded-full px-3 py-1 text-xs font-medium bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            >
+              {assignesListe.map((a) => <option key={a}>{a}</option>)}
+            </select>
+          )}
         </div>
-        {!estLecteur && (
-          <button onClick={() => setModal({ open: true, item: null })}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium">
-            + Ajouter une dépense
-          </button>
-        )}
+          <div className="flex items-center gap-2">
+          {lignes.length > 0 && (
+            <button
+              onClick={() => exportCSV(
+                'depenses',
+                ['Date', 'Catégorie', 'Description', `Montant (${devise})`, 'Assigné'],
+                lignes.map((l) => [
+                  new Date(l.date).toLocaleDateString('fr-CH'),
+                  l.categorie,
+                  l.description || '',
+                  Number(l.montant).toFixed(2),
+                  l.assigne || '',
+                ])
+              )}
+              className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 border border-gray-200 dark:border-slate-600 rounded-lg px-2.5 py-2 transition-colors"
+              title="Exporter CSV"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              CSV
+            </button>
+          )}
+          {!estLecteur && (
+            <button onClick={() => setModal({ open: true, item: null })}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium">
+              + Ajouter une dépense
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Erreur / chargement */}
@@ -225,6 +311,7 @@ export default function BudgetPage() {
                 <th className="px-4 py-3 text-left">Date</th>
                 <th className="px-4 py-3 text-left">Catégorie</th>
                 <th className="px-4 py-3 text-left">Description</th>
+                <th className="px-4 py-3 text-left">Assigné</th>
                 <th className="px-4 py-3 text-right">Montant</th>
                 {!estLecteur && <th className="px-4 py-3 text-center">Actions</th>}
               </tr>
@@ -243,6 +330,9 @@ export default function BudgetPage() {
                   </td>
                   <td className="px-4 py-3 text-gray-700 dark:text-slate-200 max-w-xs truncate">
                     {ligne.description || <span className="text-gray-400 italic">—</span>}
+                  </td>
+                  <td className="px-4 py-3 text-gray-600 dark:text-slate-300 whitespace-nowrap text-xs">
+                    {ligne.assigne || <span className="text-gray-300 dark:text-slate-600 italic">—</span>}
                   </td>
                   <td className="px-4 py-3 text-right font-mono font-semibold text-gray-900 dark:text-slate-100 whitespace-nowrap">
                     {fmt(ligne.montant, devise)}
@@ -266,7 +356,7 @@ export default function BudgetPage() {
             </tbody>
             <tfoot>
               <tr className="bg-gray-50 dark:bg-slate-700/40 border-t-2 border-gray-200 dark:border-slate-600">
-                <td colSpan={!estLecteur ? 3 : 3} className="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase">
+                <td colSpan={4} className="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase">
                   Total ({visible.length} ligne{visible.length > 1 ? 's' : ''})
                 </td>
                 <td className="px-4 py-3 text-right font-mono font-bold text-gray-900 dark:text-slate-100">

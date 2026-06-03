@@ -9,6 +9,8 @@ import ProgressBar from '../components/ProgressBar'
 import Modal from '../components/Modal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import TacheForm from '../components/TacheForm'
+import DonutChart from '../components/DonutChart'
+import { exportCSV } from '../utils/export'
 
 const ALL = 'Tous'
 
@@ -121,6 +123,15 @@ export default function TachesPage() {
   const critiques = taches.filter((t) => t.importance === 'Critique').length
   const jalonsCount = new Set(taches.map((t) => t.jalon).filter(Boolean)).size
 
+  const terminees = taches.filter((t) => (t.avancement ?? 0) >= 100).length
+  const enCours   = taches.filter((t) => (t.avancement ?? 0) > 0 && (t.avancement ?? 0) < 100).length
+  const aFaire    = taches.filter((t) => (t.avancement ?? 0) === 0).length
+  const donutSlices = [
+    { label: 'Terminées', value: terminees, color: '#16a34a' },
+    { label: 'En cours',  value: enCours,   color: '#2563eb' },
+    { label: 'À faire',   value: aFaire,    color: '#94a3b8' },
+  ]
+
   const handleAdd = async (data) => {
     setSaving(true)
     try   { await createTache(projet.id, data); await load(); setAddOpen(false); notify('Tâche ajoutée.') }
@@ -154,25 +165,68 @@ export default function TachesPage() {
           </svg>
           Suivi des Tâches
         </h1>
-        <button
-          onClick={() => setAddOpen(true)}
-          className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 sm:px-4 py-2 rounded-lg transition-colors"
-          hidden={estLecteur}
-        >
-          <span className="text-lg leading-none">＋</span>
-          <span className="hidden sm:inline">Ajouter une tâche</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {taches.length > 0 && (
+            <button
+              onClick={() => exportCSV(
+                'taches',
+                ['Nom', 'Assigné', 'Jalon', 'Importance', 'Charge (j)', 'Charge (h)', 'Avancement (%)', 'Description'],
+                taches.map((t) => [
+                  t.nom, t.assigne, t.jalon || '', t.importance,
+                  t.charge_jours != null ? t.charge_jours : '',
+                  t.charge_jours != null ? (t.charge_jours * 8).toFixed(1) : '',
+                  t.avancement ?? 0, t.description || '',
+                ])
+              )}
+              className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 border border-gray-200 dark:border-slate-600 rounded-lg px-2.5 py-2 transition-colors"
+              title="Exporter CSV"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              CSV
+            </button>
+          )}
+          <button
+            onClick={() => setAddOpen(true)}
+            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 sm:px-4 py-2 rounded-lg transition-colors"
+            hidden={estLecteur}
+          >
+            <span className="text-lg leading-none">＋</span>
+            <span className="hidden sm:inline">Ajouter une tâche</span>
+          </button>
+        </div>
       </div>
 
       <Notification {...notif} />
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
         <KpiCard label="Total"           value={taches.length} />
         <KpiCard label="Avancement moy." value={`${avgAvancement} %`} colorClass="text-blue-600" />
         <KpiCard label="Critiques"       value={critiques}   colorClass="text-red-600" />
         <KpiCard label="Jalons"          value={jalonsCount} colorClass="text-purple-600" />
       </div>
+
+      {/* Répartition par statut */}
+      {taches.length > 0 && (
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm px-5 py-4 mb-4 flex items-center gap-6">
+          <div className="w-20 flex-shrink-0">
+            <DonutChart slices={donutSlices} title={`${avgAvancement}`} size={80} />
+          </div>
+          <div className="flex flex-wrap gap-4">
+            {donutSlices.map((s) => (
+              <div key={s.label} className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: s.color }} />
+                <span className="text-sm text-gray-700 dark:text-slate-300">
+                  <strong>{s.value}</strong> {s.label}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="ml-auto text-[.65rem] text-gray-300 dark:text-slate-600 italic">Répartition des tâches</div>
+        </div>
+      )}
 
       {/* Filtres */}
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm mb-4">
@@ -251,7 +305,7 @@ export default function TachesPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-slate-700 border-b border-gray-200 dark:border-slate-600">
                 <tr>
-                  {['Importance', 'Nom', 'Assigné', 'Jalon', 'Avancement', ''].map((h) => (
+                  {['Importance', 'Nom', 'Assigné', 'Jalon', 'Charge', 'Avancement', ''].map((h) => (
                     <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -266,6 +320,12 @@ export default function TachesPage() {
                     </td>
                     <td className="px-4 py-3 text-gray-700 dark:text-slate-300 whitespace-nowrap">{t.assigne}</td>
                     <td className="px-4 py-3 text-gray-500 dark:text-slate-400 text-xs whitespace-nowrap">{t.jalon || '—'}</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-slate-300 text-xs whitespace-nowrap">
+                      {t.charge_jours != null
+                        ? <span title={`${(t.charge_jours * 8).toFixed(1)}h`}>{t.charge_jours}j</span>
+                        : <span className="text-gray-300 dark:text-slate-600">—</span>
+                      }
+                    </td>
                     <td className="px-4 py-3 min-w-[100px]"><ProgressBar value={t.avancement} /></td>
                     <td className="px-4 py-3">
                       {!estLecteur && (

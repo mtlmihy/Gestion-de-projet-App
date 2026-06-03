@@ -6,6 +6,8 @@ import Badge, { PrioriteBadge } from '../components/Badge'
 import Modal from '../components/Modal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import RisqueForm from '../components/RisqueForm'
+import DonutChart from '../components/DonutChart'
+import { exportCSV } from '../utils/export'
 
 const ALL = 'Tous'
 
@@ -70,6 +72,12 @@ export default function RisquesPage() {
   const fermes    = risques.filter((r) => r.statut === 'Fermé').length
   const critiques = risques.filter((r) => r.priorite === 1).length
 
+  const donutSlices = [
+    { label: 'P1 Critiques', value: risques.filter((r) => r.priorite === 1).length, color: '#dc2626' },
+    { label: 'P2 Élevés',    value: risques.filter((r) => r.priorite === 2).length, color: '#ea580c' },
+    { label: 'P3 Faibles',   value: risques.filter((r) => r.priorite === 3).length, color: '#16a34a' },
+  ]
+
   const handleAdd = async (data) => {
     setSaving(true)
     try {
@@ -125,26 +133,64 @@ export default function RisquesPage() {
           </svg>
           Registre des Risques
         </h1>
-        <button
-          onClick={() => setAddOpen(true)}
-          className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 sm:px-4 py-2 rounded-lg transition-colors"
-          hidden={estLecteur}
-        >
-          <span className="text-lg leading-none">＋</span>
-          <span className="hidden sm:inline">Ajouter un risque</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {risques.length > 0 && (
+            <button
+              onClick={() => exportCSV(
+                'risques',
+                ['Identifiant', 'Catégorie', 'Probabilité', 'Impact', 'Priorité', 'Responsable', 'Statut', 'Description'],
+                risques.map((r) => [r.identifiant, r.categorie, r.probabilite, r.impact, r.priorite, r.responsable, r.statut, r.description || ''])
+              )}
+              className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 border border-gray-200 dark:border-slate-600 rounded-lg px-2.5 py-2 transition-colors"
+              title="Exporter CSV"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              CSV
+            </button>
+          )}
+          <button
+            onClick={() => setAddOpen(true)}
+            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 sm:px-4 py-2 rounded-lg transition-colors"
+            hidden={estLecteur}
+          >
+            <span className="text-lg leading-none">＋</span>
+            <span className="hidden sm:inline">Ajouter un risque</span>
+          </button>
+        </div>
       </div>
 
       <Notification {...notif} />
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
         <KpiCard label="Total"         value={total} />
         <KpiCard label="Ouverts"       value={ouverts}   colorClass="text-red-600" />
         <KpiCard label="En cours"      value={enCours}   colorClass="text-yellow-600" />
         <KpiCard label="Fermés"        value={fermes}    colorClass="text-green-600" />
         <KpiCard label="Critiques (P1)"value={critiques} colorClass="text-red-700" />
       </div>
+
+      {/* Répartition par priorité */}
+      {total > 0 && (
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm px-5 py-4 mb-4 flex items-center gap-6">
+          <div className="w-20 flex-shrink-0">
+            <DonutChart slices={donutSlices} title={String(total)} size={80} />
+          </div>
+          <div className="flex flex-wrap gap-4">
+            {donutSlices.map((s) => (
+              <div key={s.label} className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: s.color }} />
+                <span className="text-sm text-gray-700 dark:text-slate-300">
+                  <strong>{s.value}</strong> {s.label}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="ml-auto text-[.65rem] text-gray-300 dark:text-slate-600 italic">Répartition par priorité</div>
+        </div>
+      )}
 
       {/* Filtres */}
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm mb-4">

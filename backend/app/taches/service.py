@@ -29,8 +29,8 @@ async def create(conn: Connection, projet_id: str, data: dict) -> dict:
         """
         INSERT INTO taches
             (id, projet_id, nom, description, importance,
-             avancement, assigne_a, jalon, statut, echeance)
-        VALUES ($1::uuid,$2::uuid,$3,$4,$5,$6,$7,$8,$9,$10::date)
+             avancement, assigne_a, jalon, statut, echeance, charge_jours)
+        VALUES ($1::uuid,$2::uuid,$3,$4,$5,$6,$7,$8,$9,$10::date,$11)
         RETURNING *
         """,
         str(uuid.uuid4()),
@@ -43,6 +43,7 @@ async def create(conn: Connection, projet_id: str, data: dict) -> dict:
         data.get("jalon", ""),
         data.get("statut", "A faire"),
         echeance,
+        data.get("charge_jours"),
     )
     return _row(row)
 
@@ -53,7 +54,8 @@ async def update(conn: Connection, tache_id: str, data: dict) -> dict | None:
         """
         UPDATE taches
         SET nom=$2, description=$3, importance=$4,
-            avancement=$5, assigne_a=$6, jalon=$7, statut=$8, echeance=$9::date
+            avancement=$5, assigne_a=$6, jalon=$7, statut=$8, echeance=$9::date,
+            charge_jours=$10
         WHERE id=$1::uuid
         RETURNING *
         """,
@@ -66,6 +68,7 @@ async def update(conn: Connection, tache_id: str, data: dict) -> dict | None:
         data.get("jalon", ""),
         data.get("statut", "A faire"),
         echeance,
+        data.get("charge_jours"),
     )
     return _row(row) if row else None
 

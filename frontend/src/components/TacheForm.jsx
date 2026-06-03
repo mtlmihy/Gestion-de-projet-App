@@ -1,10 +1,17 @@
 import { useState, useEffect, useMemo } from 'react'
 
 const IMPORTANCES = ['Faible', 'Moyenne', 'Élevée', 'Critique']
+const HEURES_PAR_JOUR = 8
 
 const EMPTY = {
   nom: '', description: '', importance: 'Moyenne',
-  avancement: 0, assigne: '', jalon: '',
+  avancement: 0, assigne: '', jalon: '', charge_jours: '',
+}
+
+/** Convertit une saisie en heures vers des jours (1J = 8h). Ex : 4 → 0.5, 8.4 → 1.05 */
+function heuresToJours(h) {
+  const n = parseFloat(h)
+  return isNaN(n) || n < 0 ? null : Math.round((n / HEURES_PAR_JOUR) * 100) / 100
 }
 
 const cls = {
@@ -15,21 +22,26 @@ const cls = {
 }
 
 export default function TacheForm({ initial, onSubmit, onCancel, loading, jalonsOptions = [] }) {
-  const [form, setForm] = useState(initial ?? EMPTY)
+  const toFormState = (data) => data
+    ? { ...data, charge_jours: data.charge_jours != null ? String(data.charge_jours * HEURES_PAR_JOUR) : '' }
+    : { ...EMPTY }
+
+  const [form, setForm] = useState(() => toFormState(initial))
   const jalonsSelectOptions = useMemo(() => {
     const values = new Set(jalonsOptions.filter(Boolean))
     if (form.jalon) values.add(form.jalon)
     return Array.from(values)
   }, [jalonsOptions, form.jalon])
 
-  useEffect(() => { setForm(initial ?? EMPTY) }, [initial])
+  useEffect(() => { setForm(toFormState(initial)) }, [initial])
 
   const set = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }))
   const setNum = (field) => (e) => setForm((f) => ({ ...f, [field]: Number(e.target.value) }))
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    onSubmit(form)
+    const chargeJours = heuresToJours(form.charge_jours)
+    onSubmit({ ...form, charge_jours: chargeJours })
   }
 
   return (
@@ -72,6 +84,25 @@ export default function TacheForm({ initial, onSubmit, onCancel, loading, jalons
           ) : (
             <input className={cls.input} value={form.jalon} onChange={set('jalon')} placeholder="Nom du jalon" />
           )}
+        </div>
+
+        {/* Charge */}
+        <div>
+          <label className={cls.label}>
+            Charge (heures)
+            {form.charge_jours !== '' && !isNaN(parseFloat(form.charge_jours)) && (
+              <span className="ml-2 text-xs text-gray-400 font-normal">
+                = {heuresToJours(form.charge_jours)} j. ({HEURES_PAR_JOUR}h/j)
+              </span>
+            )}
+          </label>
+          <input
+            type="number" min="0" step="0.5"
+            value={form.charge_jours}
+            onChange={set('charge_jours')}
+            placeholder="ex: 4 (= 0.5 jour)"
+            className={cls.input}
+          />
         </div>
 
         {/* Avancement */}
