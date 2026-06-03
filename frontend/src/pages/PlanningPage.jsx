@@ -25,14 +25,13 @@ function fmtCurrency(n, devise = 'CHF') {
 
 const TASK_WEIGHT = (imp) => {
   const v = (imp || '').toLowerCase()
-  if (v === 'faible') return 1
+  if (v === 'faible')  return 1
   if (v === 'moyenne') return 2
   if (v === 'élevée' || v === 'elevee') return 3
   if (v === 'critique') return 4
   return 2
 }
 
-// Couleur d'un jalon selon avancement tâches associées, ou date
 function jalonColor(jalon, tasks) {
   const linked = tasks.filter((t) => (t.jalon ?? '').trim() === jalon.label.trim())
   if (linked.length > 0) {
@@ -69,7 +68,6 @@ function jalonAvg(jalon, tasks) {
   return Math.round(linked.reduce((s, t) => s + (t.avancement ?? 0), 0) / linked.length)
 }
 
-// ── Barre de progression mini ─────────────────────────────────────────────────
 function MiniBar({ value, color = '#3b82f6' }) {
   const pct = Math.max(0, Math.min(100, value ?? 0))
   return (
@@ -124,11 +122,7 @@ function TimelineSVG({ jalons, startDate, endDate, onSelect }) {
       else lastBottomDateX = x
     }
     return (
-      <g
-        key={i}
-        onClick={onSelect ? () => onSelect(j.label) : undefined}
-        style={onSelect ? { cursor: 'pointer' } : undefined}
-      >
+      <g key={i} onClick={onSelect ? () => onSelect(j.label) : undefined} style={onSelect ? { cursor: 'pointer' } : undefined}>
         {onSelect && <title>{`Voir les tâches du jalon « ${j.label} »`}</title>}
         <line x1={x} y1={sy1} x2={x} y2={sy2} stroke={col} strokeWidth="1.5" strokeDasharray="3,2" opacity=".8" />
         <polygon points={`${x},${BAR_Y - DS} ${x + DS},${BAR_Y} ${x},${BAR_Y + DS} ${x - DS},${BAR_Y}`} fill={col} />
@@ -151,369 +145,394 @@ function TimelineSVG({ jalons, startDate, endDate, onSelect }) {
   )
 }
 
-// ── KPI cards de pilotage ─────────────────────────────────────────────────────
-function PilotageKpis({ progressPct, taskPct, cpi, critiques }) {
-  const cpiColor = cpi === null
-    ? 'text-gray-400'
-    : cpi >= 0.95 ? 'text-green-600 dark:text-green-400'
-    : cpi >= 0.80 ? 'text-amber-500 dark:text-amber-400'
-    : 'text-red-600 dark:text-red-400'
+// ── Panneau 1 : Avancement calendaire ────────────────────────────────────────
+function PanelAvancement({ progressPct, startDate, endDate, enrichedJalons }) {
+  const daysLeft = Math.max(0, Math.round((endDate - TODAY) / 86400000))
+  const daysPast = Math.max(0, Math.round((TODAY - startDate) / 86400000))
+  const nextJalon = enrichedJalons.find((j) => j.date > TODAY)
 
-  const cpiLabel = cpi === null ? '—'
-    : cpi >= 0.95 ? 'Sous budget'
-    : cpi >= 0.80 ? 'Attention'
-    : 'Dépassement'
-
-  const taskColor = taskPct >= 70 ? 'text-green-600 dark:text-green-400'
-    : taskPct >= 30 ? 'text-amber-500 dark:text-amber-400'
-    : 'text-red-600 dark:text-red-400'
-
-  const critColor = critiques > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
-
-  const cards = [
-    {
-      label: 'Avancement calendaire',
-      value: `${progressPct} %`,
-      sub: 'Progression temporelle',
-      valueClass: 'text-blue-600 dark:text-blue-400',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-        </svg>
-      ),
-      iconBg: 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400',
-    },
-    {
-      label: 'Réalisation tâches',
-      value: `${taskPct} %`,
-      sub: 'Moyenne pondérée',
-      valueClass: taskColor,
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-        </svg>
-      ),
-      iconBg: 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400',
-    },
-    {
-      label: 'CPI (Coût)',
-      value: cpi === null ? '—' : cpi.toFixed(2),
-      sub: cpiLabel,
-      valueClass: cpiColor,
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-        </svg>
-      ),
-      iconBg: 'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400',
-    },
-    {
-      label: 'Risques critiques',
-      value: critiques,
-      sub: critiques === 0 ? 'Aucun risque P1' : `${critiques} risque${critiques > 1 ? 's' : ''} P1`,
-      valueClass: critColor,
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-        </svg>
-      ),
-      iconBg: critiques > 0
-        ? 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400'
-        : 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400',
-    },
-  ]
+  const col = progressPct >= 100 ? '#16a34a' : '#2563eb'
+  const barBg = progressPct >= 100
+    ? '#16a34a'
+    : 'linear-gradient(90deg, #2563eb, #60a5fa)'
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      {cards.map((c) => (
-        <div key={c.label} className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm px-5 py-4 flex items-start gap-3">
-          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${c.iconBg}`}>
-            {c.icon}
-          </div>
-          <div className="min-w-0">
-            <div className="text-[.65rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-0.5">{c.label}</div>
-            <div className={`text-2xl font-bold leading-tight ${c.valueClass}`}>{c.value}</div>
-            <div className="text-[.68rem] text-gray-400 dark:text-slate-500 mt-0.5">{c.sub}</div>
-          </div>
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-4">
+      {/* Header */}
+      <div className="flex items-center gap-2">
+        <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
+          <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
         </div>
-      ))}
+        <span className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500">Avancement calendaire</span>
+      </div>
+
+      {/* Valeur principale */}
+      <div className="flex items-end gap-3">
+        <span className="text-5xl font-black leading-none" style={{ color: col }}>{progressPct}%</span>
+        <span className="text-xs text-gray-400 dark:text-slate-500 pb-1">du projet écoulé</span>
+      </div>
+
+      {/* Barre */}
+      <div>
+        <div className="w-full bg-gray-100 dark:bg-slate-700 rounded-full h-3 overflow-hidden">
+          <div className="h-3 rounded-full transition-all duration-500" style={{ width: `${progressPct}%`, background: barBg }} />
+        </div>
+        <div className="flex justify-between text-[.65rem] text-gray-400 dark:text-slate-500 mt-1">
+          <span>{fmtShort(startDate)}</span>
+          <span className="text-red-500 font-semibold">Auj. {fmtShort(TODAY)}</span>
+          <span>{fmtShort(endDate)}</span>
+        </div>
+      </div>
+
+      {/* Compteurs */}
+      <div className="grid grid-cols-2 gap-2">
+        <div className="bg-gray-50 dark:bg-slate-700/50 rounded-xl p-3 text-center">
+          <div className="text-xl font-bold text-gray-700 dark:text-slate-200">{daysPast}j</div>
+          <div className="text-[.62rem] text-gray-400 dark:text-slate-500 mt-0.5">écoulés</div>
+        </div>
+        <div className="bg-gray-50 dark:bg-slate-700/50 rounded-xl p-3 text-center">
+          <div className="text-xl font-bold text-gray-700 dark:text-slate-200">{daysLeft}j</div>
+          <div className="text-[.62rem] text-gray-400 dark:text-slate-500 mt-0.5">restants</div>
+        </div>
+      </div>
+
+      {/* Prochain jalon */}
+      {nextJalon && (
+        <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl px-3 py-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
+          <span className="text-xs text-blue-700 dark:text-blue-300 truncate font-medium">
+            {nextJalon.label}
+          </span>
+          <span className="text-xs text-blue-400 dark:text-blue-500 flex-shrink-0">{fmtShort(nextJalon.date)}</span>
+        </div>
+      )}
     </div>
   )
 }
 
-// ── Matrice des risques 3×3 ───────────────────────────────────────────────────
-function RiskMatrixPanel({ risques }) {
-  const PROBA = ['Faible', 'Moyenne', 'Élevée']
+// ── Panneau 2 : Réalisation tâches ───────────────────────────────────────────
+function PanelTaches({ taskPct, taches }) {
+  const terminees  = taches.filter((t) => (t.avancement ?? 0) >= 100).length
+  const enCours    = taches.filter((t) => (t.avancement ?? 0) > 0 && (t.avancement ?? 0) < 100).length
+  const nonDemarr  = taches.filter((t) => (t.avancement ?? 0) === 0).length
+  const total      = taches.length
+  const critiques  = taches.filter((t) => (t.importance || '').toLowerCase() === 'critique').length
+
+  const col = taskPct >= 70 ? '#16a34a' : taskPct >= 30 ? '#f59e0b' : '#ef4444'
+  const barBg = taskPct >= 70 ? '#16a34a' : taskPct >= 30 ? '#f59e0b' : '#ef4444'
+
+  return (
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-4">
+      {/* Header */}
+      <div className="flex items-center gap-2">
+        <div className="w-8 h-8 bg-green-100 dark:bg-green-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
+          <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+        </div>
+        <span className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500">Réalisation des tâches</span>
+      </div>
+
+      {/* Valeur principale */}
+      <div className="flex items-end gap-3">
+        <span className="text-5xl font-black leading-none" style={{ color: col }}>{taskPct}%</span>
+        <span className="text-xs text-gray-400 dark:text-slate-500 pb-1">complété (pondéré)</span>
+      </div>
+
+      {/* Barre */}
+      <div>
+        <div className="w-full bg-gray-100 dark:bg-slate-700 rounded-full h-3 overflow-hidden">
+          <div className="h-3 rounded-full transition-all duration-500" style={{ width: `${taskPct}%`, background: barBg }} />
+        </div>
+        <div className="flex justify-between text-[.65rem] text-gray-400 dark:text-slate-500 mt-1">
+          <span>0%</span>
+          <span>{total} tâche{total > 1 ? 's' : ''} au total</span>
+          <span>100%</span>
+        </div>
+      </div>
+
+      {/* Compteurs statuts */}
+      <div className="grid grid-cols-3 gap-2">
+        {[
+          { label: 'Terminées', val: terminees,  color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-900/20' },
+          { label: 'En cours',  val: enCours,    color: 'text-blue-600 dark:text-blue-400',   bg: 'bg-blue-50 dark:bg-blue-900/20' },
+          { label: 'À faire',   val: nonDemarr,  color: 'text-gray-500 dark:text-slate-400',  bg: 'bg-gray-50 dark:bg-slate-700/50' },
+        ].map((s) => (
+          <div key={s.label} className={`${s.bg} rounded-xl p-2.5 text-center`}>
+            <div className={`text-xl font-bold ${s.color}`}>{s.val}</div>
+            <div className="text-[.62rem] text-gray-400 dark:text-slate-500 mt-0.5">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Tâches critiques */}
+      {critiques > 0 && (
+        <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl px-3 py-2">
+          <svg className="w-3.5 h-3.5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <span className="text-xs text-red-700 dark:text-red-300 font-medium">
+            {critiques} tâche{critiques > 1 ? 's' : ''} critique{critiques > 1 ? 's' : ''}
+          </span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Panneau 3 : Matrice des risques ──────────────────────────────────────────
+function PanelRisques({ risques }) {
+  const PROBA  = ['Faible', 'Moyenne', 'Élevée']
   const IMPACT = ['Faible', 'Moyen', 'Élevé']
 
-  // score de priorité : probScore × impactScore
   const probScore  = { Faible: 1, Moyenne: 2, 'Élevée': 3 }
   const impactScore = { Faible: 1, Moyen: 2, 'Élevé': 3 }
 
-  // Couleur de cellule selon score (hors risques fermés)
-  function cellColor(prob, impact) {
+  function cellStyle(prob, impact) {
     const s = probScore[prob] * impactScore[impact]
-    if (s >= 6) return { bg: '#fef2f2', border: '#fca5a5', text: '#dc2626' }  // rouge P1
-    if (s >= 3) return { bg: '#fff7ed', border: '#fdba74', text: '#ea580c' }  // orange P2
-    return { bg: '#f0fdf4', border: '#86efac', text: '#16a34a' }              // vert P3
-  }
-
-  function countOpen(prob, impact) {
-    return risques.filter(
-      (r) => r.probabilite === prob && r.impact === impact && r.statut !== 'Fermé'
-    ).length
-  }
-  function countAll(prob, impact) {
-    return risques.filter((r) => r.probabilite === prob && r.impact === impact).length
+    if (s >= 6) return { bg: '#fef2f2', border: '#fca5a5', numCol: '#dc2626', label: 'P1' }
+    if (s >= 3) return { bg: '#fff7ed', border: '#fdba74', numCol: '#ea580c', label: 'P2' }
+    return       { bg: '#f0fdf4', border: '#86efac', numCol: '#16a34a', label: 'P3' }
   }
 
   const total    = risques.length
   const ouverts  = risques.filter((r) => r.statut === 'Ouvert').length
   const enCours  = risques.filter((r) => r.statut === 'En cours').length
   const fermes   = risques.filter((r) => r.statut === 'Fermé').length
+  const p1Count  = risques.filter((r) => r.priorite === 1 && r.statut !== 'Fermé').length
+  const p2Count  = risques.filter((r) => r.priorite === 2 && r.statut !== 'Fermé').length
+  const p3Count  = risques.filter((r) => r.priorite === 3 && r.statut !== 'Fermé').length
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm px-6 py-5">
-      <div className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-4">Matrice des risques</div>
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-red-100 dark:bg-red-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
+            <svg className="w-4 h-4 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+          <span className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500">Risques</span>
+        </div>
+        <span className="text-xs text-gray-400 dark:text-slate-500">{total} au total · {fermes} fermé{fermes > 1 ? 's' : ''}</span>
+      </div>
+
+      {/* Résumé P1/P2/P3 */}
+      <div className="grid grid-cols-3 gap-2">
+        {[
+          { label: 'Critiques P1', val: p1Count, bg: 'bg-red-50 dark:bg-red-900/20',    border: 'border-red-100 dark:border-red-800',    col: 'text-red-600 dark:text-red-400' },
+          { label: 'Élevés P2',    val: p2Count, bg: 'bg-orange-50 dark:bg-orange-900/20', border: 'border-orange-100 dark:border-orange-800', col: 'text-orange-600 dark:text-orange-400' },
+          { label: 'Faibles P3',   val: p3Count, bg: 'bg-green-50 dark:bg-green-900/20',  border: 'border-green-100 dark:border-green-800',  col: 'text-green-600 dark:text-green-400' },
+        ].map((s) => (
+          <div key={s.label} className={`${s.bg} border ${s.border} rounded-xl p-2.5 text-center`}>
+            <div className={`text-2xl font-black ${s.col}`}>{s.val}</div>
+            <div className="text-[.62rem] text-gray-400 dark:text-slate-500 mt-0.5 leading-tight">{s.label}</div>
+          </div>
+        ))}
+      </div>
 
       {total === 0 ? (
-        <div className="flex flex-col items-center justify-center h-36 text-gray-300 dark:text-slate-600 gap-2">
-          <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-          </svg>
+        <div className="flex flex-col items-center justify-center py-6 text-gray-300 dark:text-slate-600 gap-2">
           <span className="text-xs">Aucun risque enregistré</span>
         </div>
       ) : (
         <>
-          {/* Matrice */}
-          <div className="flex gap-2 items-end mb-3">
-            {/* Légende axe Y */}
-            <div className="flex flex-col justify-between h-[112px] pb-0">
-              {[...PROBA].reverse().map((p) => (
-                <div key={p} className="text-[.62rem] text-gray-400 dark:text-slate-500 text-right w-14 leading-none py-1">{p}</div>
-              ))}
-            </div>
-
-            {/* Grille */}
-            <div className="flex-1">
-              <div className="grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px' }}>
-                {[...PROBA].reverse().map((prob) =>
-                  IMPACT.map((impact) => {
-                    const open = countOpen(prob, impact)
-                    const all  = countAll(prob, impact)
-                    const col  = cellColor(prob, impact)
-                    return (
-                      <div
-                        key={`${prob}-${impact}`}
-                        className="rounded-lg flex flex-col items-center justify-center h-9 border"
-                        style={{ background: col.bg, borderColor: col.border }}
-                        title={`${prob} × ${impact} : ${open} risque${open > 1 ? 's' : ''} actif${open > 1 ? 's' : ''}${all > open ? `, ${all - open} fermé${all - open > 1 ? 's' : ''}` : ''}`}
-                      >
-                        {all > 0 ? (
-                          <span className="text-sm font-bold" style={{ color: col.text }}>
-                            {open > 0 ? open : <span className="text-gray-300 dark:text-slate-600 font-normal text-xs">{all}✓</span>}
-                          </span>
-                        ) : (
-                          <span className="text-gray-200 dark:text-slate-700 text-xs">·</span>
-                        )}
-                      </div>
-                    )
-                  })
-                )}
-              </div>
-              {/* Légende axe X */}
-              <div className="grid mt-1" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px' }}>
-                {IMPACT.map((imp) => (
-                  <div key={imp} className="text-[.62rem] text-gray-400 dark:text-slate-500 text-center">{imp}</div>
+          {/* Matrice 3×3 */}
+          <div>
+            <div className="text-[.62rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-2">Matrice Probabilité × Impact</div>
+            <div className="flex gap-2">
+              {/* Axe Y — Probabilité */}
+              <div className="flex flex-col justify-around w-14 flex-shrink-0">
+                {[...PROBA].reverse().map((p) => (
+                  <div key={p} className="text-[.6rem] text-gray-400 dark:text-slate-500 text-right leading-none">{p}</div>
                 ))}
               </div>
-              <div className="text-[.6rem] text-gray-300 dark:text-slate-600 text-center mt-0.5">Impact →</div>
-            </div>
-          </div>
 
-          {/* Légende priorités */}
-          <div className="flex gap-3 mb-3">
-            {[
-              { label: 'P1 critique', bg: '#fef2f2', border: '#fca5a5', text: '#dc2626' },
-              { label: 'P2 élevé',   bg: '#fff7ed', border: '#fdba74', text: '#ea580c' },
-              { label: 'P3 faible',  bg: '#f0fdf4', border: '#86efac', text: '#16a34a' },
-            ].map((l) => (
-              <div key={l.label} className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded border" style={{ background: l.bg, borderColor: l.border }} />
-                <span className="text-[.62rem] font-medium" style={{ color: l.text }}>{l.label}</span>
+              {/* Grille */}
+              <div className="flex-1 flex flex-col gap-1">
+                {[...PROBA].reverse().map((prob) => (
+                  <div key={prob} className="grid grid-cols-3 gap-1">
+                    {IMPACT.map((impact) => {
+                      const actifs = risques.filter(
+                        (r) => r.probabilite === prob && r.impact === impact && r.statut !== 'Fermé'
+                      ).length
+                      const clos = risques.filter(
+                        (r) => r.probabilite === prob && r.impact === impact && r.statut === 'Fermé'
+                      ).length
+                      const style = cellStyle(prob, impact)
+                      return (
+                        <div
+                          key={`${prob}-${impact}`}
+                          className="rounded-lg flex flex-col items-center justify-center h-11 border"
+                          style={{ background: actifs > 0 ? style.bg : '#f8fafc', borderColor: actifs > 0 ? style.border : '#e2e8f0' }}
+                          title={`${prob} / ${impact} : ${actifs} actif${actifs > 1 ? 's' : ''}${clos > 0 ? `, ${clos} fermé${clos > 1 ? 's' : ''}` : ''}`}
+                        >
+                          {actifs > 0 ? (
+                            <span className="text-lg font-black leading-none" style={{ color: style.numCol }}>{actifs}</span>
+                          ) : clos > 0 ? (
+                            <span className="text-xs font-semibold text-gray-300 dark:text-slate-600">{clos}✓</span>
+                          ) : (
+                            <span className="text-gray-200 dark:text-slate-700">—</span>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                ))}
+                {/* Axe X — Impact */}
+                <div className="grid grid-cols-3 gap-1 mt-1">
+                  {IMPACT.map((imp) => (
+                    <div key={imp} className="text-[.6rem] text-gray-400 dark:text-slate-500 text-center">{imp}</div>
+                  ))}
+                </div>
               </div>
-            ))}
+            </div>
+            {/* Légende axes */}
+            <div className="flex justify-between text-[.58rem] text-gray-300 dark:text-slate-600 mt-0.5 px-16">
+              <span>← Probabilité (axe gauche)</span>
+              <span>Impact →</span>
+            </div>
           </div>
 
           {/* Barre de répartition statuts */}
-          {total > 0 && (
-            <div>
-              <div className="text-[.62rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-1.5">Répartition par statut</div>
-              <div className="flex h-2 rounded-full overflow-hidden gap-px">
-                {ouverts > 0 && <div style={{ width: `${ouverts / total * 100}%`, background: '#ef4444' }} title={`Ouvert : ${ouverts}`} />}
-                {enCours > 0 && <div style={{ width: `${enCours / total * 100}%`, background: '#f59e0b' }} title={`En cours : ${enCours}`} />}
-                {fermes  > 0 && <div style={{ width: `${fermes  / total * 100}%`, background: '#22c55e' }} title={`Fermé : ${fermes}`} />}
-              </div>
-              <div className="flex gap-3 mt-1.5">
-                {[
-                  { label: `Ouvert (${ouverts})`,    color: '#ef4444' },
-                  { label: `En cours (${enCours})`,  color: '#f59e0b' },
-                  { label: `Fermé (${fermes})`,      color: '#22c55e' },
-                ].map((s) => (
-                  <div key={s.label} className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
-                    <span className="text-[.62rem] text-gray-500 dark:text-slate-400">{s.label}</span>
-                  </div>
-                ))}
-              </div>
+          <div>
+            <div className="text-[.62rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-1.5">Statuts</div>
+            <div className="flex h-2.5 rounded-full overflow-hidden gap-0.5">
+              {ouverts > 0 && <div style={{ width: `${ouverts / total * 100}%`, background: '#ef4444' }} title={`Ouvert : ${ouverts}`} className="rounded-full" />}
+              {enCours > 0 && <div style={{ width: `${enCours / total * 100}%`, background: '#f59e0b' }} title={`En cours : ${enCours}`} className="rounded-full" />}
+              {fermes  > 0 && <div style={{ width: `${fermes  / total * 100}%`, background: '#22c55e' }} title={`Fermé : ${fermes}`}  className="rounded-full" />}
             </div>
-          )}
+            <div className="flex gap-3 mt-1.5">
+              {[
+                { label: `Ouvert (${ouverts})`,   color: '#ef4444' },
+                { label: `En cours (${enCours})`, color: '#f59e0b' },
+                { label: `Fermé (${fermes})`,     color: '#22c55e' },
+              ].map((s) => (
+                <div key={s.label} className="flex items-center gap-1">
+                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
+                  <span className="text-[.62rem] text-gray-500 dark:text-slate-400">{s.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </>
       )}
     </div>
   )
 }
 
-// ── Panneau CPI / Budget ──────────────────────────────────────────────────────
-function CpiPanel({ projet, depenses, taskPct, progressPct }) {
+// ── Panneau 4 : Pilotage budgétaire ──────────────────────────────────────────
+function PanelBudget({ projet, depenses, taskPct, progressPct }) {
   const isClient = projet?.type_projet === 'Client'
   const bac      = Number(projet?.budget_prevu || 0)
   const devise   = projet?.devise || 'CHF'
 
   if (!isClient || !bac) {
     return (
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm px-6 py-5 flex flex-col items-center justify-center gap-2 text-center">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 flex flex-col items-center justify-center gap-3 text-center">
         <div className="w-10 h-10 bg-gray-100 dark:bg-slate-700 rounded-xl flex items-center justify-center">
           <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <line x1="12" y1="1" x2="12" y2="23"/>
             <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
           </svg>
         </div>
-        <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Suivi budgétaire non activé</p>
-        <p className="text-xs text-gray-400 dark:text-slate-500">Disponible pour les projets de type Client avec budget défini.</p>
+        <div>
+          <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Suivi budgétaire non activé</p>
+          <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Disponible pour les projets Client avec budget défini.</p>
+        </div>
       </div>
     )
   }
 
-  const ac  = depenses.reduce((s, d) => s + Number(d.montant), 0)
-  const ev  = bac * (taskPct / 100)
-  const pv  = bac * (progressPct / 100)
-  const cpi = ac > 0 ? ev / ac : null
-  const spi = pv > 0 ? ev / pv : null
-  const pctConsomme = Math.min(100, bac > 0 ? (ac / bac) * 100 : 0)
+  const ac   = depenses.reduce((s, d) => s + Number(d.montant), 0)
+  const ev   = bac * (taskPct / 100)
+  const pv   = bac * (progressPct / 100)
+  const cpi  = ac > 0 ? ev / ac : null
+  const spi  = pv > 0 ? ev / pv : null
   const ecart = ev - ac
+  const pctConsomme = bac > 0 ? Math.min(100, (ac / bac) * 100) : 0
 
-  const cpiColor = cpi === null ? '#94a3b8'
-    : cpi >= 0.95 ? '#16a34a'
-    : cpi >= 0.80 ? '#f59e0b'
-    : '#ef4444'
-
-  const cpiLabel = cpi === null ? 'N/A'
-    : cpi >= 0.95 ? 'Sous budget'
-    : cpi >= 0.80 ? 'Attention'
-    : 'Dépassement'
-
-  const spiLabel = spi === null ? 'N/A'
-    : spi >= 0.95 ? 'Dans les temps'
-    : spi >= 0.80 ? 'Léger retard'
-    : 'En retard'
-
-  const spiColor = spi === null ? '#94a3b8'
-    : spi >= 0.95 ? '#16a34a'
-    : spi >= 0.80 ? '#f59e0b'
-    : '#ef4444'
-
-  // Jauge SVG circulaire pour le CPI (normalisée entre 0 et 2, 1 = pile)
-  const gaugeVal = cpi === null ? 0.5 : Math.min(2, Math.max(0, cpi)) / 2  // 0–1 pour le dessin
-  const R = 40, CX = 60, CY = 56
-  const startAngle = Math.PI          // 180°
-  const endAngle   = 2 * Math.PI      // 360°
-  const arcLen     = endAngle - startAngle
-  const fillAngle  = startAngle + gaugeVal * arcLen
-  function polarToCartesian(angle) {
-    return { x: CX + R * Math.cos(angle), y: CY + R * Math.sin(angle) }
+  function indexColor(val) {
+    if (val === null) return { col: '#94a3b8', bg: 'bg-gray-100 dark:bg-slate-700', text: 'text-gray-400' }
+    if (val >= 0.95)  return { col: '#16a34a', bg: 'bg-green-50 dark:bg-green-900/20', text: 'text-green-600 dark:text-green-400' }
+    if (val >= 0.80)  return { col: '#f59e0b', bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-600 dark:text-amber-400' }
+    return              { col: '#ef4444', bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-600 dark:text-red-400' }
   }
-  const p0 = polarToCartesian(startAngle)
-  const p1 = polarToCartesian(fillAngle)
-  const largeArc = gaugeVal > 0.5 ? 1 : 0
-  const trackPath = `M ${polarToCartesian(startAngle).x} ${polarToCartesian(startAngle).y} A ${R} ${R} 0 1 1 ${polarToCartesian(endAngle - 0.001).x} ${polarToCartesian(endAngle - 0.001).y}`
-  const fillPath  = gaugeVal > 0
-    ? `M ${p0.x} ${p0.y} A ${R} ${R} 0 ${largeArc} 1 ${p1.x} ${p1.y}`
-    : ''
+
+  const cpiStyle = indexColor(cpi)
+  const spiStyle = indexColor(spi)
+
+  const cpiLabel = cpi === null ? 'N/A' : cpi >= 0.95 ? 'Sous budget' : cpi >= 0.80 ? 'Attention' : 'Dépassement'
+  const spiLabel = spi === null ? 'N/A' : spi >= 0.95 ? 'Dans les temps' : spi >= 0.80 ? 'Léger retard' : 'En retard'
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm px-6 py-5">
-      <div className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-4">Pilotage budgétaire</div>
-
-      {/* Jauges CPI + SPI */}
-      <div className="flex gap-4 items-start mb-5">
-        {/* CPI gauge */}
-        <div className="flex flex-col items-center">
-          <svg width="120" height="68" viewBox="0 0 120 68">
-            <path d={trackPath} fill="none" stroke="#f1f5f9" strokeWidth="10" strokeLinecap="round" />
-            {fillPath && <path d={fillPath} fill="none" stroke={cpiColor} strokeWidth="10" strokeLinecap="round" />}
-            <text x={CX} y={CY - 6} textAnchor="middle" fontSize="16" fontWeight="700" fill={cpiColor}>
-              {cpi === null ? '—' : cpi.toFixed(2)}
-            </text>
-            <text x={CX} y={CY + 10} textAnchor="middle" fontSize="8" fill="#94a3b8">CPI</text>
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-4">
+      {/* Header */}
+      <div className="flex items-center gap-2">
+        <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
+          <svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <line x1="12" y1="1" x2="12" y2="23"/>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
           </svg>
-          <span className="text-[.68rem] font-semibold mt-0.5" style={{ color: cpiColor }}>{cpiLabel}</span>
         </div>
+        <span className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500">Pilotage budgétaire</span>
+      </div>
 
-        {/* SPI gauge */}
-        <div className="flex flex-col items-center">
-          <svg width="120" height="68" viewBox="0 0 120 68">
-            {(() => {
-              const sv = spi === null ? 0.5 : Math.min(2, Math.max(0, spi)) / 2
-              const sa = startAngle
-              const fa = startAngle + sv * arcLen
-              const sp0 = polarToCartesian(sa)
-              const sp1 = polarToCartesian(fa)
-              const sla = sv > 0.5 ? 1 : 0
-              const sFill = sv > 0
-                ? `M ${sp0.x} ${sp0.y} A ${R} ${R} 0 ${sla} 1 ${sp1.x} ${sp1.y}`
-                : ''
-              return (
-                <>
-                  <path d={trackPath} fill="none" stroke="#f1f5f9" strokeWidth="10" strokeLinecap="round" />
-                  {sFill && <path d={sFill} fill="none" stroke={spiColor} strokeWidth="10" strokeLinecap="round" />}
-                  <text x={CX} y={CY - 6} textAnchor="middle" fontSize="16" fontWeight="700" fill={spiColor}>
-                    {spi === null ? '—' : spi.toFixed(2)}
-                  </text>
-                  <text x={CX} y={CY + 10} textAnchor="middle" fontSize="8" fill="#94a3b8">SPI</text>
-                </>
-              )
-            })()}
-          </svg>
-          <span className="text-[.68rem] font-semibold mt-0.5" style={{ color: spiColor }}>{spiLabel}</span>
+      {/* CPI + SPI badges */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* CPI */}
+        <div className={`${cpiStyle.bg} rounded-xl p-3`}>
+          <div className="text-[.6rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-1">CPI — Coût</div>
+          <div className={`text-3xl font-black leading-none ${cpiStyle.text}`}>
+            {cpi === null ? '—' : cpi.toFixed(2)}
+          </div>
+          <div className={`text-[.68rem] font-semibold mt-1 ${cpiStyle.text}`}>{cpiLabel}</div>
+          <div className="text-[.6rem] text-gray-400 dark:text-slate-500 mt-0.5">
+            {cpi !== null && (cpi >= 1 ? '▲ Sous budget' : '▼ Dépassement prévu')}
+          </div>
+        </div>
+        {/* SPI */}
+        <div className={`${spiStyle.bg} rounded-xl p-3`}>
+          <div className="text-[.6rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-1">SPI — Délai</div>
+          <div className={`text-3xl font-black leading-none ${spiStyle.text}`}>
+            {spi === null ? '—' : spi.toFixed(2)}
+          </div>
+          <div className={`text-[.68rem] font-semibold mt-1 ${spiStyle.text}`}>{spiLabel}</div>
+          <div className="text-[.6rem] text-gray-400 dark:text-slate-500 mt-0.5">
+            {spi !== null && (spi >= 1 ? '▲ En avance' : '▼ En retard')}
+          </div>
         </div>
       </div>
 
-      {/* Métriques */}
-      <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-4 text-xs">
+      {/* Métriques clés */}
+      <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
         {[
-          { label: 'Budget (BAC)',     value: fmtCurrency(bac, devise),           color: 'text-gray-700 dark:text-slate-200' },
-          { label: 'Coût réel (AC)',   value: fmtCurrency(ac,  devise),           color: 'text-gray-700 dark:text-slate-200' },
-          { label: 'Valeur acquise (EV)', value: fmtCurrency(ev, devise),         color: 'text-blue-600 dark:text-blue-400' },
-          { label: 'Écart budget',     value: fmtCurrency(ecart, devise),         color: ecart >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' },
+          { label: 'Budget (BAC)',       value: fmtCurrency(bac, devise),  col: 'text-gray-700 dark:text-slate-200' },
+          { label: 'Coût réel (AC)',     value: fmtCurrency(ac,  devise),  col: 'text-gray-700 dark:text-slate-200' },
+          { label: 'Valeur acquise (EV)',value: fmtCurrency(ev,  devise),  col: 'text-blue-600 dark:text-blue-400' },
+          { label: 'Écart (EV − AC)',    value: (ecart >= 0 ? '+' : '') + fmtCurrency(ecart, devise), col: ecart >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' },
         ].map((m) => (
-          <div key={m.label}>
-            <div className="text-[.62rem] text-gray-400 dark:text-slate-500 uppercase tracking-wide">{m.label}</div>
-            <div className={`font-semibold ${m.color}`}>{m.value}</div>
+          <div key={m.label} className="bg-gray-50 dark:bg-slate-700/40 rounded-lg px-3 py-2">
+            <div className="text-[.6rem] text-gray-400 dark:text-slate-500 uppercase tracking-wide">{m.label}</div>
+            <div className={`text-sm font-bold mt-0.5 ${m.col}`}>{m.value}</div>
           </div>
         ))}
       </div>
 
-      {/* Barre de consommation */}
+      {/* Barre consommation */}
       <div>
-        <div className="flex justify-between text-[.62rem] text-gray-400 dark:text-slate-500 mb-1">
+        <div className="flex justify-between text-[.62rem] text-gray-400 dark:text-slate-500 mb-1.5">
           <span>Consommation budget</span>
-          <span>{pctConsomme.toFixed(1)} %</span>
+          <span className="font-semibold">{pctConsomme.toFixed(1)} %</span>
         </div>
-        <div className="w-full h-2 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden">
+        <div className="w-full h-3 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden">
           <div
-            className="h-full rounded-full transition-all"
+            className="h-3 rounded-full transition-all duration-500"
             style={{
               width: `${pctConsomme}%`,
               background: pctConsomme >= 100 ? '#ef4444' : pctConsomme >= 80 ? '#f59e0b' : '#22c55e',
@@ -614,14 +633,12 @@ export default function PlanningPage() {
     [enrichedJalons]
   )
 
-  // Progression temporelle
   const progressPct = useMemo(() => {
     const total = Math.max(1, endDate - startDate)
     const done  = Math.max(0, Math.min(total, TODAY - startDate))
     return Math.round(done / total * 100)
   }, [startDate, endDate])
 
-  // Réalisation tâches (moyenne pondérée)
   const taskPct = useMemo(() => {
     if (!taches.length) return 0
     const totalW = taches.reduce((s, t) => s + TASK_WEIGHT(t.importance), 0)
@@ -630,38 +647,18 @@ export default function PlanningPage() {
     return Math.round(done / totalW)
   }, [taches])
 
-  // CPI (pour les KPI cards)
-  const cpiValue = useMemo(() => {
-    if (projet?.type_projet !== 'Client' || !Number(projet?.budget_prevu)) return null
-    const bac = Number(projet.budget_prevu)
-    const ac  = depenses.reduce((s, d) => s + Number(d.montant), 0)
-    if (ac === 0) return null
-    const ev  = bac * (taskPct / 100)
-    return ev / ac
-  }, [projet, depenses, taskPct])
-
-  // Nombre de risques critiques P1
-  const critiquesCount = useMemo(() =>
-    risques.filter((r) => r.priorite === 1 && r.statut !== 'Fermé').length,
-    [risques]
-  )
-
   const totalMonths = Math.round(Math.max(0, endDate - startDate) / 86400000 / 30)
   const durationStr = totalMonths >= 12
     ? `${Math.floor(totalMonths / 12)} an${Math.floor(totalMonths / 12) > 1 ? 's' : ''}${totalMonths % 12 ? ` ${totalMonths % 12} mois` : ''}`
     : `${totalMonths} mois`
 
-  // Points courbe S
   const points = useMemo(() => {
     if (!taches?.length) return []
     const days = Math.max(1, Math.round((endDate - startDate) / 86400000))
     const step = days > 120 ? Math.ceil(days / 120) : 1
     const taskInfos = taches.map((tt) => {
       let d = null
-      if (tt.echeance) {
-        const pd = new Date(tt.echeance)
-        if (!isNaN(pd)) d = pd
-      }
+      if (tt.echeance) { const pd = new Date(tt.echeance); if (!isNaN(pd)) d = pd }
       if (!d && tt.jalon) {
         const found = enrichedJalons.find((j) => (j.label ?? '').trim() === (tt.jalon ?? '').trim())
         if (found) d = found.date
@@ -677,17 +674,13 @@ export default function PlanningPage() {
         if (ti.date <= d) planned += ti.w
         const totalSpan = Math.max(1, (ti.date - startDate) / 86400000)
         const elapsed   = Math.max(0, Math.min(totalSpan, (d - startDate) / 86400000))
-        const frac      = Math.max(0, Math.min(1, elapsed / totalSpan))
-        completed += ti.w * (ti.av / 100) * frac
+        completed += ti.w * (ti.av / 100) * Math.max(0, Math.min(1, elapsed / totalSpan))
       }
       out.push({ date: new Date(d), planned, completed })
     }
     const totalPlanned = taskInfos.reduce((s, t) => s + t.w, 0)
     const totalDone    = taskInfos.reduce((s, t) => s + t.w * (t.av / 100), 0)
-    if (out.length) {
-      out[out.length - 1].planned   = totalPlanned
-      out[out.length - 1].completed = totalDone
-    }
+    if (out.length) { out[out.length - 1].planned = totalPlanned; out[out.length - 1].completed = totalDone }
     return out
   }, [taches, enrichedJalons, startDate, endDate])
 
@@ -725,8 +718,6 @@ export default function PlanningPage() {
           {[
             ['Début',      fmtDate(startDate)],
             ['Fin prévue', fmtDate(endDate)],
-            ['Calendaire', `${progressPct} %`],
-            ['Tâches',     `${taskPct} %`],
           ].map(([label, val]) => (
             <div key={label}>
               <div className="text-gray-500 text-[.65rem] font-bold uppercase tracking-wider">{label}</div>
@@ -736,45 +727,25 @@ export default function PlanningPage() {
         </div>
       </div>
 
-      {/* ── KPI de pilotage ────────────────────────────────────────────── */}
-      <PilotageKpis
-        progressPct={progressPct}
-        taskPct={taskPct}
-        cpi={cpiValue}
-        critiques={critiquesCount}
-      />
-
-      {/* ── Matrice risques + CPI ───────────────────────────────────────── */}
+      {/* ── Tableau de bord 2×2 ────────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <RiskMatrixPanel risques={risques} />
-        <CpiPanel
+        <PanelAvancement
+          progressPct={progressPct}
+          startDate={startDate}
+          endDate={endDate}
+          enrichedJalons={enrichedJalons}
+        />
+        <PanelTaches
+          taskPct={taskPct}
+          taches={taches}
+        />
+        <PanelRisques risques={risques} />
+        <PanelBudget
           projet={projet}
           depenses={depenses}
           taskPct={taskPct}
           progressPct={progressPct}
         />
-      </div>
-
-      {/* ── Barre de progression globale ───────────────────────────────── */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm px-6 py-4">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500">Avancement calendaire</span>
-          <span className="text-sm font-bold text-blue-600">{progressPct} %</span>
-        </div>
-        <div className="w-full bg-gray-100 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden">
-          <div
-            className="h-2.5 rounded-full transition-all duration-500"
-            style={{
-              width: `${progressPct}%`,
-              background: progressPct >= 100 ? '#16a34a' : 'linear-gradient(90deg, #2563eb, #3b82f6)',
-            }}
-          />
-        </div>
-        <div className="flex justify-between mt-1.5 text-[.68rem] text-gray-400 dark:text-slate-500">
-          <span>{fmtDate(startDate)}</span>
-          <span className="text-red-500 font-semibold">Aujourd'hui : {fmtDate(TODAY)}</span>
-          <span>{fmtDate(endDate)}</span>
-        </div>
       </div>
 
       {/* ── Courbe S ───────────────────────────────────────────────────── */}
@@ -821,10 +792,7 @@ export default function PlanningPage() {
                   </div>
                   <div className="text-sm font-bold text-gray-900 dark:text-slate-100 leading-tight mb-2">{j.label}</div>
 
-                  <span
-                    className="inline-flex items-center text-[.68rem] font-bold rounded-full px-2.5 py-0.5 mb-2"
-                    style={{ color: col, background: col + '18' }}
-                  >
+                  <span className="inline-flex items-center text-[.68rem] font-bold rounded-full px-2.5 py-0.5 mb-2" style={{ color: col, background: col + '18' }}>
                     {badge}
                   </span>
 
