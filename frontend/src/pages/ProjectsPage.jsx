@@ -104,8 +104,14 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
   const [ordrePages, setOrdrePages] = useState(
     () => {
       const saved = projet?.pages_ordre
-      if (saved && saved.length) return saved
-      return pagesDispo.map((p) => p.key)
+      const available = pagesDispo.map((p) => p.key)
+      if (saved && saved.length) {
+        return [
+          ...saved.filter((k) => available.includes(k)),
+          ...available.filter((k) => !saved.includes(k)),
+        ]
+      }
+      return available
     }
   )
   const [draggingPage, setDraggingPage] = useState(null)
@@ -140,11 +146,20 @@ function GestionAccesModal({ projet, onClose, isAdmin, onProjetUpdated, onDelete
     setPagesProjet(projet?.pages_visibles ?? null)
   }, [projet?.pages_visibles])
 
-  // Sync ordre pages
+  // Sync ordre pages — fusionne l'ordre sauvegardé avec les pages disponibles
+  // (ex: budget devient disponible après passage en type Client)
   useEffect(() => {
     const saved = projet?.pages_ordre
     const pDisp = PAGES_DISPONIBLES.filter((p) => !p.onlyClient || projet?.type_projet === 'Client')
-    setOrdrePages(saved && saved.length ? saved : pDisp.map((p) => p.key))
+    const available = pDisp.map((p) => p.key)
+    if (saved && saved.length) {
+      setOrdrePages([
+        ...saved.filter((k) => available.includes(k)),
+        ...available.filter((k) => !saved.includes(k)),
+      ])
+    } else {
+      setOrdrePages(available)
+    }
   }, [projet?.pages_ordre, projet?.type_projet])
 
   // Sync paramètres budget/type sans déclencher rechargement membres
