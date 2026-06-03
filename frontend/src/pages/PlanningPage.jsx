@@ -748,15 +748,15 @@ export default function PlanningPage() {
         />
       </div>
 
-      {/* ── Planning + Courbe S côte à côte ────────────────────────────── */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm px-6 py-5 overflow-x-auto scrollbar-hidden">
-          <div className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-4">Timeline</div>
-          <TimelineSVG jalons={enrichedJalons} startDate={startDate} endDate={endDate} onSelect={goToTachesByJalon} />
-        </div>
-        {points && points.length > 1 && (
-          <SCurve points={points} startDate={startDate} endDate={endDate} />
-        )}
+      {/* ── Courbe S ───────────────────────────────────────────────────── */}
+      {points && points.length > 1 && (
+        <SCurve points={points} startDate={startDate} endDate={endDate} />
+      )}
+
+      {/* ── Timeline SVG ───────────────────────────────────────────────── */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm px-6 py-5 overflow-x-auto scrollbar-hidden">
+        <div className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-4">Timeline</div>
+        <TimelineSVG jalons={enrichedJalons} startDate={startDate} endDate={endDate} onSelect={goToTachesByJalon} />
       </div>
 
       {/* ── Cartes jalons ──────────────────────────────────────────────── */}
