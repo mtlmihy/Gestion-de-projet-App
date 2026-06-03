@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { getCdc } from '../api/cdc'
 import { getTaches } from '../api/taches'
 import { useProject } from '../context/ProjectContext'
+import SCurve from '../components/SCurve'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const TODAY = new Date()
@@ -232,6 +233,64 @@ export default function PlanningPage() {
     ? `${Math.floor(totalMonths / 12)} an${Math.floor(totalMonths / 12) > 1 ? 's' : ''}${totalMonths % 12 ? ` ${totalMonths % 12} mois` : ''}`
     : `${totalMonths} mois`
 
+  // --- Préparer les séries pour la courbe S (prévu vs réalisé approximé)
+  const points = useMemo(() => {
+    if (!taches?.length) return []
+    // poids selon importance
+    const weight = (imp) => {
+      if (!imp) return 2
+      const v = (imp || '').toLowerCase()
+      if (v === 'faible') return 1
+      if (v === 'moyenne') return 2
+      if (v === 'élevée' || v === 'elevee') return 3
+      if (v === 'critique') return 4
+      return 2
+    }
+
+    // résolution : 1 jour ou pas trop dense
+    const days = Math.max(1, Math.round((endDate - startDate) / 86400000))
+    const step = days > 120 ? Math.ceil(days / 120) : 1
+
+    // normalize task dates
+    const taskInfos = taches.map((tt) => {
+      let d = null
+      if (tt.echeance) {
+        const pd = new Date(tt.echeance)
+        if (!isNaN(pd)) d = pd
+      }
+      if (!d && tt.jalon) {
+        const found = enrichedJalons.find((j) => (j.label ?? '').trim() === (tt.jalon ?? '').trim())
+        if (found) d = found.date
+      }
+      if (!d) d = endDate
+      return { date: d, w: weight(tt.importance), av: Math.max(0, Math.min(100, tt.avancement ?? 0)) }
+    })
+
+    const out = []
+    for (let t = new Date(startDate); t <= endDate; t = new Date(t.getFullYear(), t.getMonth(), t.getDate() + step)) {
+      const d = new Date(t)
+      let planned = 0
+      let completed = 0
+      for (const ti of taskInfos) {
+        if (ti.date <= d) planned += ti.w
+        // répartir l'avancement linéairement depuis startDate vers la date de la tâche
+        const totalSpan = Math.max(1, (ti.date - startDate) / 86400000)
+        const elapsed = Math.max(0, Math.min(totalSpan, (d - startDate) / 86400000))
+        const frac = Math.max(0, Math.min(1, elapsed / totalSpan))
+        completed += ti.w * (ti.av / 100) * frac
+      }
+      out.push({ date: new Date(d), planned, completed })
+    }
+    // ensure last point uses totals
+    const totalPlanned = taskInfos.reduce((s, t) => s + t.w, 0)
+    const totalDone = taskInfos.reduce((s, t) => s + t.w * (t.av / 100), 0)
+    if (out.length) {
+      out[out.length - 1].planned = totalPlanned
+      out[out.length - 1].completed = totalDone
+    }
+    return out
+  }, [taches, enrichedJalons, startDate, endDate])
+
   if (loading) return (
     <div className="flex items-center justify-center h-48 text-gray-400 text-sm">Chargement…</div>
   )
@@ -305,6 +364,13 @@ export default function PlanningPage() {
         <div className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-4">Timeline</div>
         <TimelineSVG jalons={enrichedJalons} startDate={startDate} endDate={endDate} onSelect={goToTachesByJalon} />
       </div>
+
+      {/* ── Courbe S (prévu vs réalisé) ─────────────────────────────────── */}
+      {points && points.length > 1 && (
+        <div className="mt-4">
+          <SCurve points={points} startDate={startDate} endDate={endDate} />
+        </div>
+      )}
 
       {/* ── Cartes jalons ──────────────────────────────────────────────── */}
       <div>
