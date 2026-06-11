@@ -765,6 +765,61 @@ export default function PlanningPage() {
     )
   }, [])
 
+  // Résoud les collisions en décalant les widgets (auto-reflow)
+  const resolveCollisions = useCallback((newPositions, draggingId) => {
+    const MAX_ITERATIONS = 10
+    let iterations = 0
+    let changed = true
+
+    while (changed && iterations < MAX_ITERATIONS) {
+      changed = false
+      iterations++
+
+      for (const panelId of visiblePanelIds) {
+        if (panelId === draggingId) continue
+
+        const pos = newPositions[panelId]
+        const size = panelSizes[panelId] || { width: 520, height: 'auto' }
+        const height = typeof size.height === 'number' ? size.height : 280
+
+        const rect1 = {
+          left: pos.x,
+          top: pos.y,
+          right: pos.x + (size.width || 520),
+          bottom: pos.y + height,
+        }
+
+        // Vérifier les collisions avec tous les autres
+        for (const otherId of visiblePanelIds) {
+          if (otherId === panelId || otherId === draggingId) continue
+
+          const otherPos = newPositions[otherId]
+          const otherSize = panelSizes[otherId] || { width: 520, height: 'auto' }
+          const otherHeight = typeof otherSize.height === 'number' ? otherSize.height : 280
+
+          const rect2 = {
+            left: otherPos.x,
+            top: otherPos.y,
+            right: otherPos.x + (otherSize.width || 520),
+            bottom: otherPos.y + otherHeight,
+          }
+
+          // Si collision, pousser le widget vers la droite
+          if (checkCollision(rect1, rect2)) {
+            const pushDistance = (otherSize.width || 520) + GRID_SIZE
+            const newX = Math.round((rect2.right + pushDistance) / GRID_SIZE) * GRID_SIZE
+
+            newPositions[panelId] = { ...pos, x: Math.max(0, newX) }
+            changed = true
+            break
+          }
+        }
+      }
+    }
+
+    return newPositions
+  }, [visiblePanelIds, panelSizes, checkCollision, GRID_SIZE])
+
   const handleDragEnd = useCallback((event) => {
     const { active, delta } = event
     if (!active || !delta) return
@@ -772,57 +827,19 @@ export default function PlanningPage() {
     setPanelPositions((prev) => {
       const current = prev[active.id]
       if (!current) return prev
-      
+
       const nextX = Math.max(0, Math.round((current.x + delta.x) / GRID_SIZE) * GRID_SIZE)
       const nextY = Math.max(0, Math.round((current.y + delta.y) / GRID_SIZE) * GRID_SIZE)
-      
-      const activeSize = panelSizes[active.id] || { width: 520, height: 'auto' }
-      const activeHeight = typeof activeSize.height === 'number' ? activeSize.height : 280
-      
-      // Rectangle du widget en mouvement à sa nouvelle position
-      const activeRect = {
-        left: nextX,
-        top: nextY,
-        right: nextX + (activeSize.width || 520),
-        bottom: nextY + activeHeight,
-      }
 
-      // Vérifier les collisions avec les autres widgets visibles
-      let hasCollision = false
-      for (const otherId of visiblePanelIds) {
-        if (otherId === active.id) continue
-        
-        const otherPos = prev[otherId]
-        if (!otherPos) continue
-        
-        const otherSize = panelSizes[otherId] || { width: 520, height: 'auto' }
-        const otherHeight = typeof otherSize.height === 'number' ? otherSize.height : 280
-        
-        const otherRect = {
-          left: otherPos.x,
-          top: otherPos.y,
-          right: otherPos.x + (otherSize.width || 520),
-          bottom: otherPos.y + otherHeight,
-        }
-
-        if (checkCollision(activeRect, otherRect)) {
-          hasCollision = true
-          break
-        }
-      }
-
-      // Si collision, garder l'ancienne position
-      if (hasCollision) {
-        return prev
-      }
-
-      // Sinon, accepter la nouvelle position
-      return {
+      const newPositions = {
         ...prev,
         [active.id]: { x: nextX, y: nextY },
       }
+
+      // Résoudre les collisions (auto-reflow)
+      return resolveCollisions(newPositions, active.id)
     })
-  }, [GRID_SIZE, panelSizes, visiblePanelIds, checkCollision])
+  }, [GRID_SIZE, resolveCollisions])
 
   const notify = (msg, type = 'ok') => {
     setNotif({ msg, type })
