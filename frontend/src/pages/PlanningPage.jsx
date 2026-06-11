@@ -6,6 +6,9 @@ import { getRisques } from '../api/risques'
 import { getDepenses } from '../api/budget'
 import { useProject } from '../context/ProjectContext'
 import SCurve from '../components/SCurve'
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import { SortableContext, arrayMove, useSortable, rectSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const TODAY = new Date()
@@ -77,6 +80,33 @@ function MiniBar({ value, color = '#3b82f6' }) {
   )
 }
 
+function SortablePanel({ id, label, children }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
+  return (
+    <div ref={setNodeRef} style={style} className={`relative ${isDragging ? 'opacity-90 shadow-xl' : ''}`}>
+      <div className="absolute right-3 top-3 z-10">
+        <button
+          type="button"
+          title={`Déplacer ${label}`}
+          {...attributes}
+          {...listeners}
+          className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/90 dark:bg-slate-900/90 border border-gray-200 dark:border-slate-700 text-gray-500 hover:text-gray-700 hover:shadow-sm transition"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        </button>
+      </div>
+      {children}
+    </div>
+  )
+}
+
 // ── Timeline SVG ──────────────────────────────────────────────────────────────
 function TimelineSVG({ jalons, startDate, endDate, onSelect }) {
   const W = 900, H = 210, PL = 70, PR = 70
@@ -135,7 +165,7 @@ function TimelineSVG({ jalons, startDate, endDate, onSelect }) {
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ minWidth: 520 }} xmlns="http://www.w3.org/2000/svg">
       {ticks}
       <rect x={PL} y={BAR_Y} width={TW} height={BAR_H} rx="5" fill="#f1f5f9" />
-      <rect x={PL} y={BAR_Y} width={pastW} height={BAR_H} rx="5" fill="#94a3b8" />
+      <rect x={PL} y={BAR_Y} width={pastW} height={BAR_H} rx="5" fill="#525252" />
       <rect x={todayX} y={BAR_Y} width={futW} height={BAR_H} rx="5" fill="#2563eb" opacity=".25" />
       {milestones}
       <line x1={todayX} y1={BAR_Y - 22} x2={todayX} y2={BAR_Y + BAR_H + 44} stroke="#ef4444" strokeWidth="1.5" strokeDasharray="4,3" />
@@ -612,6 +642,19 @@ export default function PlanningPage() {
   const [meta,     setMeta]     = useState({ nom: '', chef: '', dateDebut: '' })
   const [loading,  setLoading]  = useState(true)
   const [notif,    setNotif]    = useState({ msg: '', type: 'ok' })
+  const [panelOrder, setPanelOrder] = useState(['avancement', 'taches', 'risques', 'budget'])
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
+  const handleDragEnd = useCallback((event) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    setPanelOrder((items) => {
+      const oldIndex = items.indexOf(active.id)
+      const newIndex = items.indexOf(over.id)
+      if (oldIndex === -1 || newIndex === -1) return items
+      return arrayMove(items, oldIndex, newIndex)
+    })
+  }, [])
 
   const notify = (msg, type = 'ok') => {
     setNotif({ msg, type })
@@ -775,26 +818,53 @@ export default function PlanningPage() {
       </div>
 
       {/* ── Tableau de bord 2×2 ────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <PanelAvancement
-          progressPct={progressPct}
-          taskPct={taskPct}
-          startDate={startDate}
-          endDate={endDate}
-          enrichedJalons={enrichedJalons}
-        />
-        <PanelTaches
-          taskPct={taskPct}
-          taches={taches}
-        />
-        <PanelRisques risques={risques} />
-        <PanelBudget
-          projet={projet}
-          depenses={depenses}
-          taskPct={taskPct}
-          progressPct={progressPct}
-        />
-      </div>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={panelOrder} strategy={rectSortingStrategy}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {panelOrder.map((panelId) => {
+              const panelLabels = {
+                avancement: 'Avancement calendaire',
+                taches: 'Réalisation des tâches',
+                risques: 'Risques',
+                budget: 'Pilotage budgétaire',
+              }
+
+              const panelComponents = {
+                avancement: (
+                  <PanelAvancement
+                    progressPct={progressPct}
+                    taskPct={taskPct}
+                    startDate={startDate}
+                    endDate={endDate}
+                    enrichedJalons={enrichedJalons}
+                  />
+                ),
+                taches: (
+                  <PanelTaches
+                    taskPct={taskPct}
+                    taches={taches}
+                  />
+                ),
+                risques: <PanelRisques risques={risques} />,
+                budget: (
+                  <PanelBudget
+                    projet={projet}
+                    depenses={depenses}
+                    taskPct={taskPct}
+                    progressPct={progressPct}
+                  />
+                ),
+              }
+
+              return (
+                <SortablePanel key={panelId} id={panelId} label={panelLabels[panelId] ?? panelId}>
+                  {panelComponents[panelId]}
+                </SortablePanel>
+              )
+            })}
+          </div>
+        </SortableContext>
+      </DndContext>
 
       {/* ── Courbe S ───────────────────────────────────────────────────── */}
       {points && points.length > 1 && (
