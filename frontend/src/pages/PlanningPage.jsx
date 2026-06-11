@@ -6,8 +6,7 @@ import { getRisques } from '../api/risques'
 import { getDepenses } from '../api/budget'
 import { useProject } from '../context/ProjectContext'
 import SCurve from '../components/SCurve'
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
-import { SortableContext, arrayMove, useSortable, rectSortingStrategy } from '@dnd-kit/sortable'
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -80,20 +79,26 @@ function MiniBar({ value, color = '#3b82f6' }) {
   )
 }
 
-function SortablePanel({ id, label, children, size, onResize, onToggle }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+function DraggablePanel({ id, label, children, size, position, onResize }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id })
+  
   const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    width: size?.width ? `${size.width}px` : '100%',
-    minWidth: 320,
+    position: 'absolute',
+    left: `${position?.x ?? 0}px`,
+    top: `${position?.y ?? 0}px`,
+    width: size?.width ? `${size.width}px` : '520px',
     height: size?.height ? `${size.height}px` : 'auto',
+    minWidth: 320,
     minHeight: 280,
+    transform: CSS.Transform.toString(transform),
+    zIndex: isDragging ? 20 : 10,
+    transition: !isDragging ? 'none' : undefined,
   }
 
   const handlePointerDown = useCallback((event) => {
     if (event.button !== 0) return
-    const rootEl = event.currentTarget.closest('[data-sortable-panel]')
+    event.stopPropagation()
+    const rootEl = event.currentTarget.closest('[data-draggable-panel]')
     if (!rootEl) return
 
     const startWidth = rootEl.offsetWidth
@@ -103,7 +108,7 @@ function SortablePanel({ id, label, children, size, onResize, onToggle }) {
 
     const onPointerMove = (moveEvent) => {
       const nextWidth = Math.max(320, startWidth + (moveEvent.clientX - startX))
-      const nextHeight = Math.max(260, startHeight + (moveEvent.clientY - startY))
+      const nextHeight = Math.max(280, startHeight + (moveEvent.clientY - startY))
       onResize?.(id, nextWidth, nextHeight)
     }
 
@@ -114,43 +119,30 @@ function SortablePanel({ id, label, children, size, onResize, onToggle }) {
 
     window.addEventListener('pointermove', onPointerMove)
     window.addEventListener('pointerup', onPointerUp)
-    event.preventDefault()
   }, [id, onResize])
 
   return (
-    <div ref={setNodeRef} data-sortable-panel style={style} className={`relative ${isDragging ? 'opacity-90 shadow-xl' : ''}`}>
+    <div ref={setNodeRef} data-draggable-panel style={style} className={`bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm flex flex-col overflow-hidden ${isDragging ? 'shadow-2xl opacity-95' : ''}`}>
       <div
         {...attributes}
         {...listeners}
-        className="flex items-center justify-between gap-2 rounded-t-2xl border-b border-gray-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90 px-4 py-3 cursor-grab"
+        className="flex items-center gap-2 border-b border-gray-100 dark:border-slate-700 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 px-4 py-3 cursor-grab active:cursor-grabbing select-none"
       >
-        <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{label}</span>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            title={`Masquer ${label}`}
-            onClick={(event) => { event.stopPropagation(); onToggle?.(id) }}
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/90 dark:bg-slate-900/90 border border-gray-200 dark:border-slate-700 text-gray-500 hover:text-gray-700 transition"
-          >
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M1 1l22 22" />
-              <path d="M17.94 17.94A10 10 0 0 1 6.06 6.06" />
-              <path d="M10.59 10.59A3 3 0 0 0 13.41 13.41" />
-            </svg>
-          </button>
-          <button
-            type="button"
-            title={`Redimensionner ${label}`}
-            onPointerDown={(event) => { event.stopPropagation(); handlePointerDown(event) }}
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/90 dark:bg-slate-900/90 border border-gray-200 dark:border-slate-700 text-gray-500 hover:text-gray-700 transition"
-          >
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 20l16-16M14 20h6v-6" />
-            </svg>
-          </button>
-        </div>
+        <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex-1">{label}</span>
+        <button
+          type="button"
+          title={`Redimensionner ${label}`}
+          onPointerDown={handlePointerDown}
+          className="flex h-6 w-6 items-center justify-center rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 active:text-slate-700 transition opacity-50 hover:opacity-100"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 20l16-16M14 20h6v-6" />
+          </svg>
+        </button>
       </div>
-      {children}
+      <div className="flex-1 overflow-auto p-4">
+        {children}
+      </div>
     </div>
   )
 }
@@ -741,6 +733,16 @@ export default function PlanningPage() {
     scurve: true,
   })
   const [panelSizes, setPanelSizes] = useState({})
+  const [panelPositions, setPanelPositions] = useState({
+    avancement: { x: 16, y: 16 },
+    taches: { x: 560, y: 16 },
+    risques: { x: 16, y: 360 },
+    budget: { x: 560, y: 360 },
+    timeline: { x: 16, y: 700 },
+    scurve: { x: 560, y: 700 },
+  })
+
+  const GRID_SIZE = 16
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
   const visiblePanelIds = useMemo(() => panelOrder.filter((id) => visiblePanels[id]), [panelOrder, visiblePanels])
@@ -753,27 +755,74 @@ export default function PlanningPage() {
     setVisiblePanels((prev) => ({ ...prev, [id]: !prev[id] }))
   }, [])
 
+  // Détecte si deux rectangles se chevauchent
+  const checkCollision = useCallback((rect1, rect2, padding = 8) => {
+    return !(
+      rect1.right + padding < rect2.left ||
+      rect1.left > rect2.right + padding ||
+      rect1.bottom + padding < rect2.top ||
+      rect1.top > rect2.bottom + padding
+    )
+  }, [])
+
   const handleDragEnd = useCallback((event) => {
-    const { active, over } = event
-    if (!over || active.id === over.id) return
-    const activeIndex = visiblePanelIds.indexOf(active.id)
-    const overIndex = visiblePanelIds.indexOf(over.id)
-    if (activeIndex === -1 || overIndex === -1) return
-    setPanelOrder((items) => {
-      const visibleItems = items.filter((id) => visiblePanels[id])
-      const nextVisible = arrayMove(visibleItems, activeIndex, overIndex)
-      const hiddenItems = items.filter((id) => !visiblePanels[id])
-      const merged = []
-      items.forEach((id) => {
-        if (!visiblePanels[id]) {
-          merged.push(id)
-        } else {
-          merged.push(nextVisible.shift())
+    const { active, delta } = event
+    if (!active || !delta) return
+
+    setPanelPositions((prev) => {
+      const current = prev[active.id]
+      if (!current) return prev
+      
+      const nextX = Math.max(0, Math.round((current.x + delta.x) / GRID_SIZE) * GRID_SIZE)
+      const nextY = Math.max(0, Math.round((current.y + delta.y) / GRID_SIZE) * GRID_SIZE)
+      
+      const activeSize = panelSizes[active.id] || { width: 520, height: 'auto' }
+      const activeHeight = typeof activeSize.height === 'number' ? activeSize.height : 280
+      
+      // Rectangle du widget en mouvement à sa nouvelle position
+      const activeRect = {
+        left: nextX,
+        top: nextY,
+        right: nextX + (activeSize.width || 520),
+        bottom: nextY + activeHeight,
+      }
+
+      // Vérifier les collisions avec les autres widgets visibles
+      let hasCollision = false
+      for (const otherId of visiblePanelIds) {
+        if (otherId === active.id) continue
+        
+        const otherPos = prev[otherId]
+        if (!otherPos) continue
+        
+        const otherSize = panelSizes[otherId] || { width: 520, height: 'auto' }
+        const otherHeight = typeof otherSize.height === 'number' ? otherSize.height : 280
+        
+        const otherRect = {
+          left: otherPos.x,
+          top: otherPos.y,
+          right: otherPos.x + (otherSize.width || 520),
+          bottom: otherPos.y + otherHeight,
         }
-      })
-      return merged
+
+        if (checkCollision(activeRect, otherRect)) {
+          hasCollision = true
+          break
+        }
+      }
+
+      // Si collision, garder l'ancienne position
+      if (hasCollision) {
+        return prev
+      }
+
+      // Sinon, accepter la nouvelle position
+      return {
+        ...prev,
+        [active.id]: { x: nextX, y: nextY },
+      }
     })
-  }, [visiblePanelIds, visiblePanels])
+  }, [GRID_SIZE, panelSizes, visiblePanelIds, checkCollision])
 
   const notify = (msg, type = 'ok') => {
     setNotif({ msg, type })
@@ -989,22 +1038,20 @@ export default function PlanningPage() {
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={visiblePanelIds} strategy={rectSortingStrategy}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-[linear-gradient(#e2e8f0_1px,transparent_1px),linear-gradient(90deg,#e2e8f0_1px,transparent_1px)] bg-[length:60px_60px] p-2 rounded-3xl">
-            {visiblePanelIds.map((panelId) => (
-              <SortablePanel
-                key={panelId}
-                id={panelId}
-                label={panelLabels[panelId] ?? panelId}
-                size={panelSizes[panelId]}
-                onResize={updatePanelSize}
-                onToggle={togglePanel}
-              >
-                {panelComponents[panelId]}
-              </SortablePanel>
-            ))}
-          </div>
-        </SortableContext>
+        <div className="relative w-full min-h-[1200px] bg-slate-50/50 dark:bg-slate-950/50 rounded-3xl p-4">
+          {visiblePanelIds.map((panelId) => (
+            <DraggablePanel
+              key={panelId}
+              id={panelId}
+              label={panelLabels[panelId] ?? panelId}
+              size={panelSizes[panelId]}
+              position={panelPositions[panelId]}
+              onResize={updatePanelSize}
+            >
+              {panelComponents[panelId]}
+            </DraggablePanel>
+          ))}
+        </div>
       </DndContext>
 
       {/* ── Cartes jalons ──────────────────────────────────────────────── */}
