@@ -80,16 +80,46 @@ function MiniBar({ value, color = '#3b82f6' }) {
   )
 }
 
-function SortablePanel({ id, label, children }) {
+function SortablePanel({ id, label, children, size, onResize }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    width: size?.width ? `${size.width}px` : '100%',
+    minWidth: 320,
+    height: size?.height ? `${size.height}px` : 'auto',
+    minHeight: 280,
   }
 
+  const handlePointerDown = useCallback((event) => {
+    if (event.button !== 0) return
+    const rootEl = event.currentTarget.closest('[data-sortable-panel]')
+    if (!rootEl) return
+
+    const startWidth = rootEl.offsetWidth
+    const startHeight = rootEl.offsetHeight
+    const startX = event.clientX
+    const startY = event.clientY
+
+    const onPointerMove = (moveEvent) => {
+      const nextWidth = Math.max(320, startWidth + (moveEvent.clientX - startX))
+      const nextHeight = Math.max(260, startHeight + (moveEvent.clientY - startY))
+      onResize?.(id, nextWidth, nextHeight)
+    }
+
+    const onPointerUp = () => {
+      window.removeEventListener('pointermove', onPointerMove)
+      window.removeEventListener('pointerup', onPointerUp)
+    }
+
+    window.addEventListener('pointermove', onPointerMove)
+    window.addEventListener('pointerup', onPointerUp)
+    event.preventDefault()
+  }, [id, onResize])
+
   return (
-    <div ref={setNodeRef} style={style} className={`relative ${isDragging ? 'opacity-90 shadow-xl' : ''}`}>
-      <div className="absolute right-3 top-3 z-10">
+    <div ref={setNodeRef} data-sortable-panel style={style} className={`relative ${isDragging ? 'opacity-90 shadow-xl' : ''}`}>
+      <div className="absolute right-3 top-3 z-10 flex items-center gap-2">
         <button
           type="button"
           title={`Déplacer ${label}`}
@@ -101,8 +131,59 @@ function SortablePanel({ id, label, children }) {
             <path d="M12 5v14M5 12h14" />
           </svg>
         </button>
+        <button
+          type="button"
+          title={`Redimensionner ${label}`}
+          onPointerDown={handlePointerDown}
+          className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/90 dark:bg-slate-900/90 border border-gray-200 dark:border-slate-700 text-gray-500 hover:text-gray-700 hover:shadow-sm transition"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 20l16-16M14 20h6v-6" />
+          </svg>
+        </button>
       </div>
       {children}
+    </div>
+  )
+}
+
+function PanelTimeline({ jalons, startDate, endDate, onSelect }) {
+  return (
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 h-full">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-8 h-8 bg-slate-100 dark:bg-slate-900 rounded-lg flex items-center justify-center flex-shrink-0">
+          <svg className="w-4 h-4 text-slate-700 dark:text-slate-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path d="M12 8v4l3 3" />
+            <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+          </svg>
+        </div>
+        <span className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500">Timeline</span>
+      </div>
+      <TimelineSVG jalons={jalons} startDate={startDate} endDate={endDate} onSelect={onSelect} />
+    </div>
+  )
+}
+
+function PanelSCurve({ points, startDate, endDate, projectName }) {
+  return (
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 h-full flex flex-col gap-4">
+      <div className="flex items-center gap-2">
+        <div className="w-8 h-8 bg-slate-100 dark:bg-slate-900 rounded-lg flex items-center justify-center flex-shrink-0">
+          <svg className="w-4 h-4 text-slate-700 dark:text-slate-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path d="M4 19h16M4 15c4-3 6 0 10-5 4-5 6 1 6 1" />
+          </svg>
+        </div>
+        <span className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500">Courbe en S</span>
+      </div>
+      {points && points.length > 1 ? (
+        <div className="flex-1 min-h-[260px]">
+          <SCurve points={points} startDate={startDate} endDate={endDate} projectName={projectName} />
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-dashed border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/60 p-8 text-center text-sm text-gray-500 dark:text-slate-400">
+          Pas encore assez de données pour afficher la courbe en S.
+        </div>
+      )}
     </div>
   )
 }
@@ -642,19 +723,55 @@ export default function PlanningPage() {
   const [meta,     setMeta]     = useState({ nom: '', chef: '', dateDebut: '' })
   const [loading,  setLoading]  = useState(true)
   const [notif,    setNotif]    = useState({ msg: '', type: 'ok' })
-  const [panelOrder, setPanelOrder] = useState(['avancement', 'taches', 'risques', 'budget'])
+  const [panelOrder, setPanelOrder] = useState(['avancement', 'taches', 'risques', 'budget', 'timeline', 'scurve'])
+  const [visiblePanels, setVisiblePanels] = useState({
+    avancement: true,
+    taches: true,
+    risques: true,
+    budget: true,
+    timeline: true,
+    scurve: true,
+  })
+  const [panelSizes, setPanelSizes] = useState({})
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
+  const visiblePanelIds = useMemo(() => panelOrder.filter((id) => visiblePanels[id]), [panelOrder, visiblePanels])
+
+  const updatePanelSize = useCallback((id, width, height) => {
+    setPanelSizes((prev) => ({ ...prev, [id]: { width, height } }))
+  }, [])
+
+  const togglePanel = useCallback((id) => {
+    setVisiblePanels((prev) => ({ ...prev, [id]: !prev[id] }))
+  }, [])
+
+  const resetLayout = useCallback(() => {
+    setPanelOrder(['avancement', 'taches', 'risques', 'budget', 'timeline', 'scurve'])
+    setVisiblePanels({ avancement: true, taches: true, risques: true, budget: true, timeline: true, scurve: true })
+    setPanelSizes({})
+  }, [])
+
   const handleDragEnd = useCallback((event) => {
     const { active, over } = event
     if (!over || active.id === over.id) return
+    const activeIndex = visiblePanelIds.indexOf(active.id)
+    const overIndex = visiblePanelIds.indexOf(over.id)
+    if (activeIndex === -1 || overIndex === -1) return
     setPanelOrder((items) => {
-      const oldIndex = items.indexOf(active.id)
-      const newIndex = items.indexOf(over.id)
-      if (oldIndex === -1 || newIndex === -1) return items
-      return arrayMove(items, oldIndex, newIndex)
+      const visibleItems = items.filter((id) => visiblePanels[id])
+      const nextVisible = arrayMove(visibleItems, activeIndex, overIndex)
+      const hiddenItems = items.filter((id) => !visiblePanels[id])
+      const merged = []
+      items.forEach((id) => {
+        if (!visiblePanels[id]) {
+          merged.push(id)
+        } else {
+          merged.push(nextVisible.shift())
+        }
+      })
+      return merged
     })
-  }, [])
+  }, [visiblePanelIds, visiblePanels])
 
   const notify = (msg, type = 'ok') => {
     setNotif({ msg, type })
@@ -774,6 +891,58 @@ export default function PlanningPage() {
     return out
   }, [taches, enrichedJalons, startDate, endDate])
 
+  const panelLabels = {
+    avancement: 'Avancement calendaire',
+    taches: 'Réalisation des tâches',
+    risques: 'Risques',
+    budget: 'Pilotage budgétaire',
+    timeline: 'Timeline',
+    scurve: 'Courbe en S',
+  }
+
+  const panelComponents = {
+    avancement: (
+      <PanelAvancement
+        progressPct={progressPct}
+        taskPct={taskPct}
+        startDate={startDate}
+        endDate={endDate}
+        enrichedJalons={enrichedJalons}
+      />
+    ),
+    taches: (
+      <PanelTaches
+        taskPct={taskPct}
+        taches={taches}
+      />
+    ),
+    risques: <PanelRisques risques={risques} />,
+    budget: (
+      <PanelBudget
+        projet={projet}
+        depenses={depenses}
+        taskPct={taskPct}
+        progressPct={progressPct}
+      />
+    ),
+    timeline: (
+      <PanelTimeline
+        jalons={enrichedJalons}
+        startDate={startDate}
+        endDate={endDate}
+        onSelect={goToTachesByJalon}
+      />
+    ),
+    scurve: (
+      <PanelSCurve
+        points={points}
+        startDate={startDate}
+        endDate={endDate}
+        projectName={meta.nom}
+      />
+    ),
+  }
+
   if (loading) return (
     <div className="flex items-center justify-center h-48 text-gray-400 text-sm">Chargement…</div>
   )
@@ -817,65 +986,50 @@ export default function PlanningPage() {
         </div>
       </div>
 
-      {/* ── Tableau de bord 2×2 ────────────────────────────────────────── */}
+      {/* ── Contrôles widget ──────────────────────────────────────────── */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <div className="text-[.65rem] uppercase tracking-[.2em] text-gray-400 dark:text-slate-500 font-bold">Tableau de bord personnalisable</div>
+          <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Glisser pour réorganiser, masquer un bloc ou redimensionner depuis le coin.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(panelLabels).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => togglePanel(id)}
+              className={`rounded-full border px-3 py-1 text-[.72rem] font-semibold transition ${visiblePanels[id] ? 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-200' : 'border-gray-200 bg-white text-gray-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400'}`}
+            >
+              {visiblePanels[id] ? 'Masquer' : 'Afficher'} {label}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={resetLayout}
+            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[.72rem] font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-slate-600"
+          >
+            Réinitialiser
+          </button>
+        </div>
+      </div>
+
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={panelOrder} strategy={rectSortingStrategy}>
+        <SortableContext items={visiblePanelIds} strategy={rectSortingStrategy}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {panelOrder.map((panelId) => {
-              const panelLabels = {
-                avancement: 'Avancement calendaire',
-                taches: 'Réalisation des tâches',
-                risques: 'Risques',
-                budget: 'Pilotage budgétaire',
-              }
-
-              const panelComponents = {
-                avancement: (
-                  <PanelAvancement
-                    progressPct={progressPct}
-                    taskPct={taskPct}
-                    startDate={startDate}
-                    endDate={endDate}
-                    enrichedJalons={enrichedJalons}
-                  />
-                ),
-                taches: (
-                  <PanelTaches
-                    taskPct={taskPct}
-                    taches={taches}
-                  />
-                ),
-                risques: <PanelRisques risques={risques} />,
-                budget: (
-                  <PanelBudget
-                    projet={projet}
-                    depenses={depenses}
-                    taskPct={taskPct}
-                    progressPct={progressPct}
-                  />
-                ),
-              }
-
-              return (
-                <SortablePanel key={panelId} id={panelId} label={panelLabels[panelId] ?? panelId}>
-                  {panelComponents[panelId]}
-                </SortablePanel>
-              )
-            })}
+            {visiblePanelIds.map((panelId) => (
+              <SortablePanel
+                key={panelId}
+                id={panelId}
+                label={panelLabels[panelId] ?? panelId}
+                size={panelSizes[panelId]}
+                onResize={updatePanelSize}
+              >
+                {panelComponents[panelId]}
+              </SortablePanel>
+            ))}
           </div>
         </SortableContext>
       </DndContext>
-
-      {/* ── Courbe S ───────────────────────────────────────────────────── */}
-      {points && points.length > 1 && (
-        <SCurve points={points} startDate={startDate} endDate={endDate} projectName={meta.nom} />
-      )}
-
-      {/* ── Timeline SVG ───────────────────────────────────────────────── */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm px-6 py-5 overflow-x-auto scrollbar-hidden">
-        <div className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-4">Timeline</div>
-        <TimelineSVG jalons={enrichedJalons} startDate={startDate} endDate={endDate} onSelect={goToTachesByJalon} />
-      </div>
 
       {/* ── Cartes jalons ──────────────────────────────────────────────── */}
       <div>
