@@ -80,7 +80,7 @@ function MiniBar({ value, color = '#3b82f6' }) {
   )
 }
 
-function SortablePanel({ id, label, children, size, onResize }) {
+function SortablePanel({ id, label, children, size, onResize, onToggle }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -119,28 +119,36 @@ function SortablePanel({ id, label, children, size, onResize }) {
 
   return (
     <div ref={setNodeRef} data-sortable-panel style={style} className={`relative ${isDragging ? 'opacity-90 shadow-xl' : ''}`}>
-      <div className="absolute right-3 top-3 z-10 flex items-center gap-2">
-        <button
-          type="button"
-          title={`Déplacer ${label}`}
-          {...attributes}
-          {...listeners}
-          className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/90 dark:bg-slate-900/90 border border-gray-200 dark:border-slate-700 text-gray-500 hover:text-gray-700 hover:shadow-sm transition"
-        >
-          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-        </button>
-        <button
-          type="button"
-          title={`Redimensionner ${label}`}
-          onPointerDown={handlePointerDown}
-          className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/90 dark:bg-slate-900/90 border border-gray-200 dark:border-slate-700 text-gray-500 hover:text-gray-700 hover:shadow-sm transition"
-        >
-          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 20l16-16M14 20h6v-6" />
-          </svg>
-        </button>
+      <div
+        {...attributes}
+        {...listeners}
+        className="flex items-center justify-between gap-2 rounded-t-2xl border-b border-gray-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90 px-4 py-3 cursor-grab"
+      >
+        <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{label}</span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            title={`Masquer ${label}`}
+            onClick={(event) => { event.stopPropagation(); onToggle?.(id) }}
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/90 dark:bg-slate-900/90 border border-gray-200 dark:border-slate-700 text-gray-500 hover:text-gray-700 transition"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M1 1l22 22" />
+              <path d="M17.94 17.94A10 10 0 0 1 6.06 6.06" />
+              <path d="M10.59 10.59A3 3 0 0 0 13.41 13.41" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            title={`Redimensionner ${label}`}
+            onPointerDown={(event) => { event.stopPropagation(); handlePointerDown(event) }}
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/90 dark:bg-slate-900/90 border border-gray-200 dark:border-slate-700 text-gray-500 hover:text-gray-700 transition"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 20l16-16M14 20h6v-6" />
+            </svg>
+          </button>
+        </div>
       </div>
       {children}
     </div>
@@ -745,12 +753,6 @@ export default function PlanningPage() {
     setVisiblePanels((prev) => ({ ...prev, [id]: !prev[id] }))
   }, [])
 
-  const resetLayout = useCallback(() => {
-    setPanelOrder(['avancement', 'taches', 'risques', 'budget', 'timeline', 'scurve'])
-    setVisiblePanels({ avancement: true, taches: true, risques: true, budget: true, timeline: true, scurve: true })
-    setPanelSizes({})
-  }, [])
-
   const handleDragEnd = useCallback((event) => {
     const { active, over } = event
     if (!over || active.id === over.id) return
@@ -986,36 +988,9 @@ export default function PlanningPage() {
         </div>
       </div>
 
-      {/* ── Contrôles widget ──────────────────────────────────────────── */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <div className="text-[.65rem] uppercase tracking-[.2em] text-gray-400 dark:text-slate-500 font-bold">Tableau de bord personnalisable</div>
-          <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Glisser pour réorganiser, masquer un bloc ou redimensionner depuis le coin.</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {Object.entries(panelLabels).map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => togglePanel(id)}
-              className={`rounded-full border px-3 py-1 text-[.72rem] font-semibold transition ${visiblePanels[id] ? 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-200' : 'border-gray-200 bg-white text-gray-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400'}`}
-            >
-              {visiblePanels[id] ? 'Masquer' : 'Afficher'} {label}
-            </button>
-          ))}
-          <button
-            type="button"
-            onClick={resetLayout}
-            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[.72rem] font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-slate-600"
-          >
-            Réinitialiser
-          </button>
-        </div>
-      </div>
-
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={visiblePanelIds} strategy={rectSortingStrategy}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-[linear-gradient(#e2e8f0_1px,transparent_1px),linear-gradient(90deg,#e2e8f0_1px,transparent_1px)] bg-[length:60px_60px] p-2 rounded-3xl">
             {visiblePanelIds.map((panelId) => (
               <SortablePanel
                 key={panelId}
@@ -1023,6 +998,7 @@ export default function PlanningPage() {
                 label={panelLabels[panelId] ?? panelId}
                 size={panelSizes[panelId]}
                 onResize={updatePanelSize}
+                onToggle={togglePanel}
               >
                 {panelComponents[panelId]}
               </SortablePanel>
