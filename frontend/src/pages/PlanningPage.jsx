@@ -1015,22 +1015,19 @@ export default function PlanningPage() {
     <div className="flex items-center justify-center h-48 text-gray-400 text-sm">Chargement…</div>
   )
 
-  if (enrichedJalons.length === 0) return (
-    <div className="space-y-4">
-      <PageHeader />
-      {notif.msg && <Notif {...notif} />}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm flex flex-col items-center justify-center h-48 text-gray-400 gap-2">
-        <span className="text-3xl">📅</span>
-        <p className="text-sm font-medium text-gray-600">Aucun jalon défini</p>
-        <p className="text-xs text-gray-400">Renseignez des jalons dans le Cahier des Charges.</p>
-      </div>
-    </div>
-  )
+  const noJalons = enrichedJalons.length === 0
 
   return (
     <div className="space-y-4 max-w-5xl mx-auto">
       <PageHeader />
       {notif.msg && <Notif {...notif} />}
+      {noJalons && (
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm flex flex-col items-center justify-center p-6 text-gray-400 gap-2">
+          <span className="text-3xl">📅</span>
+          <p className="text-sm font-medium text-gray-600">Aucun jalon défini</p>
+          <p className="text-xs text-gray-400">Renseignez des jalons dans le Cahier des Charges pour retrouver le planning complet.</p>
+        </div>
+      )}
 
       {/* ── Header projet ──────────────────────────────────────────────── */}
       <div className="bg-gray-900 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4">
