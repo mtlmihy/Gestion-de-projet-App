@@ -29,8 +29,8 @@ export default function DonutChart({ slices = [], title = '', size = 200 }) {
   if (total === 0) {
     return (
       <svg viewBox={`0 0 ${size} ${size}`} className="w-full max-w-[200px]">
-        <circle cx={cx} cy={cy} r={R} fill="none" stroke="#e2e8f0" strokeWidth={R - r} />
-        <text x={cx} y={cy + 5} textAnchor="middle" fontSize="11" fill="#94a3b8">—</text>
+        <circle cx={cx} cy={cy} r={(R + r) / 2} fill="none" className="stroke-gray-100 dark:stroke-slate-700" strokeWidth={R - r} />
+        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fontSize={Math.round(size * 0.14)} className="fill-gray-400 dark:fill-slate-500">—</text>
       </svg>
     )
   }
@@ -60,14 +60,20 @@ export default function DonutChart({ slices = [], title = '', size = 200 }) {
 
   return (
     <svg viewBox={`0 0 ${size} ${size}`} className="w-full max-w-[200px]">
-      {/* fond gris */}
-      <circle cx={cx} cy={cy} r={(R + r) / 2} fill="none" stroke="#f1f5f9" strokeWidth={R - r} />
+      <circle cx={cx} cy={cy} r={(R + r) / 2} fill="none" className="stroke-gray-100 dark:stroke-slate-700" strokeWidth={R - r} />
       {paths}
-      {/* texte centre */}
       {title && (
-        <>
-          <text x={cx} y={cy - 4} textAnchor="middle" fontSize="22" fontWeight="800" fill="#1e293b">{title}</text>
-        </>
+        <text
+          x={cx}
+          y={cy}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontSize={Math.round(size * 0.275)}
+          fontWeight="800"
+          className="fill-gray-900 dark:fill-slate-100"
+        >
+          {title}
+        </text>
       )}
     </svg>
   )
