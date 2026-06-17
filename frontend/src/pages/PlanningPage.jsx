@@ -6,8 +6,6 @@ import { getRisques } from '../api/risques'
 import { getDepenses } from '../api/budget'
 import { useProject } from '../context/ProjectContext'
 import SCurve from '../components/SCurve'
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, useDraggable } from '@dnd-kit/core'
-import { CSS } from '@dnd-kit/utilities'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const TODAY = new Date()
@@ -79,115 +77,6 @@ function MiniBar({ value, color = '#3b82f6' }) {
   )
 }
 
-function DraggablePanel({ id, label, children, size, position, onResize }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id })
-  
-  const style = {
-    position: 'absolute',
-    left: `${position?.x ?? 0}px`,
-    top: `${position?.y ?? 0}px`,
-    width: size?.width ? `${size.width}px` : '520px',
-    height: size?.height ? `${size.height}px` : 'auto',
-    minWidth: 320,
-    minHeight: 280,
-    transform: CSS.Transform.toString(transform),
-    zIndex: isDragging ? 20 : 10,
-    transition: !isDragging ? 'none' : undefined,
-  }
-
-  const handlePointerDown = useCallback((event) => {
-    if (event.button !== 0) return
-    event.stopPropagation()
-    const rootEl = event.currentTarget.closest('[data-draggable-panel]')
-    if (!rootEl) return
-
-    const startWidth = rootEl.offsetWidth
-    const startHeight = rootEl.offsetHeight
-    const startX = event.clientX
-    const startY = event.clientY
-
-    const onPointerMove = (moveEvent) => {
-      const nextWidth = Math.max(320, startWidth + (moveEvent.clientX - startX))
-      const nextHeight = Math.max(280, startHeight + (moveEvent.clientY - startY))
-      onResize?.(id, nextWidth, nextHeight)
-    }
-
-    const onPointerUp = () => {
-      window.removeEventListener('pointermove', onPointerMove)
-      window.removeEventListener('pointerup', onPointerUp)
-    }
-
-    window.addEventListener('pointermove', onPointerMove)
-    window.addEventListener('pointerup', onPointerUp)
-  }, [id, onResize])
-
-  return (
-    <div ref={setNodeRef} data-draggable-panel style={style} className={`bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm flex flex-col overflow-hidden ${isDragging ? 'shadow-2xl opacity-95' : ''}`}>
-      <div
-        {...attributes}
-        {...listeners}
-        className="flex items-center gap-2 border-b border-gray-100 dark:border-slate-700 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 px-4 py-3 cursor-grab active:cursor-grabbing select-none"
-      >
-        <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex-1">{label}</span>
-        <button
-          type="button"
-          title={`Redimensionner ${label}`}
-          onPointerDown={handlePointerDown}
-          className="flex h-6 w-6 items-center justify-center rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 active:text-slate-700 transition opacity-50 hover:opacity-100"
-        >
-          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 20l16-16M14 20h6v-6" />
-          </svg>
-        </button>
-      </div>
-      <div className="flex-1 overflow-auto p-4">
-        {children}
-      </div>
-    </div>
-  )
-}
-
-function PanelTimeline({ jalons, startDate, endDate, onSelect }) {
-  return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 h-full">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 bg-slate-100 dark:bg-slate-900 rounded-lg flex items-center justify-center flex-shrink-0">
-          <svg className="w-4 h-4 text-slate-700 dark:text-slate-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path d="M12 8v4l3 3" />
-            <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-          </svg>
-        </div>
-        <span className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500">Timeline</span>
-      </div>
-      <TimelineSVG jalons={jalons} startDate={startDate} endDate={endDate} onSelect={onSelect} />
-    </div>
-  )
-}
-
-function PanelSCurve({ points, startDate, endDate, projectName }) {
-  return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 h-full flex flex-col gap-4">
-      <div className="flex items-center gap-2">
-        <div className="w-8 h-8 bg-slate-100 dark:bg-slate-900 rounded-lg flex items-center justify-center flex-shrink-0">
-          <svg className="w-4 h-4 text-slate-700 dark:text-slate-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path d="M4 19h16M4 15c4-3 6 0 10-5 4-5 6 1 6 1" />
-          </svg>
-        </div>
-        <span className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500">Courbe en S</span>
-      </div>
-      {points && points.length > 1 ? (
-        <div className="flex-1 min-h-[260px]">
-          <SCurve points={points} startDate={startDate} endDate={endDate} projectName={projectName} />
-        </div>
-      ) : (
-        <div className="rounded-2xl border border-dashed border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/60 p-8 text-center text-sm text-gray-500 dark:text-slate-400">
-          Pas encore assez de données pour afficher la courbe en S.
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ── Timeline SVG ──────────────────────────────────────────────────────────────
 function TimelineSVG({ jalons, startDate, endDate, onSelect }) {
   const W = 900, H = 210, PL = 70, PR = 70
@@ -243,7 +132,7 @@ function TimelineSVG({ jalons, startDate, endDate, onSelect }) {
   })
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ minWidth: 520 }} xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" xmlns="http://www.w3.org/2000/svg">
       {ticks}
       <rect x={PL} y={BAR_Y} width={TW} height={BAR_H} rx="5" fill="#f1f5f9" />
       <rect x={PL} y={BAR_Y} width={pastW} height={BAR_H} rx="5" fill="#525252" />
@@ -284,8 +173,7 @@ function PanelAvancement({ progressPct, taskPct, startDate, endDate, enrichedJal
     : 'linear-gradient(90deg, #2563eb, #60a5fa)'
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-4">
-      {/* Header */}
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-4 h-full">
       <div className="flex items-center gap-2">
         <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
           <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -295,13 +183,11 @@ function PanelAvancement({ progressPct, taskPct, startDate, endDate, enrichedJal
         <span className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500">Avancement calendaire</span>
       </div>
 
-      {/* Valeur principale */}
       <div className="flex items-end gap-3">
         <span className="text-5xl font-black leading-none" style={{ color: col }}>{progressPct}%</span>
         <span className="text-xs text-gray-400 dark:text-slate-500 pb-1">du projet écoulé</span>
       </div>
 
-      {/* Barre */}
       <div>
         <div className="w-full bg-gray-100 dark:bg-slate-700 rounded-full h-3 overflow-hidden">
           <div className="h-3 rounded-full transition-all duration-500" style={{ width: `${progressPct}%`, background: barBg }} />
@@ -313,7 +199,6 @@ function PanelAvancement({ progressPct, taskPct, startDate, endDate, enrichedJal
         </div>
       </div>
 
-      {/* Compteurs */}
       <div className="grid grid-cols-2 gap-2">
         <div className="bg-gray-50 dark:bg-slate-700/50 rounded-xl p-3 text-center">
           <div className="text-xl font-bold text-gray-700 dark:text-slate-200">{daysPast}j</div>
@@ -325,14 +210,12 @@ function PanelAvancement({ progressPct, taskPct, startDate, endDate, enrichedJal
         </div>
       </div>
 
-      {/* Alerte retard */}
       {retardAlert && (
         <AlertBanner icon="⚠️" level="warning">
           Retard détecté — le calendrier avance plus vite que la réalisation des tâches ({progressPct}% vs {taskPct}%).
         </AlertBanner>
       )}
 
-      {/* Prochain jalon */}
       {nextJalon && (
         <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl px-3 py-2">
           <div className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
@@ -358,8 +241,7 @@ function PanelTaches({ taskPct, taches }) {
   const barBg = taskPct >= 70 ? '#16a34a' : taskPct >= 30 ? '#f59e0b' : '#ef4444'
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-4">
-      {/* Header */}
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-4 h-full">
       <div className="flex items-center gap-2">
         <div className="w-8 h-8 bg-green-100 dark:bg-green-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
           <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -369,13 +251,11 @@ function PanelTaches({ taskPct, taches }) {
         <span className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500">Réalisation des tâches</span>
       </div>
 
-      {/* Valeur principale */}
       <div className="flex items-end gap-3">
         <span className="text-5xl font-black leading-none" style={{ color: col }}>{taskPct}%</span>
         <span className="text-xs text-gray-400 dark:text-slate-500 pb-1">complété (pondéré)</span>
       </div>
 
-      {/* Barre */}
       <div>
         <div className="w-full bg-gray-100 dark:bg-slate-700 rounded-full h-3 overflow-hidden">
           <div className="h-3 rounded-full transition-all duration-500" style={{ width: `${taskPct}%`, background: barBg }} />
@@ -387,7 +267,6 @@ function PanelTaches({ taskPct, taches }) {
         </div>
       </div>
 
-      {/* Compteurs statuts */}
       <div className="grid grid-cols-3 gap-2">
         {[
           { label: 'Terminées', val: terminees,  color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-900/20' },
@@ -401,7 +280,6 @@ function PanelTaches({ taskPct, taches }) {
         ))}
       </div>
 
-      {/* Tâches critiques */}
       {critiques > 0 && (
         <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl px-3 py-2">
           <svg className="w-3.5 h-3.5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -441,8 +319,7 @@ function PanelRisques({ risques }) {
   const p3Count  = risques.filter((r) => r.priorite === 3 && r.statut !== 'Fermé').length
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-4">
-      {/* Header */}
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-4 h-full">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-red-100 dark:bg-red-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -456,7 +333,6 @@ function PanelRisques({ risques }) {
         <span className="text-xs text-gray-400 dark:text-slate-500">{total} au total · {fermes} fermé{fermes > 1 ? 's' : ''}</span>
       </div>
 
-      {/* Résumé P1/P2/P3 */}
       <div className="grid grid-cols-3 gap-2">
         {[
           { label: 'Critiques P1', val: p1Count, bg: 'bg-red-50 dark:bg-red-900/20',    border: 'border-red-100 dark:border-red-800',    col: 'text-red-600 dark:text-red-400' },
@@ -470,7 +346,6 @@ function PanelRisques({ risques }) {
         ))}
       </div>
 
-      {/* Alerte P1 */}
       {p1Count > 0 && (
         <AlertBanner icon="🔴" level="error">
           {p1Count} risque{p1Count > 1 ? 's' : ''} critique{p1Count > 1 ? 's' : ''} (P1) actif{p1Count > 1 ? 's' : ''} — action immédiate requise.
@@ -483,18 +358,14 @@ function PanelRisques({ risques }) {
         </div>
       ) : (
         <>
-          {/* Matrice 3×3 */}
           <div>
             <div className="text-[.62rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-2">Matrice Probabilité × Impact</div>
             <div className="flex gap-2">
-              {/* Axe Y — Probabilité */}
               <div className="flex flex-col justify-around w-14 flex-shrink-0">
                 {[...PROBA].reverse().map((p) => (
                   <div key={p} className="text-[.6rem] text-gray-400 dark:text-slate-500 text-right leading-none">{p}</div>
                 ))}
               </div>
-
-              {/* Grille */}
               <div className="flex-1 flex flex-col gap-1">
                 {[...PROBA].reverse().map((prob) => (
                   <div key={prob} className="grid grid-cols-3 gap-1">
@@ -525,7 +396,6 @@ function PanelRisques({ risques }) {
                     })}
                   </div>
                 ))}
-                {/* Axe X — Impact */}
                 <div className="grid grid-cols-3 gap-1 mt-1">
                   {IMPACT.map((imp) => (
                     <div key={imp} className="text-[.6rem] text-gray-400 dark:text-slate-500 text-center">{imp}</div>
@@ -533,14 +403,12 @@ function PanelRisques({ risques }) {
                 </div>
               </div>
             </div>
-            {/* Légende axes */}
             <div className="flex justify-between text-[.58rem] text-gray-300 dark:text-slate-600 mt-0.5 px-16">
               <span>← Probabilité (axe gauche)</span>
               <span>Impact →</span>
             </div>
           </div>
 
-          {/* Barre de répartition statuts */}
           <div>
             <div className="text-[.62rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-1.5">Statuts</div>
             <div className="flex h-2.5 rounded-full overflow-hidden gap-0.5">
@@ -575,7 +443,7 @@ function PanelBudget({ projet, depenses, taskPct, progressPct }) {
 
   if (!isClient || !bac) {
     return (
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 flex flex-col items-center justify-center gap-3 text-center">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 flex flex-col items-center justify-center gap-3 text-center h-full">
         <div className="w-10 h-10 bg-gray-100 dark:bg-slate-700 rounded-xl flex items-center justify-center">
           <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <line x1="12" y1="1" x2="12" y2="23"/>
@@ -612,8 +480,7 @@ function PanelBudget({ projet, depenses, taskPct, progressPct }) {
   const spiLabel = spi === null ? 'N/A' : spi >= 0.95 ? 'Dans les temps' : spi >= 0.80 ? 'Léger retard' : 'En retard'
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-4">
-      {/* Header */}
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-4 h-full">
       <div className="flex items-center gap-2">
         <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
           <svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -624,7 +491,6 @@ function PanelBudget({ projet, depenses, taskPct, progressPct }) {
         <span className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500">Pilotage budgétaire</span>
       </div>
 
-      {/* Alertes budget */}
       {cpi !== null && cpi < 0.8 && (
         <AlertBanner icon="🔴" level="error">
           Dépassement budgétaire — CPI à {cpi.toFixed(2)} (chaque CHF dépensé produit {fmtCurrency(ev / ac, devise)} de valeur).
@@ -641,9 +507,7 @@ function PanelBudget({ projet, depenses, taskPct, progressPct }) {
         </AlertBanner>
       )}
 
-      {/* CPI + SPI badges */}
       <div className="grid grid-cols-2 gap-3">
-        {/* CPI */}
         <div className={`${cpiStyle.bg} rounded-xl p-3`}>
           <div className="text-[.6rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-1">CPI — Coût</div>
           <div className={`text-3xl font-black leading-none ${cpiStyle.text}`}>
@@ -654,7 +518,6 @@ function PanelBudget({ projet, depenses, taskPct, progressPct }) {
             {cpi !== null && (cpi >= 1 ? '▲ Sous budget' : '▼ Dépassement prévu')}
           </div>
         </div>
-        {/* SPI */}
         <div className={`${spiStyle.bg} rounded-xl p-3`}>
           <div className="text-[.6rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-1">SPI — Délai</div>
           <div className={`text-3xl font-black leading-none ${spiStyle.text}`}>
@@ -667,7 +530,6 @@ function PanelBudget({ projet, depenses, taskPct, progressPct }) {
         </div>
       </div>
 
-      {/* Métriques clés */}
       <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
         {[
           { label: 'Budget (BAC)',       value: fmtCurrency(bac, devise),  col: 'text-gray-700 dark:text-slate-200' },
@@ -682,7 +544,6 @@ function PanelBudget({ projet, depenses, taskPct, progressPct }) {
         ))}
       </div>
 
-      {/* Barre consommation */}
       <div>
         <div className="flex justify-between text-[.62rem] text-gray-400 dark:text-slate-500 mb-1.5">
           <span>Consommation budget</span>
@@ -723,123 +584,6 @@ export default function PlanningPage() {
   const [meta,     setMeta]     = useState({ nom: '', chef: '', dateDebut: '' })
   const [loading,  setLoading]  = useState(true)
   const [notif,    setNotif]    = useState({ msg: '', type: 'ok' })
-  const [panelOrder, setPanelOrder] = useState(['avancement', 'taches', 'risques', 'budget', 'timeline', 'scurve'])
-  const [visiblePanels, setVisiblePanels] = useState({
-    avancement: true,
-    taches: true,
-    risques: true,
-    budget: true,
-    timeline: true,
-    scurve: true,
-  })
-  const [panelSizes, setPanelSizes] = useState({})
-  const [panelPositions, setPanelPositions] = useState({
-    avancement: { x: 16, y: 16 },
-    taches: { x: 560, y: 16 },
-    risques: { x: 16, y: 360 },
-    budget: { x: 560, y: 360 },
-    timeline: { x: 16, y: 700 },
-    scurve: { x: 560, y: 700 },
-  })
-
-  const GRID_SIZE = 16
-
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
-  const visiblePanelIds = useMemo(() => panelOrder.filter((id) => visiblePanels[id]), [panelOrder, visiblePanels])
-
-  const updatePanelSize = useCallback((id, width, height) => {
-    setPanelSizes((prev) => ({ ...prev, [id]: { width, height } }))
-  }, [])
-
-  const togglePanel = useCallback((id) => {
-    setVisiblePanels((prev) => ({ ...prev, [id]: !prev[id] }))
-  }, [])
-
-  // Détecte si deux rectangles se chevauchent
-  const checkCollision = useCallback((rect1, rect2, padding = 8) => {
-    return !(
-      rect1.right + padding < rect2.left ||
-      rect1.left > rect2.right + padding ||
-      rect1.bottom + padding < rect2.top ||
-      rect1.top > rect2.bottom + padding
-    )
-  }, [])
-
-  // Résoud les collisions en décalant les widgets (auto-reflow)
-  const resolveCollisions = useCallback((newPositions, draggingId) => {
-    const MAX_ITERATIONS = 10
-    let iterations = 0
-    let changed = true
-
-    while (changed && iterations < MAX_ITERATIONS) {
-      changed = false
-      iterations++
-
-      for (const panelId of visiblePanelIds) {
-        if (panelId === draggingId) continue
-
-        const pos = newPositions[panelId]
-        const size = panelSizes[panelId] || { width: 520, height: 'auto' }
-        const height = typeof size.height === 'number' ? size.height : 280
-
-        const rect1 = {
-          left: pos.x,
-          top: pos.y,
-          right: pos.x + (size.width || 520),
-          bottom: pos.y + height,
-        }
-
-        // Vérifier les collisions avec tous les autres
-        for (const otherId of visiblePanelIds) {
-          if (otherId === panelId || otherId === draggingId) continue
-
-          const otherPos = newPositions[otherId]
-          const otherSize = panelSizes[otherId] || { width: 520, height: 'auto' }
-          const otherHeight = typeof otherSize.height === 'number' ? otherSize.height : 280
-
-          const rect2 = {
-            left: otherPos.x,
-            top: otherPos.y,
-            right: otherPos.x + (otherSize.width || 520),
-            bottom: otherPos.y + otherHeight,
-          }
-
-          // Si collision, pousser le widget vers la droite
-          if (checkCollision(rect1, rect2)) {
-            const pushDistance = (otherSize.width || 520) + GRID_SIZE
-            const newX = Math.round((rect2.right + pushDistance) / GRID_SIZE) * GRID_SIZE
-
-            newPositions[panelId] = { ...pos, x: Math.max(0, newX) }
-            changed = true
-            break
-          }
-        }
-      }
-    }
-
-    return newPositions
-  }, [visiblePanelIds, panelSizes, checkCollision, GRID_SIZE])
-
-  const handleDragEnd = useCallback((event) => {
-    const { active, delta } = event
-    if (!active || !delta) return
-
-    setPanelPositions((prev) => {
-      const current = prev[active.id]
-      if (!current) return prev
-
-      const nextX = Math.max(0, Math.round((current.x + delta.x) / GRID_SIZE) * GRID_SIZE)
-      const nextY = Math.max(0, Math.round((current.y + delta.y) / GRID_SIZE) * GRID_SIZE)
-
-      const newPositions = {
-        ...prev,
-        [active.id]: { x: nextX, y: nextY },
-      }
-
-      // Résoudre les collisions (auto-reflow)
-      return resolveCollisions(newPositions, active.id)
-    })
-  }, [GRID_SIZE, resolveCollisions])
 
   const notify = (msg, type = 'ok') => {
     setNotif({ msg, type })
@@ -959,75 +703,26 @@ export default function PlanningPage() {
     return out
   }, [taches, enrichedJalons, startDate, endDate])
 
-  const panelLabels = {
-    avancement: 'Avancement calendaire',
-    taches: 'Réalisation des tâches',
-    risques: 'Risques',
-    budget: 'Pilotage budgétaire',
-    timeline: 'Timeline',
-    scurve: 'Courbe en S',
-  }
-
-  const panelComponents = {
-    avancement: (
-      <PanelAvancement
-        progressPct={progressPct}
-        taskPct={taskPct}
-        startDate={startDate}
-        endDate={endDate}
-        enrichedJalons={enrichedJalons}
-      />
-    ),
-    taches: (
-      <PanelTaches
-        taskPct={taskPct}
-        taches={taches}
-      />
-    ),
-    risques: <PanelRisques risques={risques} />,
-    budget: (
-      <PanelBudget
-        projet={projet}
-        depenses={depenses}
-        taskPct={taskPct}
-        progressPct={progressPct}
-      />
-    ),
-    timeline: (
-      <PanelTimeline
-        jalons={enrichedJalons}
-        startDate={startDate}
-        endDate={endDate}
-        onSelect={goToTachesByJalon}
-      />
-    ),
-    scurve: (
-      <PanelSCurve
-        points={points}
-        startDate={startDate}
-        endDate={endDate}
-        projectName={meta.nom}
-      />
-    ),
-  }
-
   if (loading) return (
     <div className="flex items-center justify-center h-48 text-gray-400 text-sm">Chargement…</div>
   )
 
-  const noJalons = enrichedJalons.length === 0
-
-  return (
+  if (enrichedJalons.length === 0) return (
     <div className="space-y-4 max-w-5xl mx-auto">
       <PageHeader />
       {notif.msg && <Notif {...notif} />}
-      {noJalons && (
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm flex flex-col items-center justify-center p-6 text-gray-400 gap-2">
-          <span className="text-3xl">📅</span>
-          <p className="text-sm font-medium text-gray-600">Aucun jalon défini</p>
-          <p className="text-xs text-gray-400">Renseignez des jalons dans le Cahier des Charges pour retrouver le planning complet.</p>
-        </div>
-      )}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm flex flex-col items-center justify-center h-48 text-gray-400 gap-2">
+        <span className="text-3xl">📅</span>
+        <p className="text-sm font-medium text-gray-600">Aucun jalon défini</p>
+        <p className="text-xs text-gray-400">Renseignez des jalons dans le Cahier des Charges.</p>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="space-y-6 max-w-5xl mx-auto">
+      <PageHeader />
+      {notif.msg && <Notif {...notif} />}
 
       {/* ── Header projet ──────────────────────────────────────────────── */}
       <div className="bg-gray-900 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4">
@@ -1051,24 +746,66 @@ export default function PlanningPage() {
         </div>
       </div>
 
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <div className="relative w-full min-h-[1200px] bg-slate-50/50 dark:bg-slate-950/50 rounded-3xl p-4">
-          {visiblePanelIds.map((panelId) => (
-            <DraggablePanel
-              key={panelId}
-              id={panelId}
-              label={panelLabels[panelId] ?? panelId}
-              size={panelSizes[panelId]}
-              position={panelPositions[panelId]}
-              onResize={updatePanelSize}
-            >
-              {panelComponents[panelId]}
-            </DraggablePanel>
-          ))}
-        </div>
-      </DndContext>
+      {/* ── Grille KPI 2×2 ─────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <PanelAvancement
+          progressPct={progressPct}
+          taskPct={taskPct}
+          startDate={startDate}
+          endDate={endDate}
+          enrichedJalons={enrichedJalons}
+        />
+        <PanelTaches
+          taskPct={taskPct}
+          taches={taches}
+        />
+        <PanelRisques risques={risques} />
+        <PanelBudget
+          projet={projet}
+          depenses={depenses}
+          taskPct={taskPct}
+          progressPct={progressPct}
+        />
+      </div>
 
-      {/* ── Cartes jalons ──────────────────────────────────────────────── */}
+      {/* ── Timeline pleine largeur ─────────────────────────────────────── */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-8 h-8 bg-slate-100 dark:bg-slate-900 rounded-lg flex items-center justify-center flex-shrink-0">
+            <svg className="w-4 h-4 text-slate-700 dark:text-slate-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path d="M12 8v4l3 3" />
+              <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+          </div>
+          <span className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500">Timeline</span>
+        </div>
+        <div className="overflow-x-auto">
+          <TimelineSVG jalons={enrichedJalons} startDate={startDate} endDate={endDate} onSelect={goToTachesByJalon} />
+        </div>
+      </div>
+
+      {/* ── Courbe en S pleine largeur ──────────────────────────────────── */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-8 h-8 bg-slate-100 dark:bg-slate-900 rounded-lg flex items-center justify-center flex-shrink-0">
+            <svg className="w-4 h-4 text-slate-700 dark:text-slate-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path d="M4 19h16M4 15c4-3 6 0 10-5 4-5 6 1 6 1" />
+            </svg>
+          </div>
+          <span className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500">Courbe en S</span>
+        </div>
+        {points && points.length > 1 ? (
+          <div className="min-h-[280px]">
+            <SCurve points={points} startDate={startDate} endDate={endDate} projectName={meta.nom} />
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/60 p-8 text-center text-sm text-gray-500 dark:text-slate-400">
+            Pas encore assez de données pour afficher la courbe en S.
+          </div>
+        )}
+      </div>
+
+      {/* ── Détail des jalons ───────────────────────────────────────────── */}
       <div>
         <div className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-3">Détail des jalons</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
