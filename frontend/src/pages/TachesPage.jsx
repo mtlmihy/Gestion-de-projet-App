@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { getTaches, createTache, updateTache, deleteTache } from '../api/taches'
 import { getCdc } from '../api/cdc'
+import { getEquipe } from '../api/equipe'
 import { useProject } from '../context/ProjectContext'
 import KpiCard from '../components/KpiCard'
 import Badge from '../components/Badge'
@@ -36,6 +37,7 @@ export default function TachesPage() {
   const [fJalon,     setFJalon]     = useState(jalonFromUrl || ALL)
   const [showFilters,setShowFilters]= useState(Boolean(jalonFromUrl))
   const [jalonsOptions, setJalonsOptions] = useState([])
+  const [membresOptions, setMembresOptions] = useState([])
   const addInitial = useMemo(() => ({
     nom: '',
     description: '',
@@ -75,6 +77,10 @@ export default function TachesPage() {
           .filter(Boolean)
         setJalonsOptions(noms)
       } catch { /* pas de CDC */ }
+    }).catch(() => {})
+    getEquipe(projet.id).then(({ data }) => {
+      const noms = (data ?? []).map((m) => (m.collaborateur ?? '').trim()).filter(Boolean)
+      setMembresOptions(noms)
     }).catch(() => {})
   }, [])
 
@@ -353,11 +359,11 @@ export default function TachesPage() {
       </div>
 
       <Modal open={addOpen} title="Ajouter une tâche" onClose={() => setAddOpen(false)} size="lg">
-        <TacheForm initial={addInitial} onSubmit={handleAdd} onCancel={() => setAddOpen(false)} loading={saving} jalonsOptions={jalonsOptions} />
+        <TacheForm initial={addInitial} onSubmit={handleAdd} onCancel={() => setAddOpen(false)} loading={saving} jalonsOptions={jalonsOptions} membresOptions={membresOptions} />
       </Modal>
 
       <Modal open={!!editItem} title="Modifier la tâche" onClose={() => setEditItem(null)} size="lg">
-        <TacheForm initial={editItem} onSubmit={handleEdit} onCancel={() => setEditItem(null)} loading={saving} jalonsOptions={jalonsOptions} />
+        <TacheForm initial={editItem} onSubmit={handleEdit} onCancel={() => setEditItem(null)} loading={saving} jalonsOptions={jalonsOptions} membresOptions={membresOptions} />
       </Modal>
 
       <ConfirmDialog
