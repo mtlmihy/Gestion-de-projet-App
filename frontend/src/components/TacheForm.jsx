@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from 'react'
 
 const IMPORTANCES = ['Faible', 'Moyenne', 'Élevée', 'Critique']
+const STATUTS     = ['A faire', 'En cours', 'Terminée', 'Bloquée']
 const HEURES_PAR_JOUR = 8
 
 const EMPTY = {
   nom: '', description: '', importance: 'Moyenne',
-  avancement: 0, assigne: '', jalon: '', charge_jours: '',
+  avancement: 0, assigne: '', jalon: '', charge_jours: '', statut: 'A faire',
 }
 
 /** Convertit une saisie en heures vers des jours (1J = 8h). Ex : 4 → 0.5, 8.4 → 1.05 */
@@ -70,6 +71,14 @@ export default function TacheForm({ initial, onSubmit, onCancel, loading, jalons
           <label className={cls.label}>Importance</label>
           <select className={cls.select} value={form.importance} onChange={set('importance')}>
             {IMPORTANCES.map((i) => <option key={i}>{i}</option>)}
+          </select>
+        </div>
+
+        {/* Statut */}
+        <div>
+          <label className={cls.label}>Statut</label>
+          <select className={cls.select} value={form.statut ?? 'A faire'} onChange={set('statut')}>
+            {STATUTS.map((s) => <option key={s}>{s}</option>)}
           </select>
         </div>
 

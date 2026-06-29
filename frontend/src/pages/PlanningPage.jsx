@@ -32,34 +32,19 @@ const TASK_WEIGHT = (imp) => {
   return 2
 }
 
-function jalonColor(jalon, tasks) {
+function jalonStatus(jalon, tasks) {
   const linked = tasks.filter((t) => (t.jalon ?? '').trim() === jalon.label.trim())
   if (linked.length > 0) {
     const avg = linked.reduce((s, t) => s + (t.avancement ?? 0), 0) / linked.length
-    if (avg >= 100) return '#16a34a'
-    if (avg >= 50)  return '#2563eb'
-    if (avg > 0)    return '#f59e0b'
-    return '#ef4444'
+    if (avg >= 100) return { badge: '✓ Terminé',      color: '#16a34a' }
+    if (avg >= 50)  return { badge: '▶ En cours',     color: '#2563eb' }
+    if (avg > 0)    return { badge: '◐ Démarré',      color: '#f59e0b' }
+    return                  { badge: '○ Non démarré', color: '#ef4444' }
   }
   const diff = (jalon.date - TODAY) / 86400000
-  if (diff < 0)   return '#94a3b8'
-  if (diff <= 30) return '#f59e0b'
-  return '#2563eb'
-}
-
-function jalonBadge(jalon, tasks) {
-  const linked = tasks.filter((t) => (t.jalon ?? '').trim() === jalon.label.trim())
-  if (linked.length > 0) {
-    const avg = linked.reduce((s, t) => s + (t.avancement ?? 0), 0) / linked.length
-    if (avg >= 100) return '✓ Terminé'
-    if (avg >= 50)  return '▶ En cours'
-    if (avg > 0)    return '◐ Démarré'
-    return '○ Non démarré'
-  }
-  const diff = (jalon.date - TODAY) / 86400000
-  if (diff < 0)   return '✓ Passé'
-  if (diff <= 30) return '⚡ Prochain'
-  return '→ À venir'
+  if (diff < 0)   return { badge: '✓ Passé',    color: '#94a3b8' }
+  if (diff <= 30) return { badge: '⚡ Prochain', color: '#f59e0b' }
+  return                  { badge: '→ À venir',  color: '#2563eb' }
 }
 
 function jalonAvg(jalon, tasks) {
@@ -637,7 +622,10 @@ export default function PlanningPage() {
   useEffect(() => { load() }, [load])
 
   const enrichedJalons = useMemo(() =>
-    jalons.map((j) => ({ ...j, _color: jalonColor(j, taches) })),
+    jalons.map((j) => {
+      const { badge, color } = jalonStatus(j, taches)
+      return { ...j, _color: color, _badge: badge }
+    }),
     [jalons, taches]
   )
 
@@ -811,7 +799,7 @@ export default function PlanningPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {enrichedJalons.map((j, i) => {
             const col    = j._color
-            const badge  = jalonBadge(j, taches)
+            const badge  = j._badge
             const avg    = jalonAvg(j, taches)
             const linked = taches.filter((t) => (t.jalon ?? '').trim() === j.label.trim())
             const diff   = Math.round((j.date - TODAY) / 86400000)

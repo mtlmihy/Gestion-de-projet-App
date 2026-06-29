@@ -14,6 +14,14 @@ import DonutChart from '../components/DonutChart'
 import { exportCSV } from '../utils/export'
 
 const ALL = 'Tous'
+const STATUTS = ['A faire', 'En cours', 'Terminée', 'Bloquée']
+
+function statutCls(statut) {
+  if (statut === 'Terminée') return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+  if (statut === 'En cours') return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+  if (statut === 'Bloquée')  return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+  return 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-400'
+}
 
 function Notification({ msg, type }) {
   if (!msg) return null
@@ -35,6 +43,7 @@ export default function TachesPage() {
   const [fSearch,    setFSearch]    = useState('')
   const [fImportance,setFImportance]= useState(ALL)
   const [fJalon,     setFJalon]     = useState(jalonFromUrl || ALL)
+  const [fStatut,    setFStatut]    = useState(ALL)
   const [showFilters,setShowFilters]= useState(Boolean(jalonFromUrl))
   const [jalonsOptions, setJalonsOptions] = useState([])
   const [membresOptions, setMembresOptions] = useState([])
@@ -45,6 +54,7 @@ export default function TachesPage() {
     avancement: 0,
     assigne: '',
     jalon: fJalon !== ALL ? fJalon : '',
+    statut: 'A faire',
   }), [fJalon])
 
   // Si l'URL reçoit un nouveau ?jalon=..., synchroniser le filtre
@@ -99,15 +109,16 @@ export default function TachesPage() {
     return taches.filter((t) => {
       if (fImportance !== ALL && (t.importance ?? '') !== fImportance) return false
       if (jf !== ALL && (t.jalon ?? '').trim() !== jf) return false
+      if (fStatut !== ALL && (t.statut ?? 'A faire') !== fStatut) return false
       if (q) {
         const hay = `${t.nom ?? ''} ${t.assigne ?? ''} ${t.jalon ?? ''} ${t.description ?? ''}`.toLowerCase()
         if (!hay.includes(q)) return false
       }
       return true
     })
-  }, [taches, fImportance, fJalon, fSearch])
+  }, [taches, fImportance, fJalon, fStatut, fSearch])
 
-  const activeFiltersCount = (fImportance !== ALL ? 1 : 0) + (fJalon !== ALL ? 1 : 0) + (fSearch.trim() ? 1 : 0)
+  const activeFiltersCount = (fImportance !== ALL ? 1 : 0) + (fJalon !== ALL ? 1 : 0) + (fStatut !== ALL ? 1 : 0) + (fSearch.trim() ? 1 : 0)
 
   // Ouvre automatiquement le panneau si un filtre est actif
   useEffect(() => {
@@ -118,6 +129,7 @@ export default function TachesPage() {
     setFSearch('')
     setFImportance(ALL)
     setFJalon(ALL)
+    setFStatut(ALL)
     const next = new URLSearchParams(searchParams)
     next.delete('jalon')
     setSearchParams(next, { replace: true })
@@ -176,9 +188,9 @@ export default function TachesPage() {
             <button
               onClick={() => exportCSV(
                 'taches',
-                ['Nom', 'Assigné', 'Jalon', 'Importance', 'Charge (j)', 'Charge (h)', 'Avancement (%)', 'Description'],
+                ['Nom', 'Assigné', 'Statut', 'Jalon', 'Importance', 'Charge (j)', 'Charge (h)', 'Avancement (%)', 'Description'],
                 taches.map((t) => [
-                  t.nom, t.assigne, t.jalon || '', t.importance,
+                  t.nom, t.assigne, t.statut ?? 'A faire', t.jalon || '', t.importance,
                   t.charge_jours != null ? t.charge_jours : '',
                   t.charge_jours != null ? (t.charge_jours * 8).toFixed(1) : '',
                   t.avancement ?? 0, t.description || '',
@@ -259,7 +271,7 @@ export default function TachesPage() {
         </button>
         {showFilters && (
           <div className="border-t border-gray-100 dark:border-slate-700 px-4 py-3">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-gray-600 dark:text-slate-400">Recherche</label>
                 <input className="border border-gray-300 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="Rechercher" value={fSearch} onChange={(e) => setFSearch(e.target.value)} />
@@ -271,11 +283,16 @@ export default function TachesPage() {
                 </select>
               </div>
               <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-gray-600 dark:text-slate-400">Statut</label>
+                <select className={selCls} value={fStatut} onChange={(e) => setFStatut(e.target.value)}>
+                  {[ALL, ...STATUTS].map((v) => <option key={v}>{v}</option>)}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-gray-600 dark:text-slate-400">Jalon</label>
                 <select className={selCls} value={fJalon} onChange={(e) => {
                   const v = e.target.value
                   setFJalon(v)
-                  // Garder l'URL synchronisée avec le filtre jalon
                   const next = new URLSearchParams(searchParams)
                   if (v && v !== ALL) next.set('jalon', v)
                   else next.delete('jalon')
@@ -311,7 +328,7 @@ export default function TachesPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-slate-700 border-b border-gray-200 dark:border-slate-600">
                 <tr>
-                  {['Importance', 'Nom', 'Assigné', 'Jalon', 'Charge', 'Avancement', ''].map((h) => (
+                  {['Importance', 'Nom', 'Assigné', 'Statut', 'Jalon', 'Charge', 'Avancement', ''].map((h) => (
                     <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -325,6 +342,11 @@ export default function TachesPage() {
                       {t.description && <p className="text-xs text-gray-400 dark:text-slate-500 truncate mt-0.5">{t.description}</p>}
                     </td>
                     <td className="px-4 py-3 text-gray-700 dark:text-slate-300 whitespace-nowrap">{t.assigne}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span className={`inline-flex text-xs font-semibold px-2 py-0.5 rounded-full ${statutCls(t.statut ?? 'A faire')}`}>
+                        {t.statut ?? 'A faire'}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-gray-500 dark:text-slate-400 text-xs whitespace-nowrap">{t.jalon || '—'}</td>
                     <td className="px-4 py-3 text-gray-600 dark:text-slate-300 text-xs whitespace-nowrap">
                       {t.charge_jours != null
