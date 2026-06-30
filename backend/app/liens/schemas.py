@@ -8,7 +8,7 @@ TYPES_VALIDES = ("jira", "miro", "teams", "confluence", "github", "drive", "autr
 
 class LienBase(BaseModel):
     libelle: str = Field(..., min_length=1, max_length=100)
-    url: str = Field(..., min_length=1)
+    url: str = Field(..., min_length=1, max_length=2000)
     type: str = "autre"
     visible: bool = True
     ordre: int = 0

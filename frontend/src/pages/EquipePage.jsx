@@ -1,22 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { getEquipe, createMembre, updateMembre, deleteMembre } from '../api/equipe'
 import { useProject } from '../context/ProjectContext'
 import KpiCard from '../components/KpiCard'
 import Modal from '../components/Modal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import MembreForm from '../components/MembreForm'
-
-function Notification({ msg, type }) {
-  if (!msg) return null
-  const bg = type === 'error' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-green-50 text-green-700 border-green-200'
-  return <div className={`mb-4 px-4 py-2.5 rounded-lg border text-sm font-medium ${bg}`}>{msg}</div>
-}
+import Notification from '../components/Notification'
+import { useCrudResource } from '../hooks/useCrudResource'
 
 const AVATAR_COLORS = ['bg-blue-500','bg-purple-500','bg-green-500','bg-orange-500','bg-pink-500','bg-cyan-500']
 
 function Avatar({ name, size = 'sm' }) {
-  const initials = name.split(' ').map((p) => p[0]?.toUpperCase()).slice(0, 2).join('')
-  const color    = AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length]
+  const safeName = name || '?'
+  const initials = safeName.split(' ').map((p) => p[0]?.toUpperCase()).slice(0, 2).join('') || '?'
+  const color    = AVATAR_COLORS[safeName.charCodeAt(0) % AVATAR_COLORS.length]
   const sz       = size === 'lg' ? 'w-12 h-12 text-sm' : 'w-8 h-8 text-xs'
   return (
     <span className={`inline-flex items-center justify-center rounded-full text-white font-bold shrink-0 ${color} ${sz}`}>
@@ -155,48 +152,29 @@ function OrgChart({ equipe, onEdit, onDelete }) {
 export default function EquipePage() {
   const { projet, estLecteur, estProprietaire } = useProject()
   const peutModifier = estProprietaire && !estLecteur
-  const [equipe,     setEquipe]     = useState([])
-  const [loading,    setLoading]    = useState(true)
-  const [saving,     setSaving]     = useState(false)
-  const [notif,      setNotif]      = useState({ msg: '', type: 'ok' })
   const [addOpen,    setAddOpen]    = useState(false)
   const [editItem,   setEditItem]   = useState(null)
   const [deleteItem, setDeleteItem] = useState(null)
   const [tab,        setTab]        = useState('organigramme')   // 'grille' | 'organigramme'
 
-  const notify = (msg, type = 'ok') => {
-    setNotif({ msg, type })
-    setTimeout(() => setNotif({ msg: '', type: 'ok' }), 3500)
-  }
+  const fetchList = useCallback(() => getEquipe(projet.id), [projet.id])
+  const { items: equipe, loading, saving, notif, load, runMutation } = useCrudResource(fetchList)
 
-  const load = async () => {
-    setLoading(true)
-    try   { const { data } = await getEquipe(projet.id); setEquipe(data) }
-    catch { notify('Erreur lors du chargement.', 'error') }
-    finally { setLoading(false) }
-  }
-
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [load])
 
   const handleAdd = async (data) => {
-    setSaving(true)
-    try   { await createMembre(projet.id, data); await load(); setAddOpen(false); notify('Membre ajouté.') }
-    catch { notify("Erreur lors de l'ajout.", 'error') }
-    finally { setSaving(false) }
+    const ok = await runMutation(() => createMembre(projet.id, data), 'Membre ajouté.', "Erreur lors de l'ajout.")
+    if (ok) setAddOpen(false)
   }
 
   const handleEdit = async (data) => {
-    setSaving(true)
-    try   { await updateMembre(projet.id, editItem.id, data); await load(); setEditItem(null); notify('Membre modifié.') }
-    catch { notify('Erreur lors de la modification.', 'error') }
-    finally { setSaving(false) }
+    const ok = await runMutation(() => updateMembre(projet.id, editItem.id, data), 'Membre modifié.', 'Erreur lors de la modification.')
+    if (ok) setEditItem(null)
   }
 
   const handleDelete = async () => {
-    setSaving(true)
-    try   { await deleteMembre(projet.id, deleteItem.id); await load(); setDeleteItem(null); notify('Membre supprimé.') }
-    catch { notify('Erreur lors de la suppression.', 'error') }
-    finally { setSaving(false) }
+    const ok = await runMutation(() => deleteMembre(projet.id, deleteItem.id), 'Membre supprimé.', 'Erreur lors de la suppression.')
+    if (ok) setDeleteItem(null)
   }
 
   const managers = [...new Set(equipe.flatMap((m) => (m.manager ?? '').split(';').map((s) => s.trim()).filter(Boolean)))]

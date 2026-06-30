@@ -223,10 +223,11 @@ export default function AidePage() {
       >
         <form onSubmit={submit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1" htmlFor="lien-libelle">
               Libellé <span className="text-red-500">*</span>
             </label>
             <input
+              id="lien-libelle"
               required
               maxLength={100}
               value={form.libelle}
@@ -237,10 +238,11 @@ export default function AidePage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1" htmlFor="lien-url">
               URL <span className="text-red-500">*</span>
             </label>
             <input
+              id="lien-url"
               required
               type="url"
               value={form.url}
@@ -251,10 +253,11 @@ export default function AidePage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1" htmlFor="lien-type">
               Type d'outil
             </label>
             <select
+              id="lien-type"
               value={form.type}
               onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
               className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"

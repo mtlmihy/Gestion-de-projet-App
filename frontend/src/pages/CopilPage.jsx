@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import ConfirmDialog from '../components/ConfirmDialog'
 import Modal from '../components/Modal'
+import Notification from '../components/Notification'
 import { useProject } from '../context/ProjectContext'
+import { useCrudResource } from '../hooks/useCrudResource'
 import {
   createCopil,
   createCopilNote,
@@ -13,12 +15,6 @@ import {
   updateCopil,
   updateCopilNote,
 } from '../api/copils'
-
-function Notification({ msg, type }) {
-  if (!msg) return null
-  const bg = type === 'error' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-green-50 text-green-700 border-green-200'
-  return <div className={`mb-4 px-4 py-2.5 rounded-lg border text-sm font-medium ${bg}`}>{msg}</div>
-}
 
 function CopilForm({ initial, onSubmit, onCancel, saving }) {
   const isCreate = !initial
@@ -53,29 +49,29 @@ function CopilForm({ initial, onSubmit, onCancel, saving }) {
     <form onSubmit={handleSubmit} className="space-y-3">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label className={lbl}>Date de réunion *</label>
-          <input type="date" className={inp} required value={form.date_reunion} onChange={setF('date_reunion')} />
+          <label className={lbl} htmlFor="copil-date">Date de réunion *</label>
+          <input id="copil-date" type="date" className={inp} required value={form.date_reunion} onChange={setF('date_reunion')} />
         </div>
         <div>
-          <label className={lbl}>Heure de réunion *</label>
-          <input type="time" className={inp} required value={form.heure_reunion} onChange={setF('heure_reunion')} />
+          <label className={lbl} htmlFor="copil-heure">Heure de réunion *</label>
+          <input id="copil-heure" type="time" className={inp} required value={form.heure_reunion} onChange={setF('heure_reunion')} />
         </div>
       </div>
 
       <div>
-        <label className={lbl}>Titre de la note (optionnel)</label>
-        <input className={inp} maxLength={200} value={form.titre} onChange={setF('titre')} placeholder="Titre" />
+        <label className={lbl} htmlFor="copil-titre">Titre de la note (optionnel)</label>
+        <input id="copil-titre" className={inp} maxLength={200} value={form.titre} onChange={setF('titre')} placeholder="Titre" />
         <p className="mt-1 text-[11px] text-gray-400 dark:text-slate-500">Si vide, généré automatiquement.</p>
       </div>
 
       <div>
-        <label className={lbl}>Participants</label>
-        <input className={inp} value={form.participants} onChange={setF('participants')} placeholder="Participants" />
+        <label className={lbl} htmlFor="copil-participants">Participants</label>
+        <input id="copil-participants" className={inp} value={form.participants} onChange={setF('participants')} placeholder="Participants" />
       </div>
 
       <div>
-        <label className={lbl}>Notes de la réunion *</label>
-        <textarea className={`${inp} min-h-28`} required value={form.notes} onChange={setF('notes')} placeholder="Notes" />
+        <label className={lbl} htmlFor="copil-notes">Notes de la réunion *</label>
+        <textarea id="copil-notes" className={`${inp} min-h-28`} required value={form.notes} onChange={setF('notes')} placeholder="Notes" />
       </div>
 
       <div className="flex gap-2 pt-2">
@@ -88,39 +84,20 @@ function CopilForm({ initial, onSubmit, onCancel, saving }) {
 
 export default function CopilPage() {
   const { projet, estLecteur } = useProject()
-  const [items, setItems] = useState([])
   const [expandedCopilId, setExpandedCopilId] = useState(null)
   const [editingNoteId, setEditingNoteId] = useState(null)
   const [editingNoteContent, setEditingNoteContent] = useState('')
   const [notesByCopil, setNotesByCopil] = useState({})
   const [noteDraftByCopil, setNoteDraftByCopil] = useState({})
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
   const [savingNote, setSavingNote] = useState(false)
-  const [notif, setNotif] = useState({ msg: '', type: 'ok' })
   const [addOpen, setAddOpen] = useState(false)
   const [editItem, setEditItem] = useState(null)
   const [deleteItem, setDeleteItem] = useState(null)
 
-  const notify = (msg, type = 'ok') => {
-    setNotif({ msg, type })
-    setTimeout(() => setNotif({ msg: '', type: 'ok' }), 3500)
-  }
+  const fetchList = useCallback(() => getCopils(projet.id), [projet.id])
+  const { items, loading, saving, notif, notify, load, runMutation } = useCrudResource(fetchList, 'Erreur lors du chargement des notes COPIL.')
 
-  const load = async () => {
-    setLoading(true)
-    try {
-      const copilsRes = await getCopils(projet.id)
-      const copilItems = copilsRes.data || []
-      setItems(copilItems)
-    } catch {
-      notify('Erreur lors du chargement des notes COPIL.', 'error')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => { load() }, [projet.id])
+  useEffect(() => { load() }, [load])
 
   const fmtDate = (iso) => new Date(iso).toLocaleDateString('fr-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
   const fmtDateTimeTs = (iso) => new Date(iso).toLocaleString('fr-CH', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
@@ -131,45 +108,18 @@ export default function CopilPage() {
   }
 
   const handleAdd = async (data) => {
-    setSaving(true)
-    try {
-      await createCopil(projet.id, data)
-      await load()
-      setAddOpen(false)
-      notify('Note COPIL ajoutée.')
-    } catch {
-      notify('Erreur lors de la création.', 'error')
-    } finally {
-      setSaving(false)
-    }
+    const ok = await runMutation(() => createCopil(projet.id, data), 'Note COPIL ajoutée.', 'Erreur lors de la création.')
+    if (ok) setAddOpen(false)
   }
 
   const handleEdit = async (data) => {
-    setSaving(true)
-    try {
-      await updateCopil(editItem.id, data)
-      await load()
-      setEditItem(null)
-      notify('Note COPIL mise à jour.')
-    } catch {
-      notify('Erreur lors de la modification.', 'error')
-    } finally {
-      setSaving(false)
-    }
+    const ok = await runMutation(() => updateCopil(editItem.id, data), 'Note COPIL mise à jour.', 'Erreur lors de la modification.')
+    if (ok) setEditItem(null)
   }
 
   const handleDelete = async () => {
-    setSaving(true)
-    try {
-      await deleteCopil(deleteItem.id)
-      await load()
-      setDeleteItem(null)
-      notify('Note COPIL supprimée.')
-    } catch {
-      notify('Erreur lors de la suppression.', 'error')
-    } finally {
-      setSaving(false)
-    }
+    const ok = await runMutation(() => deleteCopil(deleteItem.id), 'Note COPIL supprimée.', 'Erreur lors de la suppression.')
+    if (ok) setDeleteItem(null)
   }
 
   const handleAddNote = async (copilId) => {

@@ -68,34 +68,34 @@ function DepenseModal({ open, initial, devise, onSave, onClose }) {
       <form onSubmit={handleSubmit} className="space-y-4 p-1">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-slate-400 mb-1">Date *</label>
-            <input type="date" value={form.date} onChange={e => set('date', e.target.value)} required
+            <label className="block text-xs font-medium text-gray-600 dark:text-slate-400 mb-1" htmlFor="depense-date">Date *</label>
+            <input id="depense-date" type="date" value={form.date} onChange={e => set('date', e.target.value)} required
               className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-slate-400 mb-1">Catégorie *</label>
-            <select value={form.categorie} onChange={e => set('categorie', e.target.value)} required
+            <label className="block text-xs font-medium text-gray-600 dark:text-slate-400 mb-1" htmlFor="depense-categorie">Catégorie *</label>
+            <select id="depense-categorie" value={form.categorie} onChange={e => set('categorie', e.target.value)} required
               className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
               {CATEGORIES.map(c => <option key={c}>{c}</option>)}
             </select>
           </div>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-slate-400 mb-1">Description</label>
-          <input type="text" value={form.description} onChange={e => set('description', e.target.value)} maxLength={200}
+          <label className="block text-xs font-medium text-gray-600 dark:text-slate-400 mb-1" htmlFor="depense-description">Description</label>
+          <input id="depense-description" type="text" value={form.description} onChange={e => set('description', e.target.value)} maxLength={200}
             placeholder="Description"
             className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-slate-400 mb-1">Montant ({devise}) *</label>
-            <input type="number" min="0" step="0.01" value={form.montant} onChange={e => set('montant', e.target.value)} required
+            <label className="block text-xs font-medium text-gray-600 dark:text-slate-400 mb-1" htmlFor="depense-montant">Montant ({devise}) *</label>
+            <input id="depense-montant" type="number" min="0" step="0.01" value={form.montant} onChange={e => set('montant', e.target.value)} required
               placeholder="Montant"
               className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-slate-400 mb-1">Assigné à</label>
-            <input type="text" value={form.assigne} onChange={e => set('assigne', e.target.value)} maxLength={100}
+            <label className="block text-xs font-medium text-gray-600 dark:text-slate-400 mb-1" htmlFor="depense-assigne">Assigné à</label>
+            <input id="depense-assigne" type="text" value={form.assigne} onChange={e => set('assigne', e.target.value)} maxLength={100}
               placeholder="Nom ou équipe"
               className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>

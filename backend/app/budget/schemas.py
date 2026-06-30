@@ -8,10 +8,10 @@ CATEGORIES = ('Prestation', 'Matériel', 'Déplacement', 'Formation', 'Sous-trai
 
 class DepenseCreate(BaseModel):
     date: date
-    categorie: str = 'Autre'
-    description: str = ''
+    categorie: str = Field('Autre', max_length=100)
+    description: str = Field('', max_length=2000)
     montant: float = Field(..., ge=0)
-    assigne: Optional[str] = None
+    assigne: Optional[str] = Field(None, max_length=200)
 
 
 class DepenseUpdate(DepenseCreate):

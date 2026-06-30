@@ -3,11 +3,11 @@ from pydantic import BaseModel, Field
 
 
 class MembreBase(BaseModel):
-    collaborateur: str = Field(..., min_length=1)
-    poste:   str = ""
-    manager: str = ""
-    numero:  str = ""
-    email:   str = ""
+    collaborateur: str = Field(..., min_length=1, max_length=200)
+    poste:   str = Field("", max_length=200)
+    manager: str = Field("", max_length=200)
+    numero:  str = Field("", max_length=50)
+    email:   str = Field("", max_length=254)
 
 
 class MembreCreate(MembreBase):

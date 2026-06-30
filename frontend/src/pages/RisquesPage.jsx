@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { getRisques, createRisque, updateRisque, deleteRisque } from '../api/risques'
 import { useProject } from '../context/ProjectContext'
 import KpiCard from '../components/KpiCard'
@@ -7,22 +7,14 @@ import Modal from '../components/Modal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import RisqueForm from '../components/RisqueForm'
 import DonutChart from '../components/DonutChart'
+import Notification from '../components/Notification'
+import { useCrudResource } from '../hooks/useCrudResource'
 import { exportCSV } from '../utils/export'
 
 const ALL = 'Tous'
 
-function Notification({ msg, type }) {
-  if (!msg) return null
-  const bg = type === 'error' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-green-50 text-green-700 border-green-200'
-  return <div className={`mb-4 px-4 py-2.5 rounded-lg border text-sm font-medium ${bg}`}>{msg}</div>
-}
-
 export default function RisquesPage() {
   const { projet, estLecteur } = useProject()
-  const [risques,  setRisques]  = useState([])
-  const [loading,  setLoading]  = useState(true)
-  const [saving,   setSaving]   = useState(false)
-  const [notif,    setNotif]    = useState({ msg: '', type: 'ok' })
 
   // Modals
   const [addOpen,    setAddOpen]    = useState(false)
@@ -37,24 +29,10 @@ export default function RisquesPage() {
   const [fImpact,  setFImpact]  = useState(ALL)
   const [showFilters, setShowFilters] = useState(false)
 
-  const notify = (msg, type = 'ok') => {
-    setNotif({ msg, type })
-    setTimeout(() => setNotif({ msg: '', type: 'ok' }), 3500)
-  }
+  const fetchList = useCallback(() => getRisques(projet.id), [projet.id])
+  const { items: risques, loading, saving, notif, load, runMutation } = useCrudResource(fetchList, 'Erreur lors du chargement des risques.')
 
-  const load = async () => {
-    setLoading(true)
-    try {
-      const { data } = await getRisques(projet.id)
-      setRisques(data)
-    } catch {
-      notify('Erreur lors du chargement des risques.', 'error')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [load])
 
   const filtered = useMemo(() => risques.filter((r) => {
     if (fStatut   !== ALL && r.statut      !== fStatut)    return false
@@ -79,45 +57,18 @@ export default function RisquesPage() {
   ]
 
   const handleAdd = async (data) => {
-    setSaving(true)
-    try {
-      await createRisque(projet.id, data)
-      await load()
-      setAddOpen(false)
-      notify('Risque ajouté avec succès.')
-    } catch {
-      notify('Erreur lors de l\'ajout.', 'error')
-    } finally {
-      setSaving(false)
-    }
+    const ok = await runMutation(() => createRisque(projet.id, data), 'Risque ajouté avec succès.', 'Erreur lors de l\'ajout.')
+    if (ok) setAddOpen(false)
   }
 
   const handleEdit = async (data) => {
-    setSaving(true)
-    try {
-      await updateRisque(editItem.id, data)
-      await load()
-      setEditItem(null)
-      notify('Risque modifié avec succès.')
-    } catch {
-      notify('Erreur lors de la modification.', 'error')
-    } finally {
-      setSaving(false)
-    }
+    const ok = await runMutation(() => updateRisque(editItem.id, data), 'Risque modifié avec succès.', 'Erreur lors de la modification.')
+    if (ok) setEditItem(null)
   }
 
   const handleDelete = async () => {
-    setSaving(true)
-    try {
-      await deleteRisque(deleteItem.id)
-      await load()
-      setDeleteItem(null)
-      notify('Risque supprimé.')
-    } catch {
-      notify('Erreur lors de la suppression.', 'error')
-    } finally {
-      setSaving(false)
-    }
+    const ok = await runMutation(() => deleteRisque(deleteItem.id), 'Risque supprimé.', 'Erreur lors de la suppression.')
+    if (ok) setDeleteItem(null)
   }
 
   const selLabel = 'text-xs font-medium text-gray-600 dark:text-slate-400'

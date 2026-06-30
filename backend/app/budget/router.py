@@ -6,34 +6,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.auth.dependencies import get_current_user
 from app.db.pool import get_pool
-from app.projets import service as projets_svc
+from app.projets import permissions as perms
 from app.budget import service as svc
 from app.budget.schemas import DepenseCreate, DepenseRead, DepenseUpdate
 
 router = APIRouter(dependencies=[Depends(get_current_user)])
-
-_ROLES_EDITEUR = {'Proprietaire', 'Editeur'}
-
-
-async def _check_membre(projet_id: str, user: dict, pool: Pool) -> None:
-    if user['is_admin']:
-        return
-    async with pool.acquire() as conn:
-        role = await projets_svc.get_user_role(conn, projet_id, user['id'])
-    if role is None:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Accès refusé.')
-
-
-async def _check_editeur(projet_id: str, user: dict, pool: Pool) -> None:
-    if user['is_admin']:
-        return
-    async with pool.acquire() as conn:
-        role = await projets_svc.get_user_role(conn, projet_id, user['id'])
-    if role not in _ROLES_EDITEUR:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail='Rôle Éditeur ou Propriétaire requis.',
-        )
 
 
 async def _get_projet_id_for_ligne(ligne_id: str, pool: Pool) -> str:
@@ -52,7 +29,7 @@ async def list_depenses(
     pool: Pool = Depends(get_pool),
     current_user: dict = Depends(get_current_user),
 ):
-    await _check_membre(projet_id, current_user, pool)
+    await perms.check_membre(projet_id, current_user, pool)
     async with pool.acquire() as conn:
         return await svc.get_all(conn, projet_id)
 
@@ -64,7 +41,7 @@ async def create_depense(
     pool: Pool = Depends(get_pool),
     current_user: dict = Depends(get_current_user),
 ):
-    await _check_editeur(projet_id, current_user, pool)
+    await perms.check_editeur(projet_id, current_user, pool)
     async with pool.acquire() as conn:
         return await svc.create(conn, projet_id, payload.model_dump())
 
@@ -77,7 +54,7 @@ async def update_depense(
     current_user: dict = Depends(get_current_user),
 ):
     projet_id = await _get_projet_id_for_ligne(ligne_id, pool)
-    await _check_editeur(projet_id, current_user, pool)
+    await perms.check_editeur(projet_id, current_user, pool)
     async with pool.acquire() as conn:
         result = await svc.update(conn, ligne_id, payload.model_dump())
     if not result:
@@ -92,7 +69,7 @@ async def delete_depense(
     current_user: dict = Depends(get_current_user),
 ):
     projet_id = await _get_projet_id_for_ligne(ligne_id, pool)
-    await _check_editeur(projet_id, current_user, pool)
+    await perms.check_editeur(projet_id, current_user, pool)
     async with pool.acquire() as conn:
         deleted = await svc.delete(conn, ligne_id)
     if not deleted:

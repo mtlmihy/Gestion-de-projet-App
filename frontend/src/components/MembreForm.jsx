@@ -44,16 +44,17 @@ export default function MembreForm({ initial, onSubmit, onCancel, loading }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="sm:col-span-2">
-          <label className={cls.label}>Collaborateur <span className="text-red-500">*</span></label>
-          <input className={cls.input} value={form.collaborateur} onChange={set('collaborateur')} required />
+          <label className={cls.label} htmlFor="membre-collaborateur">Collaborateur <span className="text-red-500">*</span></label>
+          <input id="membre-collaborateur" className={cls.input} value={form.collaborateur} onChange={set('collaborateur')} required />
         </div>
         <div>
-          <label className={cls.label}>Poste</label>
-          <input className={cls.input} value={form.poste} onChange={set('poste')} />
+          <label className={cls.label} htmlFor="membre-poste">Poste</label>
+          <input id="membre-poste" className={cls.input} value={form.poste} onChange={set('poste')} />
         </div>
         <div>
-          <label className={cls.label}>Manager(s)</label>
+          <label className={cls.label} htmlFor="membre-manager">Manager(s)</label>
           <input
+            id="membre-manager"
             className={`${cls.input} ${selfManager ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
             value={form.manager}
             onChange={set('manager')}
@@ -68,12 +69,12 @@ export default function MembreForm({ initial, onSubmit, onCancel, loading }) {
           )}
         </div>
         <div>
-          <label className={cls.label}>Numéro</label>
-          <input className={cls.input} type="tel" value={form.numero} onChange={set('numero')} />
+          <label className={cls.label} htmlFor="membre-numero">Numéro</label>
+          <input id="membre-numero" className={cls.input} type="tel" value={form.numero} onChange={set('numero')} />
         </div>
         <div>
-          <label className={cls.label}>Email</label>
-          <input className={cls.input} type="email" value={form.email} onChange={set('email')} />
+          <label className={cls.label} htmlFor="membre-email">Email</label>
+          <input id="membre-email" className={cls.input} type="email" value={form.email} onChange={set('email')} />
         </div>
       </div>
 

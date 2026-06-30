@@ -56,61 +56,61 @@ export default function TacheForm({ initial, onSubmit, onCancel, loading, jalons
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Nom */}
         <div className="sm:col-span-2">
-          <label className={cls.label}>Nom <span className="text-red-500">*</span></label>
-          <input className={cls.input} value={form.nom} onChange={set('nom')} required />
+          <label className={cls.label} htmlFor="tache-nom">Nom <span className="text-red-500">*</span></label>
+          <input id="tache-nom" className={cls.input} value={form.nom} onChange={set('nom')} required />
         </div>
 
         {/* Description */}
         <div className="sm:col-span-2">
-          <label className={cls.label}>Description</label>
-          <textarea className={cls.textarea} rows={2} value={form.description} onChange={set('description')} />
+          <label className={cls.label} htmlFor="tache-description">Description</label>
+          <textarea id="tache-description" className={cls.textarea} rows={2} value={form.description} onChange={set('description')} />
         </div>
 
         {/* Importance */}
         <div>
-          <label className={cls.label}>Importance</label>
-          <select className={cls.select} value={form.importance} onChange={set('importance')}>
+          <label className={cls.label} htmlFor="tache-importance">Importance</label>
+          <select id="tache-importance" className={cls.select} value={form.importance} onChange={set('importance')}>
             {IMPORTANCES.map((i) => <option key={i}>{i}</option>)}
           </select>
         </div>
 
         {/* Statut */}
         <div>
-          <label className={cls.label}>Statut</label>
-          <select className={cls.select} value={form.statut ?? 'A faire'} onChange={set('statut')}>
+          <label className={cls.label} htmlFor="tache-statut">Statut</label>
+          <select id="tache-statut" className={cls.select} value={form.statut ?? 'A faire'} onChange={set('statut')}>
             {STATUTS.map((s) => <option key={s}>{s}</option>)}
           </select>
         </div>
 
         {/* Assigné */}
         <div>
-          <label className={cls.label}>Assigné à <span className="text-red-500">*</span></label>
+          <label className={cls.label} htmlFor="tache-assigne">Assigné à <span className="text-red-500">*</span></label>
           {assigneSelectOptions.length > 0 ? (
-            <select className={cls.select} value={form.assigne} onChange={set('assigne')} required>
+            <select id="tache-assigne" className={cls.select} value={form.assigne} onChange={set('assigne')} required>
               <option value="">— Choisir un membre —</option>
               {assigneSelectOptions.map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
           ) : (
-            <input className={cls.input} value={form.assigne} onChange={set('assigne')} required placeholder="Nom du responsable" />
+            <input id="tache-assigne" className={cls.input} value={form.assigne} onChange={set('assigne')} required placeholder="Nom du responsable" />
           )}
         </div>
 
         {/* Jalon */}
         <div>
-          <label className={cls.label}>Jalon</label>
+          <label className={cls.label} htmlFor="tache-jalon">Jalon</label>
           {jalonsSelectOptions.length > 0 ? (
-            <select className={cls.select} value={form.jalon} onChange={set('jalon')}>
+            <select id="tache-jalon" className={cls.select} value={form.jalon} onChange={set('jalon')}>
               <option value="">(Sans jalon)</option>
               {jalonsSelectOptions.map((j) => <option key={j} value={j}>{j}</option>)}
             </select>
           ) : (
-            <input className={cls.input} value={form.jalon} onChange={set('jalon')} placeholder="Nom du jalon" />
+            <input id="tache-jalon" className={cls.input} value={form.jalon} onChange={set('jalon')} placeholder="Nom du jalon" />
           )}
         </div>
 
         {/* Charge */}
         <div>
-          <label className={cls.label}>
+          <label className={cls.label} htmlFor="tache-charge">
             Charge (heures)
             {form.charge_jours !== '' && !isNaN(parseFloat(form.charge_jours)) && (
               <span className="ml-2 text-xs text-gray-400 font-normal">
@@ -119,6 +119,7 @@ export default function TacheForm({ initial, onSubmit, onCancel, loading, jalons
             )}
           </label>
           <input
+            id="tache-charge"
             type="number" min="0" step="0.5"
             value={form.charge_jours}
             onChange={set('charge_jours')}
@@ -129,8 +130,9 @@ export default function TacheForm({ initial, onSubmit, onCancel, loading, jalons
 
         {/* Avancement */}
         <div>
-          <label className={cls.label}>Avancement : <span className="font-semibold">{form.avancement} %</span></label>
+          <label className={cls.label} htmlFor="tache-avancement">Avancement : <span className="font-semibold">{form.avancement} %</span></label>
           <input
+            id="tache-avancement"
             type="range" min="0" max="100" step="5"
             value={form.avancement}
             onChange={setNum('avancement')}

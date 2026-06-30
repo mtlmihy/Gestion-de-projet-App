@@ -16,32 +16,9 @@ from app.copils.schemas import (
     CopilUpdate,
 )
 from app.db.pool import get_pool
-from app.projets import service as projets_svc
+from app.projets import permissions as perms
 
 router = APIRouter(dependencies=[Depends(get_current_user)])
-
-_ROLES_EDITEUR = {"Proprietaire", "Editeur"}
-
-
-async def _check_membre(projet_id: str, current_user: dict, pool: Pool) -> None:
-    if current_user["is_admin"]:
-        return
-    async with pool.acquire() as conn:
-        role = await projets_svc.get_user_role(conn, projet_id, current_user["id"])
-    if role is None:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accès refusé.")
-
-
-async def _check_editeur(projet_id: str, current_user: dict, pool: Pool) -> None:
-    if current_user["is_admin"]:
-        return
-    async with pool.acquire() as conn:
-        role = await projets_svc.get_user_role(conn, projet_id, current_user["id"])
-    if role not in _ROLES_EDITEUR:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Accès refusé : rôle Éditeur ou Propriétaire requis.",
-        )
 
 
 async def _get_projet_id_for_copil(copil_id: str, pool: Pool) -> str:
@@ -77,7 +54,7 @@ async def list_copils(
     pool: Pool = Depends(get_pool),
     current_user: dict = Depends(get_current_user),
 ):
-    await _check_membre(projet_id, current_user, pool)
+    await perms.check_membre(projet_id, current_user, pool)
     async with pool.acquire() as conn:
         return await svc.get_all(conn, projet_id)
 
@@ -89,7 +66,7 @@ async def create_copil(
     pool: Pool = Depends(get_pool),
     current_user: dict = Depends(get_current_user),
 ):
-    await _check_editeur(projet_id, current_user, pool)
+    await perms.check_editeur(projet_id, current_user, pool)
     async with pool.acquire() as conn:
         return await svc.create(conn, projet_id, payload.model_dump(), current_user.get("id"))
 
@@ -102,7 +79,7 @@ async def update_copil(
     current_user: dict = Depends(get_current_user),
 ):
     projet_id = await _get_projet_id_for_copil(copil_id, pool)
-    await _check_editeur(projet_id, current_user, pool)
+    await perms.check_editeur(projet_id, current_user, pool)
     async with pool.acquire() as conn:
         result = await svc.update(conn, copil_id, payload.model_dump())
     if result is None:
@@ -117,7 +94,7 @@ async def delete_copil(
     current_user: dict = Depends(get_current_user),
 ):
     projet_id = await _get_projet_id_for_copil(copil_id, pool)
-    await _check_editeur(projet_id, current_user, pool)
+    await perms.check_editeur(projet_id, current_user, pool)
     async with pool.acquire() as conn:
         deleted = await svc.delete(conn, copil_id)
     if not deleted:
@@ -131,7 +108,7 @@ async def list_copil_notes(
     current_user: dict = Depends(get_current_user),
 ):
     projet_id = await _get_projet_id_for_copil(copil_id, pool)
-    await _check_membre(projet_id, current_user, pool)
+    await perms.check_membre(projet_id, current_user, pool)
     async with pool.acquire() as conn:
         return await svc.get_notes(conn, copil_id)
 
@@ -144,7 +121,7 @@ async def create_copil_note(
     current_user: dict = Depends(get_current_user),
 ):
     projet_id = await _get_projet_id_for_copil(copil_id, pool)
-    await _check_editeur(projet_id, current_user, pool)
+    await perms.check_editeur(projet_id, current_user, pool)
     async with pool.acquire() as conn:
         note = await svc.create_note(conn, copil_id, payload.contenu, current_user.get("id"))
     if note is None:
@@ -160,7 +137,7 @@ async def update_copil_note(
     current_user: dict = Depends(get_current_user),
 ):
     projet_id = await _get_projet_id_for_note(note_id, pool)
-    await _check_editeur(projet_id, current_user, pool)
+    await perms.check_editeur(projet_id, current_user, pool)
     async with pool.acquire() as conn:
         note = await svc.update_note(conn, note_id, payload.contenu)
     if note is None:
@@ -175,7 +152,7 @@ async def delete_copil_note(
     current_user: dict = Depends(get_current_user),
 ):
     projet_id = await _get_projet_id_for_note(note_id, pool)
-    await _check_editeur(projet_id, current_user, pool)
+    await perms.check_editeur(projet_id, current_user, pool)
     async with pool.acquire() as conn:
         deleted = await svc.delete_note(conn, note_id)
     if not deleted:

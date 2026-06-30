@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { getTaches, createTache, updateTache, deleteTache } from '../api/taches'
 import { getCdc } from '../api/cdc'
@@ -11,6 +11,8 @@ import Modal from '../components/Modal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import TacheForm from '../components/TacheForm'
 import DonutChart from '../components/DonutChart'
+import Notification from '../components/Notification'
+import { useCrudResource } from '../hooks/useCrudResource'
 import { exportCSV } from '../utils/export'
 
 const ALL = 'Tous'
@@ -23,20 +25,10 @@ function statutCls(statut) {
   return 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-400'
 }
 
-function Notification({ msg, type }) {
-  if (!msg) return null
-  const bg = type === 'error' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-green-50 text-green-700 border-green-200'
-  return <div className={`mb-4 px-4 py-2.5 rounded-lg border text-sm font-medium ${bg}`}>{msg}</div>
-}
-
 export default function TachesPage() {
   const { projet, estLecteur } = useProject()
   const [searchParams, setSearchParams] = useSearchParams()
   const jalonFromUrl = (searchParams.get('jalon') || '').trim()
-  const [taches,     setTaches]     = useState([])
-  const [loading,    setLoading]    = useState(true)
-  const [saving,     setSaving]     = useState(false)
-  const [notif,      setNotif]      = useState({ msg: '', type: 'ok' })
   const [addOpen,    setAddOpen]    = useState(false)
   const [editItem,   setEditItem]   = useState(null)
   const [deleteItem, setDeleteItem] = useState(null)
@@ -65,17 +57,8 @@ export default function TachesPage() {
     }
   }, [jalonFromUrl])
 
-  const notify = (msg, type = 'ok') => {
-    setNotif({ msg, type })
-    setTimeout(() => setNotif({ msg: '', type: 'ok' }), 3500)
-  }
-
-  const load = async () => {
-    setLoading(true)
-    try { const { data } = await getTaches(projet.id); setTaches(data) }
-    catch { notify('Erreur lors du chargement.', 'error') }
-    finally { setLoading(false) }
-  }
+  const fetchList = useCallback(() => getTaches(projet.id), [projet.id])
+  const { items: taches, loading, saving, notif, load, runMutation } = useCrudResource(fetchList)
 
   useEffect(() => {
     load()
@@ -92,7 +75,7 @@ export default function TachesPage() {
       const noms = (data ?? []).map((m) => (m.collaborateur ?? '').trim()).filter(Boolean)
       setMembresOptions(noms)
     }).catch(() => {})
-  }, [])
+  }, [load, projet.id])
 
   const jalonsDisponibles = useMemo(() => {
     // Fusion : jalons du CDC + jalons utilisés par les tâches + filtre courant (au cas où)
@@ -151,24 +134,18 @@ export default function TachesPage() {
   ]
 
   const handleAdd = async (data) => {
-    setSaving(true)
-    try   { await createTache(projet.id, data); await load(); setAddOpen(false); notify('Tâche ajoutée.') }
-    catch { notify('Erreur lors de l\'ajout.', 'error') }
-    finally { setSaving(false) }
+    const ok = await runMutation(() => createTache(projet.id, data), 'Tâche ajoutée.', 'Erreur lors de l\'ajout.')
+    if (ok) setAddOpen(false)
   }
 
   const handleEdit = async (data) => {
-    setSaving(true)
-    try { await updateTache(editItem.id, data); await load(); setEditItem(null); notify('Tâche modifiée.') }
-    catch { notify('Erreur lors de la modification.', 'error') }
-    finally { setSaving(false) }
+    const ok = await runMutation(() => updateTache(editItem.id, data), 'Tâche modifiée.', 'Erreur lors de la modification.')
+    if (ok) setEditItem(null)
   }
 
   const handleDelete = async () => {
-    setSaving(true)
-    try { await deleteTache(deleteItem.id); await load(); setDeleteItem(null); notify('Tâche supprimée.') }
-    catch { notify('Erreur lors de la suppression.', 'error') }
-    finally { setSaving(false) }
+    const ok = await runMutation(() => deleteTache(deleteItem.id), 'Tâche supprimée.', 'Erreur lors de la suppression.')
+    if (ok) setDeleteItem(null)
   }
 
   const selCls = 'border border-gray-300 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400'

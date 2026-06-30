@@ -7,33 +7,15 @@
 from __future__ import annotations
 from typing import List
 from asyncpg import Pool
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.auth.dependencies import get_current_user
 from app.db.pool import get_pool
 from app.liens import service as svc
 from app.liens.schemas import LienCreate, LienRead, LienUpdate, LienVisibilite
-from app.projets import service as projets_svc
+from app.projets import permissions as perms
 
 router = APIRouter(dependencies=[Depends(get_current_user)])
-
-_ROLES_EDITEUR = {"Proprietaire", "Editeur"}
-
-
-async def _can_edit(projet_id: str, current_user: dict, pool: Pool) -> bool:
-    if current_user["is_admin"]:
-        return True
-    async with pool.acquire() as conn:
-        role = await projets_svc.get_user_role(conn, projet_id, current_user["id"])
-    return role in _ROLES_EDITEUR
-
-
-async def _check_can_edit(projet_id: str, current_user: dict, pool: Pool) -> None:
-    if not await _can_edit(projet_id, current_user, pool):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Accès refusé : rôle Éditeur ou Propriétaire requis.",
-        )
 
 
 @router.get("/projets/{projet_id}/liens", response_model=List[LienRead])
@@ -42,7 +24,7 @@ async def list_liens(
     pool: Pool = Depends(get_pool),
     current_user: dict = Depends(get_current_user),
 ):
-    only_visible = not await _can_edit(projet_id, current_user, pool)
+    only_visible = not await perms.is_editeur(projet_id, current_user, pool)
     async with pool.acquire() as conn:
         return await svc.list_for_projet(conn, projet_id, only_visible=only_visible)
 
@@ -54,7 +36,7 @@ async def create_lien(
     pool: Pool = Depends(get_pool),
     current_user: dict = Depends(get_current_user),
 ):
-    await _check_can_edit(projet_id, current_user, pool)
+    await perms.check_editeur(projet_id, current_user, pool)
     async with pool.acquire() as conn:
         return await svc.create(conn, projet_id, payload.model_dump())
 
@@ -67,7 +49,7 @@ async def update_lien(
     pool: Pool = Depends(get_pool),
     current_user: dict = Depends(get_current_user),
 ):
-    await _check_can_edit(projet_id, current_user, pool)
+    await perms.check_editeur(projet_id, current_user, pool)
     async with pool.acquire() as conn:
         result = await svc.update(conn, lien_id, payload.model_dump())
     if not result:
@@ -83,7 +65,7 @@ async def toggle_visibilite(
     pool: Pool = Depends(get_pool),
     current_user: dict = Depends(get_current_user),
 ):
-    await _check_can_edit(projet_id, current_user, pool)
+    await perms.check_editeur(projet_id, current_user, pool)
     async with pool.acquire() as conn:
         result = await svc.set_visibilite(conn, lien_id, payload.visible)
     if not result:
@@ -98,7 +80,7 @@ async def delete_lien(
     pool: Pool = Depends(get_pool),
     current_user: dict = Depends(get_current_user),
 ):
-    await _check_can_edit(projet_id, current_user, pool)
+    await perms.check_editeur(projet_id, current_user, pool)
     async with pool.acquire() as conn:
         deleted = await svc.delete(conn, lien_id)
     if not deleted:

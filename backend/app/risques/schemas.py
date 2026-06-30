@@ -9,14 +9,14 @@ Priorite    = Literal[1, 2, 3]
 
 
 class RisqueBase(BaseModel):
-    nom:         str        = Field(..., min_length=1)
-    description: str        = ""
-    categorie:   str        = ""
+    nom:         str        = Field(..., min_length=1, max_length=200)
+    description: str        = Field("", max_length=5000)
+    categorie:   str        = Field("", max_length=100)
     probabilite: Probabilite = "Faible"
     impact:      Impact      = "Faible"
     priorite:    Priorite    = 1
-    responsable: str        = ""
-    attenuation: str        = ""
+    responsable: str        = Field("", max_length=200)
+    attenuation: str        = Field("", max_length=5000)
     statut:      Statut      = "Ouvert"
 
 

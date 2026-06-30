@@ -51,42 +51,42 @@ export default function RisqueForm({ initial, onSubmit, onCancel, loading }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Nom */}
         <div className="sm:col-span-2">
-          <label className={cls.label}>Nom du risque <span className="text-red-500">*</span></label>
-          <input className={cls.input} value={form.nom} onChange={set('nom')} required />
+          <label className={cls.label} htmlFor="risque-nom">Nom du risque <span className="text-red-500">*</span></label>
+          <input id="risque-nom" className={cls.input} value={form.nom} onChange={set('nom')} required />
         </div>
 
         {/* Description */}
         <div className="sm:col-span-2">
-          <label className={cls.label}>Description</label>
-          <textarea className={cls.textarea} rows={2} value={form.description} onChange={set('description')} />
+          <label className={cls.label} htmlFor="risque-description">Description</label>
+          <textarea id="risque-description" className={cls.textarea} rows={2} value={form.description} onChange={set('description')} />
         </div>
 
         {/* Catégorie */}
         <div>
-          <label className={cls.label}>Catégorie</label>
-          <select className={cls.select} value={form.categorie} onChange={set('categorie')}>
+          <label className={cls.label} htmlFor="risque-categorie">Catégorie</label>
+          <select id="risque-categorie" className={cls.select} value={form.categorie} onChange={set('categorie')}>
             {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
           </select>
         </div>
 
         {/* Responsable */}
         <div>
-          <label className={cls.label}>Responsable <span className="text-red-500">*</span></label>
-          <input className={cls.input} value={form.responsable} onChange={set('responsable')} required />
+          <label className={cls.label} htmlFor="risque-responsable">Responsable <span className="text-red-500">*</span></label>
+          <input id="risque-responsable" className={cls.input} value={form.responsable} onChange={set('responsable')} required />
         </div>
 
         {/* Probabilité */}
         <div>
-          <label className={cls.label}>Probabilité</label>
-          <select className={cls.select} value={form.probabilite} onChange={set('probabilite')}>
+          <label className={cls.label} htmlFor="risque-probabilite">Probabilité</label>
+          <select id="risque-probabilite" className={cls.select} value={form.probabilite} onChange={set('probabilite')}>
             {PROBABILITES.map((p) => <option key={p}>{p}</option>)}
           </select>
         </div>
 
         {/* Impact */}
         <div>
-          <label className={cls.label}>Impact</label>
-          <select className={cls.select} value={form.impact} onChange={set('impact')}>
+          <label className={cls.label} htmlFor="risque-impact">Impact</label>
+          <select id="risque-impact" className={cls.select} value={form.impact} onChange={set('impact')}>
             {IMPACTS.map((i) => <option key={i}>{i}</option>)}
           </select>
         </div>
@@ -101,14 +101,14 @@ export default function RisqueForm({ initial, onSubmit, onCancel, loading }) {
 
         {/* Atténuation */}
         <div className="sm:col-span-2">
-          <label className={cls.label}>Mesure d'atténuation</label>
-          <textarea className={cls.textarea} rows={2} value={form.attenuation} onChange={set('attenuation')} />
+          <label className={cls.label} htmlFor="risque-attenuation">Mesure d'atténuation</label>
+          <textarea id="risque-attenuation" className={cls.textarea} rows={2} value={form.attenuation} onChange={set('attenuation')} />
         </div>
 
         {/* Statut */}
         <div>
-          <label className={cls.label}>Statut</label>
-          <select className={cls.select} value={form.statut} onChange={set('statut')}>
+          <label className={cls.label} htmlFor="risque-statut">Statut</label>
+          <select id="risque-statut" className={cls.select} value={form.statut} onChange={set('statut')}>
             {STATUTS.map((s) => <option key={s}>{s}</option>)}
           </select>
         </div>

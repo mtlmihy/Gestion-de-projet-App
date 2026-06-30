@@ -1,26 +1,25 @@
 # ── Framework ─────────────────────────────────────────────────────────────────
-fastapi>=0.111.0
-uvicorn[standard]>=0.29.0      # serveur ASGI avec rechargement automatique
+fastapi>=0.111.0,<1.0.0
+uvicorn[standard]>=0.29.0,<1.0.0      # serveur ASGI avec rechargement automatique
 
 # ── Base de données ───────────────────────────────────────────────────────────
-asyncpg>=0.29.0                # driver PostgreSQL asynchrone (remplace psycopg2)
-sqlalchemy>=2.0.0              # ORM et query builder
-aiosqlite>=0.19.0              # support SQLite asynchrone (pour tests)
+# Pas d'ORM en exécution métier : tout passe par asyncpg + SQL brut (voir app/db/pool.py).
+asyncpg>=0.29.0,<1.0.0                # driver PostgreSQL asynchrone (remplace psycopg2)
 
 # ── Validation / Configuration ────────────────────────────────────────────────
-pydantic>=2.7.0
-pydantic-settings>=2.2.0       # lecture du .env via BaseSettings
+pydantic>=2.7.0,<3.0.0
+pydantic-settings>=2.2.0,<3.0.0       # lecture du .env via BaseSettings
 
 # ── Authentification JWT ──────────────────────────────────────────────────────
-PyJWT>=2.8.0                   # création et validation des JWT (remplace python-jose)
-bcrypt>=4.1.0                  # hashing des mots de passe (utilisé directement)
+PyJWT>=2.8.0,<3.0.0                   # création et validation des JWT (remplace python-jose)
+bcrypt>=4.1.0,<6.0.0                  # hashing des mots de passe (utilisé directement)
 
 # ── Sécurité ──────────────────────────────────────────────────────────────────
-slowapi>=0.1.9                 # rate limiting (anti brute-force /auth/login)
+slowapi>=0.1.9,<0.2.0                 # rate limiting (anti brute-force /auth/login)
 
 # ── Observabilité (optionnel) ─────────────────────────────────────────────────
 # Activé seulement si SENTRY_DSN est défini (cf. app/main.py).
-sentry-sdk[fastapi]>=2.0.0     # capture des erreurs Python + alerting
+sentry-sdk[fastapi]>=2.0.0,<3.0.0     # capture des erreurs Python + alerting
 
 # ── Utilitaires ───────────────────────────────────────────────────────────────
-python-multipart>=0.0.9        # nécessaire pour Form() dans FastAPI
+python-multipart>=0.0.9,<0.1.0        # nécessaire pour Form() dans FastAPI

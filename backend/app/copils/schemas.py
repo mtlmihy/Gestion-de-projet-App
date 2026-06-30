@@ -9,8 +9,8 @@ class CopilCreate(BaseModel):
     date_reunion: date
     heure_reunion: time
     titre: str = Field(..., min_length=3, max_length=200)
-    participants: Optional[str] = None
-    notes: Optional[str] = None
+    participants: Optional[str] = Field(None, max_length=2000)
+    notes: Optional[str] = Field(None, max_length=10000)
 
 
 class CopilUpdate(CopilCreate):
