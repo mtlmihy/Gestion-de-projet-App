@@ -235,7 +235,7 @@ function PanelTaches({ taskPct, taches }) {
   const enCours    = taches.filter((t) => (t.avancement ?? 0) > 0 && (t.avancement ?? 0) < 100).length
   const nonDemarr  = taches.filter((t) => (t.avancement ?? 0) === 0).length
   const total      = taches.length
-  const critiques  = taches.filter((t) => (t.importance || '').toLowerCase() === 'critique').length
+  const critiques  = taches.filter((t) => (t.importance || '').toLowerCase() === 'critique' && (t.avancement ?? 0) < 100).length
 
   const col = taskPct >= 70 ? '#16a34a' : taskPct >= 30 ? '#f59e0b' : '#ef4444'
   const barBg = taskPct >= 70 ? '#16a34a' : taskPct >= 30 ? '#f59e0b' : '#ef4444'
