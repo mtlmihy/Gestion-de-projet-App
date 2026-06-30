@@ -5,7 +5,7 @@ from asyncpg import create_pool
 
 # Import app and models
 from app.main import app
-from app.db.pool import get_db
+from app.db.pool import get_pool
 
 
 # Test database setup
@@ -19,7 +19,7 @@ async def test_db():
     async def override_get_db():
         async with pool.acquire() as connection:
             yield connection
-    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_pool] = override_get_db
     yield
     await pool.close()
 
@@ -173,9 +173,6 @@ class TestCopilValidation:
         # Valid title
         valid = CopilCreate(
             date_reunion=date(2026, 5, 12),
-            """Test COPIL CRUD endpoints."""
-
-            async def test_create_copil_with_auto_title(self, async_client):
             heure_reunion=time(14, 30),
             titre="Valid Title",
         )
@@ -202,17 +199,6 @@ class TestCopilValidation:
             heure_reunion=time(14, 30),
             titre="x" * 200,
         )
-            async def test_create_copil_with_title(self, async_client):
-                """Test creating a COPIL with an explicit title."""
-                payload = {
-                    "date_reunion": "2026-05-12",
-                    "heure_reunion": "14:30",
-                    "titre": "Custom Meeting Title",
-                    "participants": "Alice",
-                    "notes": "Meeting notes",
-                }
-
-                assert payload["titre"] == "Custom Meeting Title"
         assert len(valid.titre) == 200
 
         # Invalid: exceeds max
