@@ -215,8 +215,6 @@ export default function PlanningPage() {
         <PanelBudget
           projet={projet}
           depenses={depenses}
-          taskPct={taskPct}
-          progressPct={progressPct}
         />
       </div>
 
