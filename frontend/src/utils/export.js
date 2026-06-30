@@ -1,8 +1,8 @@
 /**
- * Export CSV via Blob — aucune dépendance externe.
- * @param {string}   filename  — nom du fichier sans extension (ou avec .csv)
- * @param {string[]} headers   — noms des colonnes
- * @param {Array[]}  rows      — tableau de tableaux de valeurs
+ * Export CSV via Blob - aucune dépendance externe.
+ * @param {string}   filename  - nom du fichier sans extension (ou avec .csv)
+ * @param {string[]} headers   - noms des colonnes
+ * @param {Array[]}  rows      - tableau de tableaux de valeurs
  */
 export function exportCSV(filename, headers, rows) {
   const escape = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`

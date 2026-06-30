@@ -156,7 +156,7 @@ export default function CopilPage() {
 
   const preview = (text) => {
     const val = (text || '').trim()
-    if (!val) return '—'
+    if (!val) return '-'
     return val.length > 140 ? `${val.slice(0, 140)}...` : val
   }
 
@@ -265,7 +265,7 @@ export default function CopilPage() {
               <div className="grid grid-cols-1 gap-3 text-sm mt-3">
                 <section className="rounded-lg border border-gray-100 dark:border-slate-700 p-3 min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 mb-1">Notes</p>
-                  <p className="text-gray-700 dark:text-slate-300 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{it.notes || '—'}</p>
+                  <p className="text-gray-700 dark:text-slate-300 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{it.notes || '-'}</p>
                 </section>
               </div>
 

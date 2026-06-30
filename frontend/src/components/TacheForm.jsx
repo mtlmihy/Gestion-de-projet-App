@@ -87,7 +87,7 @@ export default function TacheForm({ initial, onSubmit, onCancel, loading, jalons
           <label className={cls.label} htmlFor="tache-assigne">Assigné à <span className="text-red-500">*</span></label>
           {assigneSelectOptions.length > 0 ? (
             <select id="tache-assigne" className={cls.select} value={form.assigne} onChange={set('assigne')} required>
-              <option value="">— Choisir un membre —</option>
+              <option value="">- Choisir un membre -</option>
               {assigneSelectOptions.map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
           ) : (

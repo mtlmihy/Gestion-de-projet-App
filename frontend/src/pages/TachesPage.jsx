@@ -324,11 +324,11 @@ export default function TachesPage() {
                         {t.statut ?? 'A faire'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-500 dark:text-slate-400 text-xs whitespace-nowrap">{t.jalon || '—'}</td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-slate-400 text-xs whitespace-nowrap">{t.jalon || '-'}</td>
                     <td className="px-4 py-3 text-gray-600 dark:text-slate-300 text-xs whitespace-nowrap">
                       {t.charge_jours != null
                         ? <span title={`${(t.charge_jours * 8).toFixed(1)}h`}>{t.charge_jours}j</span>
-                        : <span className="text-gray-300 dark:text-slate-600">—</span>
+                        : <span className="text-gray-300 dark:text-slate-600">-</span>
                       }
                     </td>
                     <td className="px-4 py-3 min-w-[100px]"><ProgressBar value={t.avancement} /></td>

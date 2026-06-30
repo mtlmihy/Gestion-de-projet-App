@@ -1,8 +1,8 @@
 """
 Dépendances FastAPI d'authentification.
 
-get_current_user  — vérifie le JWT, charge l'utilisateur depuis la DB.
-require_admin     — vérifie en plus que is_admin=True.
+get_current_user  - vérifie le JWT, charge l'utilisateur depuis la DB.
+require_admin     - vérifie en plus que is_admin=True.
 """
 from __future__ import annotations
 
@@ -52,7 +52,7 @@ async def get_current_user(
         raise _UNAUTHORIZED
 
     # Révocation : si le token a été émis avant un changement
-    # (logout global, reset mot de passe, désactivation), on refuse —
+    # (logout global, reset mot de passe, désactivation), on refuse -
     # même message générique.
     if token_v is None or token_v != row["token_version"]:
         raise _UNAUTHORIZED

@@ -39,7 +39,7 @@ async def close_pool() -> None:
 
 def get_pool() -> Pool:
     """
-    Dépendance FastAPI — injecte le pool dans les fonctions de service.
+    Dépendance FastAPI - injecte le pool dans les fonctions de service.
 
     Usage dans un router :
         pool = Depends(get_pool)  # dans la signature de route

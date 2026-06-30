@@ -1,4 +1,4 @@
-// Badges colorés — utilisés dans tout l'app
+// Badges colorés - utilisés dans tout l'app
 const CONFIG = {
   probabilite: {
     Faible:  'bg-green-100 text-green-800',

@@ -55,7 +55,7 @@ export default function PanelBudget({ projet, depenses }) {
       )}
       {isNearLimit && (
         <AlertBanner icon="⚠️" level="warning">
-          Budget consommé à {pctConsomme.toFixed(0)} % — surveiller les dépenses restantes.
+          Budget consommé à {pctConsomme.toFixed(0)} % - surveiller les dépenses restantes.
         </AlertBanner>
       )}
 

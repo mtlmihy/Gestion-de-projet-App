@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 
-// Notification éphémère (auto-effacée après 3.5s) — pattern dupliqué tel quel
+// Notification éphémère (auto-effacée après 3.5s) - pattern dupliqué tel quel
 // dans RisquesPage, TachesPage, CopilPage, EquipePage avant extraction.
 export function useNotify() {
   const [notif, setNotif] = useState({ msg: '', type: 'ok' })

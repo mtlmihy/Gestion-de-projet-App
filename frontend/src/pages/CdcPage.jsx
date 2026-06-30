@@ -57,7 +57,7 @@ function jalonDateKey(raw) {
 
 function formatJalonDate(raw) {
   const s = String(raw || '').trim()
-  if (!s) return '—'
+  if (!s) return '-'
 
   const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})$/)
   if (iso) {
@@ -80,17 +80,17 @@ function pvTextBlock(text) {
   const color   = hasText ? '#374151' : '#94a3b8'
   const content = hasText
     ? `<pre style="font-family:inherit;font-size:10px;white-space:pre-wrap;line-height:1.65;margin:0;">${escH(text)}</pre>`
-    : '—'
+    : '-'
   return `<div style="font-size:10px;color:${color};line-height:1.65;padding:10px 14px;background:#f8fafc;border-left:3px solid ${bLeft};border-radius:0 6px 6px 0;-webkit-print-color-adjust:exact;print-color-adjust:exact;">${content}</div>`
 }
 
 function buildPrintViewHtml(cdc, includeBudget = true) {
-  const dv   = s => s || '—'
+  const dv   = s => s || '-'
   const today = new Date().toLocaleDateString('fr-FR')
   const thS  = 'background:#f1f5f9;font-size:7.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;padding:7px 10px;border:1px solid #e2e8f0;-webkit-print-color-adjust:exact;print-color-adjust:exact;'
 
   const histRows = (cdc.history || []).map(row => {
-    const d = row[3] ? new Date(row[3]).toLocaleDateString('fr-FR') : '—'
+    const d = row[3] ? new Date(row[3]).toLocaleDateString('fr-FR') : '-'
     return `<tr>
       <td style="padding:6px 10px;border:1px solid #e9eef5;font-weight:700;color:#2563eb;-webkit-print-color-adjust:exact;print-color-adjust:exact;">${escH(dv(row[0]))}</td>
       <td style="padding:6px 10px;border:1px solid #e9eef5;">${escH(dv(row[1]))}</td>
@@ -179,14 +179,14 @@ function buildPrintViewHtml(cdc, includeBudget = true) {
 }
 
 function buildCharterHtml(cdc, dark = false, includeBudget = true) {
-  const dv    = s => escH(s || '—')
+  const dv    = s => escH(s || '-')
   const today = new Date().toLocaleDateString('fr-FR')
   const tb = dark
     ? { bodyBg: '#0f172a', barBg: '#1e293b', barBorder: '#334155', barText: '#cbd5e1', closeBg: '#334155', closeText: '#e2e8f0', printBg: '#3b82f6', printText: '#fff' }
     : { bodyBg: '#fff',    barBg: '#f8fafc', barBorder: '#e2e8f0', barText: '#64748b', closeBg: '#f1f5f9', closeText: '#475569', printBg: '#1e293b', printText: '#fff' }
 
   const bullets = text => {
-    if (!text || !text.trim()) return '<p style="color:#94a3b8;">—</p>'
+    if (!text || !text.trim()) return '<p style="color:#94a3b8;">-</p>'
     return text.split('\n').filter(l => l.trim())
       .map(l =>
         `<div style="display:flex;gap:7px;margin-bottom:5px;align-items:flex-start;">` +
@@ -195,7 +195,7 @@ function buildCharterHtml(cdc, dark = false, includeBudget = true) {
       .join('')
   }
   const numbered = text => {
-    if (!text || !text.trim()) return '<p style="color:#94a3b8;">—</p>'
+    if (!text || !text.trim()) return '<p style="color:#94a3b8;">-</p>'
     return text.split('\n').filter(l => l.trim())
       .map((l, i) =>
         `<div style="display:flex;gap:8px;margin-bottom:5px;align-items:flex-start;">` +
@@ -213,7 +213,7 @@ function buildCharterHtml(cdc, dark = false, includeBudget = true) {
     .filter((r) => r[0] || r[1] || r[2])
     .map((row) => {
     const d = formatJalonDate(row[1])
-    return `<tr><td style="${td}font-weight:600;color:#1e293b;">${escH(row[0] || '—')}</td><td style="${td}">${escH(d)}</td><td style="${td}">${escH(row[2] || '')}</td></tr>`
+    return `<tr><td style="${td}font-weight:600;color:#1e293b;">${escH(row[0] || '-')}</td><td style="${td}">${escH(d)}</td><td style="${td}">${escH(row[2] || '')}</td></tr>`
   }).join('') || `<tr><td colspan="3" style="${td}color:#94a3b8;text-align:center;">Aucun jalon renseigné</td></tr>`
 
   const secTitle = t =>
@@ -233,13 +233,13 @@ function buildCharterHtml(cdc, dark = false, includeBudget = true) {
     ['Référence stratégique', cdc.reference, cdc.service],
   ].map(([lbl, val, sub]) =>
     box(`<div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#475569;border-bottom:1.5px solid #e2e8f0;padding-bottom:5px;margin-bottom:10px;">${lbl}</div>` +
-      `<div style="font-size:12px;font-weight:600;color:#1e293b;">${escH(val || '—')}</div>` +
-      `<div style="font-size:10px;color:#64748b;margin-top:2px;">${escH(sub || '—')}</div>`)
+      `<div style="font-size:12px;font-weight:600;color:#1e293b;">${escH(val || '-')}</div>` +
+      `<div style="font-size:10px;color:#64748b;margin-top:2px;">${escH(sub || '-')}</div>`)
   ).join('')
 
   return `<!DOCTYPE html>
 <html lang="fr">
-<head><meta charset="UTF-8"/><title>Charte de Projet — ${escH(cdc.nom_projet || 'Sans titre')}</title>
+<head><meta charset="UTF-8"/><title>Charte de Projet - ${escH(cdc.nom_projet || 'Sans titre')}</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 *{font-family:'Inter',sans-serif;box-sizing:border-box;margin:0;padding:0;}
@@ -298,7 +298,7 @@ function closeViewer(){
     </div>
   </div>
   <div class="avoid-break" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px;">${infoCards}</div>
-  <div class="avoid-break" style="margin-bottom:18px;">${secTitle('Contexte du projet')}${box(`<div style="font-size:10.5px;color:#374151;line-height:1.65;">${escH(cdc.contexte || '—').replace(/\n/g, '<br/>')}</div>`)}</div>
+  <div class="avoid-break" style="margin-bottom:18px;">${secTitle('Contexte du projet')}${box(`<div style="font-size:10.5px;color:#374151;line-height:1.65;">${escH(cdc.contexte || '-').replace(/\n/g, '<br/>')}</div>`)}</div>
   <div class="avoid-break" style="margin-bottom:18px;">${secTitle('Objectifs')}${box(bullets(cdc.objectifs))}</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
     <div class="avoid-break">${secTitle('Périmètre')}${box(bullets(cdc.perimetre))}</div>
@@ -324,8 +324,8 @@ function closeViewer(){
       <tbody>
         <tr><td style="${tdL}">Chef de Projet</td><td style="${td}">${dv(cdc.chef_projet)}</td><td style="${td}">${dv(cdc.service)}</td></tr>
         <tr><td style="${tdL}">Sponsor</td><td style="${td}">${dv(cdc.sponsor)}</td><td style="${td}">${dv(cdc.service)}</td></tr>
-        <tr><td style="${tdL}">Représentant MOA</td><td style="${td}">—</td><td style="${td}">—</td></tr>
-        <tr><td style="${tdL}">Responsable Technique</td><td style="${td}">—</td><td style="${td}">—</td></tr>
+        <tr><td style="${tdL}">Représentant MOA</td><td style="${td}">-</td><td style="${td}">-</td></tr>
+        <tr><td style="${tdL}">Responsable Technique</td><td style="${td}">-</td><td style="${td}">-</td></tr>
       </tbody>
     </table>
   </div>
@@ -341,7 +341,7 @@ function closeViewer(){
     </div>
   </div>
   <div style="border-top:1px solid #e2e8f0;padding-top:10px;margin-top:24px;display:flex;justify-content:space-between;">
-    <span style="font-size:8.5px;color:#94a3b8;">Charte de Projet · ${escH(cdc.nom_projet || '—')} · ${escH(cdc.service || '—')}</span>
+    <span style="font-size:8.5px;color:#94a3b8;">Charte de Projet · ${escH(cdc.nom_projet || '-')} · ${escH(cdc.service || '-')}</span>
     <span style="font-size:8.5px;color:#94a3b8;">Générée le ${today} · Document confidentiel</span>
   </div>
 </div>
@@ -512,7 +512,7 @@ export default function CdcPage() {
       : { ...cdc, budget: '', budget_titre: 'Budget' }
     const inner = buildPrintViewHtml(cdcForExport, isProjetClient)
     const today = new Date().toLocaleDateString('fr-FR')
-    const title = `Cahier des Charges — ${cdc.nom_projet || 'Sans titre'}`
+    const title = `Cahier des Charges - ${cdc.nom_projet || 'Sans titre'}`
     // Thème appliqué à la barre d'outils + au fond de la fenêtre (le document reste blanc)
     const tb = dark
       ? { bodyBg: '#0f172a', barBg: '#1e293b', barBorder: '#334155', barText: '#cbd5e1', closeBg: '#334155', closeText: '#e2e8f0', printBg: '#3b82f6', printText: '#fff' }

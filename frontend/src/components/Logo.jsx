@@ -3,7 +3,7 @@ import logoCouleur from '../assets/QimInfo-LogoSymbole-Couleur.png'
 import logoBlanc   from '../assets/QimInfo-LogoSymbole-Blanc.png'
 
 /**
- * Logo Qim info — change automatiquement selon le thème.
+ * Logo Qim info - change automatiquement selon le thème.
  * - Thème clair → version couleur
  * - Thème sombre → version blanche
  *

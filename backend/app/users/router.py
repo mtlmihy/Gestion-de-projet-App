@@ -1,5 +1,5 @@
 """
-Endpoints de gestion des utilisateurs — réservés aux administrateurs.
+Endpoints de gestion des utilisateurs - réservés aux administrateurs.
 
 GET    /users/           → liste tous les utilisateurs
 POST   /users/           → crée un utilisateur
@@ -23,7 +23,7 @@ from app.users.schemas import ResetPasswordRequest, UserCreate, UserPublic, User
 router = APIRouter(dependencies=[Depends(require_admin)])
 
 
-# Endpoint accessible à tout utilisateur connecté — retourne uniquement id/nom/email/poste
+# Endpoint accessible à tout utilisateur connecté - retourne uniquement id/nom/email/poste
 # Utilisé par les propriétaires de projet pour inviter des membres
 _public_router = APIRouter(dependencies=[Depends(get_current_user)])
 

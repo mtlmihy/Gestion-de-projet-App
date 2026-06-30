@@ -69,7 +69,7 @@ _docs_kwargs = (
 )
 
 app = FastAPI(
-    title="Gestion de Projet — API",
+    title="Gestion de Projet - API",
     description="Backend FastAPI pour l'application de gestion de projet.",
     version="1.0.0",
     lifespan=lifespan,
@@ -100,7 +100,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         )
         response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
         response.headers["Cross-Origin-Resource-Policy"] = "same-site"
-        # API JSON only — pas de scripts à autoriser, on bloque tout.
+        # API JSON only - pas de scripts à autoriser, on bloque tout.
         response.headers["Content-Security-Policy"] = (
             "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
         )
@@ -125,7 +125,7 @@ app.add_middleware(CSRFMiddleware)
 app.add_middleware(TarpitMiddleware)
 
 
-# ── Handler global 500 — réponse opaque ───────────────────────────────────────
+# ── Handler global 500 - réponse opaque ───────────────────────────────────────
 # Empêche FastAPI de renvoyer une stack trace ou un message technique en cas
 # d'erreur non gérée. L'erreur réelle reste loggée côté serveur (Sentry/Render).
 from fastapi.exceptions import RequestValidationError  # noqa: E402

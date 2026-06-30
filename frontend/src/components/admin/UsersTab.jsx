@@ -140,9 +140,9 @@ export default function UsersTab({ currentUser }) {
             <tbody className="divide-y divide-gray-50 dark:divide-slate-700">
               {users.map((u) => (
                 <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
-                  <td className="px-4 py-3 font-medium text-gray-900 dark:text-slate-100">{u.nom ?? '—'}</td>
+                  <td className="px-4 py-3 font-medium text-gray-900 dark:text-slate-100">{u.nom ?? '-'}</td>
                   <td className="px-4 py-3 text-gray-600 dark:text-slate-400">{u.email}</td>
-                  <td className="px-4 py-3 text-gray-500 dark:text-slate-400">{u.poste ?? '—'}</td>
+                  <td className="px-4 py-3 text-gray-500 dark:text-slate-400">{u.poste ?? '-'}</td>
                   <td className="px-4 py-3">
                     {u.is_admin
                       ? <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full">Admin</span>
@@ -179,7 +179,7 @@ export default function UsersTab({ currentUser }) {
             <div>
               <label className={lbl}>Mot de passe *</label>
               <input className={inp} type="password" required minLength={12} value={form.password} onChange={setF('password')} autoComplete="new-password" />
-              <p className="mt-1 text-[11px] text-gray-400 dark:text-slate-500">Min. 12 car. — 1 maj, 1 min, 1 chiffre, 1 spécial.</p>
+              <p className="mt-1 text-[11px] text-gray-400 dark:text-slate-500">Min. 12 car. - 1 maj, 1 min, 1 chiffre, 1 spécial.</p>
             </div>
             <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300 cursor-pointer">
               <input type="checkbox" className="accent-red-600" checked={form.is_admin} onChange={setF('is_admin')} />
@@ -201,7 +201,7 @@ export default function UsersTab({ currentUser }) {
 
       {/* Modal édition */}
       {modal === 'edit' && target && (
-        <AdminModal title={`Modifier — ${target.email}`} onClose={() => setModal(null)}>
+        <AdminModal title={`Modifier - ${target.email}`} onClose={() => setModal(null)}>
           <form onSubmit={handleEdit} className="space-y-3">
             <div><label className={lbl}>Nom</label><input className={inp} value={editForm.nom} onChange={setE('nom')} /></div>
             <div><label className={lbl}>Poste</label><input className={inp} value={editForm.poste} onChange={setE('poste')} /></div>
@@ -229,12 +229,12 @@ export default function UsersTab({ currentUser }) {
 
       {/* Modal mot de passe */}
       {modal === 'pwd' && target && (
-        <AdminModal title={`Réinitialiser le mot de passe — ${target.email}`} onClose={() => setModal(null)}>
+        <AdminModal title={`Réinitialiser le mot de passe - ${target.email}`} onClose={() => setModal(null)}>
           <form onSubmit={handlePwd} className="space-y-3">
             <div>
               <label className={lbl}>Nouveau mot de passe *</label>
               <input className={inp} type="password" required minLength={12} value={newPwd} onChange={(e) => setNewPwd(e.target.value)} autoComplete="new-password" />
-              <p className="mt-1 text-[11px] text-gray-400 dark:text-slate-500">Min. 12 car. — 1 maj, 1 min, 1 chiffre, 1 spécial.</p>
+              <p className="mt-1 text-[11px] text-gray-400 dark:text-slate-500">Min. 12 car. - 1 maj, 1 min, 1 chiffre, 1 spécial.</p>
             </div>
             <div className="flex gap-2 pt-2">
               <button type="button" onClick={() => setModal(null)} className="flex-1 border border-gray-200 dark:border-slate-600 rounded-xl py-2 text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">Annuler</button>

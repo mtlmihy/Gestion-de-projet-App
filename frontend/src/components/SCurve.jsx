@@ -52,7 +52,7 @@ export default function SCurve({ points = [], startDate, endDate, projectName = 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm px-6 py-5 overflow-x-auto scrollbar-hidden">
       <div className="flex items-center justify-between mb-3">
-        <div className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500">Courbe S — Charge prévue vs restante</div>
+        <div className="text-[.68rem] font-bold uppercase tracking-wide text-gray-400 dark:text-slate-500">Courbe S - Charge prévue vs restante</div>
         <button
           onClick={exportCSV}
           className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 border border-gray-200 dark:border-slate-600 rounded-lg px-2.5 py-1 transition-colors"
@@ -104,11 +104,11 @@ export default function SCurve({ points = [], startDate, endDate, projectName = 
       <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2">
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-sm bg-blue-600 flex-shrink-0" />
-          <span className="text-sm text-gray-600 dark:text-slate-400">Charge prévue (cumulée) — {totalPlanned}</span>
+          <span className="text-sm text-gray-600 dark:text-slate-400">Charge prévue (cumulée) - {totalPlanned}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-sm bg-green-600 flex-shrink-0" />
-          <span className="text-sm text-gray-600 dark:text-slate-400">Charge réalisée (cumulée) — {Math.round(latestCompleted)}</span>
+          <span className="text-sm text-gray-600 dark:text-slate-400">Charge réalisée (cumulée) - {Math.round(latestCompleted)}</span>
         </div>
         <div className="hidden sm:block h-4 w-px bg-gray-200 dark:bg-slate-600" />
         <div className="text-sm text-gray-600 dark:text-slate-400">

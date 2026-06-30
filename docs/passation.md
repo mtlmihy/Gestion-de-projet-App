@@ -1,7 +1,7 @@
-# Document de passation — QimProject
+# Document de passation - QimProject
 
 Dernière mise à jour : 2026-06-30. Aucune valeur sensible (clé, mot de passe,
-URL privée, token) ne doit jamais être ajoutée à ce fichier — il est versionné
+URL privée, token) ne doit jamais être ajoutée à ce fichier - il est versionné
 dans git.
 
 ## 1. C'est quoi, ce projet ?
@@ -51,7 +51,7 @@ Les variables d'environnement nécessaires sont documentées (avec des
 placeholders, pas de vraies valeurs) dans `backend/.env.example` et
 `frontend/.env.production.example`. Les vraies valeurs (DB, clé JWT, etc.)
 sont à récupérer auprès de la personne qui gère les accès Render / Supabase /
-Vercel — elles ne sont stockées nulle part dans le dépôt.
+Vercel - elles ne sont stockées nulle part dans le dépôt.
 
 ## 4. Où trouver quoi
 
@@ -68,7 +68,7 @@ backend/app/
   <module>/service.py    # accès DB (SQL brut via asyncpg, pas d'ORM)
   <module>/schemas.py    # validation Pydantic
   projets/permissions.py # vérifications de rôle projet partagées
-                           # (check_membre / check_editeur) — à réutiliser
+                           # (check_membre / check_editeur) - à réutiliser
                            # pour tout nouveau module métier
 
 frontend/src/
@@ -93,7 +93,7 @@ frontend/src/
 - **Conventions établies à respecter pour tout nouveau code** :
   - Backend : tout nouvel endpoint qui dépend d'un `projet_id` doit appeler
     `perms.check_membre(...)` (lecture) ou `perms.check_editeur(...)`
-    (écriture) depuis `app/projets/permissions.py` — ne pas réimplémenter la
+    (écriture) depuis `app/projets/permissions.py` - ne pas réimplémenter la
     vérification localement.
   - Frontend : pour une nouvelle page de type liste CRUD (charger une liste +
     créer/modifier/supprimer avec notification), réutiliser
@@ -105,7 +105,7 @@ frontend/src/
 Le détail complet (avec fichiers et lignes précises) est dans
 [reste-a-faire.md](reste-a-faire.md). En résumé, par priorité :
 
-1. Migrations DB : pas de table de version, application manuelle — risque
+1. Migrations DB : pas de table de version, application manuelle - risque
    d'oubli en prod. `doc-archi.md` est même légèrement désynchronisé (ne
    référence pas les migrations 020/021 déjà présentes dans le dépôt).
 2. Pas de transaction DB sur les opérations multi-requêtes (ex: création de
@@ -128,7 +128,7 @@ Le détail complet (avec fichiers et lignes précises) est dans
   Render, jamais dans le dépôt.
 - **Base de données (Supabase)** : accès via le dashboard Supabase. Les
   migrations dans `backend/app/db/migrations/` doivent être appliquées dans
-  l'ordre numérique (voir §6, point 1 — c'est manuel pour l'instant).
+  l'ordre numérique (voir §6, point 1 - c'est manuel pour l'instant).
 
 Pour les identifiants d'accès à ces trois dashboards, se rapprocher de la
-personne qui les détient actuellement — ils ne sont pas dans ce dépôt.
+personne qui les détient actuellement - ils ne sont pas dans ce dépôt.

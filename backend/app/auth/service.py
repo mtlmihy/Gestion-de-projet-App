@@ -2,7 +2,7 @@
 Service d'authentification.
 
 Authentification par e-mail + mot de passe (bcrypt) stocké en base.
-JWT HttpOnly cookie — sub = UUID de l'utilisateur, tv = token_version.
+JWT HttpOnly cookie - sub = UUID de l'utilisateur, tv = token_version.
 """
 from __future__ import annotations
 

@@ -2,7 +2,7 @@
 
 Avant ce module, le pattern "l'utilisateur doit être membre / Éditeur du
 projet" était réimplémenté indépendamment dans risques, taches, budget,
-raci, cdc, copils, equipe et liens — avec des variations (noms, ensembles
+raci, cdc, copils, equipe et liens - avec des variations (noms, ensembles
 de rôles) qui ont fini par diverger silencieusement.
 """
 from __future__ import annotations

@@ -1,4 +1,4 @@
-# Reste à faire — suite de l'audit QimProject
+# Reste à faire - suite de l'audit QimProject
 
 État au 2026-06-30. Ce document liste ce qui n'a **pas** encore été traité après
 les sessions d'audit (faille IDOR, CI, risques moyens/faibles). À reprendre dans
@@ -6,7 +6,7 @@ cet ordre de priorité indicatif.
 
 ## 1. Mis en stand-by volontairement : tracking des migrations DB
 
-- Pas de table de version (`alembic_version` ou équivalent) — les migrations
+- Pas de table de version (`alembic_version` ou équivalent) - les migrations
   `backend/app/db/migrations/*.sql` sont appliquées à la main, sans garantie
   qu'elles l'ont toutes été en prod.
 - `docs/doc-archi.md` référence les migrations jusqu'à `019` seulement, alors
@@ -20,14 +20,14 @@ cet ordre de priorité indicatif.
 - **Transactions DB manquantes** : aucune opération multi-requêtes n'est
   englobée dans `async with conn.transaction()`. Cas concret :
   `backend/app/projets/service.py` (`create`) insère le projet puis son
-  membre Propriétaire en deux requêtes séparées — un échec entre les deux
+  membre Propriétaire en deux requêtes séparées - un échec entre les deux
   laisse un projet orphelin sans propriétaire.
 - **Race conditions frontend** : pas d'`AbortController` dans les `useEffect`
   de chargement (RisquesPage, TachesPage, CopilPage, RaciPage, CdcPage,
   PlanningPage). Changer rapidement de projet peut afficher les données du
   mauvais projet le temps que les requêtes se résolvent.
 - **Couverture de tests quasi nulle** sur le cœur métier : aucun test sur
-  l'auth, les permissions, ni le CRUD risques/tâches/équipe/admin/projets —
+  l'auth, les permissions, ni le CRUD risques/tâches/équipe/admin/projets -
   exactement la zone où s'était glissée la faille IDOR. Pages sans aucun
   test : `RisquesPage`, `TachesPage`, `EquipePage`, `RaciPage`, `BudgetPage`,
   `AdminPage`, `ProjectsPage`, `AuthContext`, `ProjectContext`, le routeur
@@ -51,10 +51,10 @@ cet ordre de priorité indicatif.
 ## 4. Risques "Faible" restants
 
 - **Pool DB modeste** (`backend/app/db/pool.py:22-24` : `min_size=2,
-  max_size=10, command_timeout=30`) — à surveiller en prod si la charge
+  max_size=10, command_timeout=30`) - à surveiller en prod si la charge
   augmente, pas bloquant pour un usage actuel.
 - **Pas de focus trap dans les modals** (`components/Modal.jsx`,
-  `components/admin/AdminModal.jsx`) — gênant en navigation clavier, pas
+  `components/admin/AdminModal.jsx`) - gênant en navigation clavier, pas
   traité pendant le passage accessibilité (on a fait les `htmlFor`/`id`
   uniquement).
 - **`Layout.test.jsx` exclu de la CI** (`.github/workflows/ci.yml`, voir le

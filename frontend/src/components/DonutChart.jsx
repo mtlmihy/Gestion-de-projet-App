@@ -13,10 +13,10 @@ function arcPath(cx, cy, r, startAngle, endAngle) {
 }
 
 /**
- * DonutChart — SVG pur, cohérent avec SCurve et TimelineSVG.
- * @param {Array} slices  — [{ label, value, color }]
- * @param {string} title  — texte centre du donut (optionnel)
- * @param {number} size   — taille SVG (défaut 200)
+ * DonutChart - SVG pur, cohérent avec SCurve et TimelineSVG.
+ * @param {Array} slices  - [{ label, value, color }]
+ * @param {string} title  - texte centre du donut (optionnel)
+ * @param {number} size   - taille SVG (défaut 200)
  */
 export default function DonutChart({ slices = [], title = '', size = 200 }) {
   const cx = size / 2
@@ -30,7 +30,7 @@ export default function DonutChart({ slices = [], title = '', size = 200 }) {
     return (
       <svg viewBox={`0 0 ${size} ${size}`} className="w-full max-w-[200px]">
         <circle cx={cx} cy={cy} r={(R + r) / 2} fill="none" className="stroke-gray-100 dark:stroke-slate-700" strokeWidth={R - r} />
-        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fontSize={Math.round(size * 0.14)} className="fill-gray-400 dark:fill-slate-500">—</text>
+        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fontSize={Math.round(size * 0.14)} className="fill-gray-400 dark:fill-slate-500">-</text>
       </svg>
     )
   }

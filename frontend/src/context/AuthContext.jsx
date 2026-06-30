@@ -9,7 +9,7 @@ function loadUser() {
 
 // Filet de sécurité : efface côté JS le cookie csrf_token (non HttpOnly)
 // au cas où la suppression cross-site (SameSite=None) côté serveur échoue.
-// access_token est HttpOnly, donc inaccessible — seul le serveur peut le purger.
+// access_token est HttpOnly, donc inaccessible - seul le serveur peut le purger.
 function clearCsrfCookieClientSide() {
   document.cookie = 'csrf_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=None; Secure'
   document.cookie = 'csrf_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'

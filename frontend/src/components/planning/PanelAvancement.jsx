@@ -52,7 +52,7 @@ export default function PanelAvancement({ progressPct, taskPct, startDate, endDa
 
       {retardAlert && (
         <AlertBanner icon="⚠️" level="warning">
-          Retard détecté — le calendrier avance plus vite que la réalisation des tâches ({progressPct}% vs {taskPct}%).
+          Retard détecté - le calendrier avance plus vite que la réalisation des tâches ({progressPct}% vs {taskPct}%).
         </AlertBanner>
       )}
 

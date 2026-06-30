@@ -385,7 +385,7 @@ export default function PermissionsTab() {
       {/* Modal édition de cellule */}
       {editing && (
         <AdminModal
-          title={`Accès — ${editing.user.email}`}
+          title={`Accès - ${editing.user.email}`}
           onClose={() => !submitting && setEditing(null)}
         >
           <div className="space-y-3">
@@ -399,7 +399,7 @@ export default function PermissionsTab() {
                 defaultValue={editing.currentRole}
                 onChange={(e) => setEditing({ ...editing, currentRole: e.target.value })}
               >
-                <option value="">— Aucun accès —</option>
+                <option value="">- Aucun accès -</option>
                 <option value="Proprietaire">Propriétaire</option>
                 <option value="Editeur">Éditeur</option>
                 <option value="Lecteur">Lecteur</option>
@@ -436,8 +436,8 @@ export default function PermissionsTab() {
         <AdminModal
           title={
             acting.mode === 'logout'
-              ? `Forcer la déconnexion — ${acting.user.email}`
-              : `Offboarding — ${acting.user.email}`
+              ? `Forcer la déconnexion - ${acting.user.email}`
+              : `Offboarding - ${acting.user.email}`
           }
           onClose={() => !submitting && setActing(null)}
         >

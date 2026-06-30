@@ -58,7 +58,7 @@ export default function GestionAccesModal({ projet, onClose, isAdmin, onProjetUp
     setPagesProjet(projet?.pages_visibles ?? null)
   }, [projet?.pages_visibles])
 
-  // Sync ordre pages — fusionne l'ordre sauvegardé avec les pages disponibles
+  // Sync ordre pages - fusionne l'ordre sauvegardé avec les pages disponibles
   // (ex: budget devient disponible après passage en type Client)
   useEffect(() => {
     const saved = projet?.pages_ordre
@@ -279,7 +279,7 @@ export default function GestionAccesModal({ projet, onClose, isAdmin, onProjetUp
           }`}>{notif.msg}</div>
         )}
 
-        {/* Paramètres projet — visible propriétaires/admins uniquement */}
+        {/* Paramètres projet - visible propriétaires/admins uniquement */}
         {estProprietaire && <div className="mb-3 flex-shrink-0 p-3 rounded-xl border border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/70">
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-2">Paramètres du projet</p>
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-3">
@@ -388,7 +388,7 @@ export default function GestionAccesModal({ projet, onClose, isAdmin, onProjetUp
           {estProprietaire && (
             <div className="mt-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-2">Ordre des pages dans le menu</p>
-              <p className="text-xs text-gray-400 dark:text-slate-500 mb-2">Glissez-déposez pour réordonner — sauvegarde automatique.</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500 mb-2">Glissez-déposez pour réordonner - sauvegarde automatique.</p>
               <div className="flex flex-col gap-1">
                 {ordrePages.map((key) => {
                   const page = PAGES_DISPONIBLES.find((p) => p.key === key)
@@ -461,7 +461,7 @@ export default function GestionAccesModal({ projet, onClose, isAdmin, onProjetUp
                       setExpandedClientId((current) => (current === m.user_id ? null : m.user_id))
                     }}
                   >
-                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-slate-100">{m.nom ?? '—'}</td>
+                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-slate-100">{m.nom ?? '-'}</td>
                     <td className="px-4 py-3 text-gray-500 dark:text-slate-400 text-xs">{m.email}</td>
                     <td className="px-4 py-3">
                       {!isAdmin && m.role === 'Proprietaire' ? (
@@ -526,7 +526,7 @@ export default function GestionAccesModal({ projet, onClose, isAdmin, onProjetUp
                   value={addForm.user_id}
                   onChange={(e) => setAddForm((f) => ({ ...f, user_id: e.target.value }))}
                 >
-                  <option value="">— Sélectionner —</option>
+                  <option value="">- Sélectionner -</option>
                   {usersDisponibles.map((u) => (
                     <option key={u.id} value={u.id}>{u.nom ?? u.email} ({u.email})</option>
                   ))}

@@ -52,7 +52,7 @@ export default function PanelRisques({ risques }) {
 
       {p1Count > 0 && (
         <AlertBanner icon="🔴" level="error">
-          {p1Count} risque{p1Count > 1 ? 's' : ''} critique{p1Count > 1 ? 's' : ''} (P1) actif{p1Count > 1 ? 's' : ''} — action immédiate requise.
+          {p1Count} risque{p1Count > 1 ? 's' : ''} critique{p1Count > 1 ? 's' : ''} (P1) actif{p1Count > 1 ? 's' : ''} - action immédiate requise.
         </AlertBanner>
       )}
 
@@ -93,7 +93,7 @@ export default function PanelRisques({ risques }) {
                           ) : clos > 0 ? (
                             <span className="text-xs font-semibold text-gray-300 dark:text-slate-600">{clos}✓</span>
                           ) : (
-                            <span className="text-gray-200 dark:text-slate-700">—</span>
+                            <span className="text-gray-200 dark:text-slate-700">-</span>
                           )}
                         </div>
                       )

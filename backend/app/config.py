@@ -57,7 +57,7 @@ class Settings(BaseSettings):
     db_ssl: bool = False
 
     # ── Environnement ─────────────────────────────────────────────────────────
-    # "development" | "production" — contrôle l'exposition de /docs, /redoc, etc.
+    # "development" | "production" - contrôle l'exposition de /docs, /redoc, etc.
     env: str = "development"
 
     @property

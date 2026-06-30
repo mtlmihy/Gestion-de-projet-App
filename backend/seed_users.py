@@ -1,5 +1,5 @@
 """
-Script de seeding — crée les utilisateurs initiaux dans la base.
+Script de seeding - crée les utilisateurs initiaux dans la base.
 
 Usage :
     cd backend

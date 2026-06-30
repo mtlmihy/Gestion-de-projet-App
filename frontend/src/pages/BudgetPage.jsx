@@ -329,10 +329,10 @@ export default function BudgetPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-gray-700 dark:text-slate-200 max-w-xs truncate">
-                    {ligne.description || <span className="text-gray-400 italic">—</span>}
+                    {ligne.description || <span className="text-gray-400 italic">-</span>}
                   </td>
                   <td className="px-4 py-3 text-gray-600 dark:text-slate-300 whitespace-nowrap text-xs">
-                    {ligne.assigne || <span className="text-gray-300 dark:text-slate-600 italic">—</span>}
+                    {ligne.assigne || <span className="text-gray-300 dark:text-slate-600 italic">-</span>}
                   </td>
                   <td className="px-4 py-3 text-right font-mono font-semibold text-gray-900 dark:text-slate-100 whitespace-nowrap">
                     {fmt(ligne.montant, devise)}

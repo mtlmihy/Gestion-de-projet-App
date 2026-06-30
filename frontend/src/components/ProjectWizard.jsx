@@ -25,7 +25,7 @@ const DEFAULT_PAGES_INTERNE = PAGES_DISPONIBLES.filter((p) => !p.onlyClient).map
 
 // ── État initial ─────────────────────────────────────────────────────────────
 const EMPTY_FORM = {
-  // Étape 1 — Identité
+  // Étape 1 - Identité
   nom: '',
   type_projet: 'Interne',
   budget_prevu: '',
@@ -35,13 +35,13 @@ const EMPTY_FORM = {
   service: '',
   sponsor: '',
   date_debut: '',
-  // Étape 2 — Cadrage
+  // Étape 2 - Cadrage
   contexte: '',
   objectifs: '',
   perimetre: '',
-  // Étape 3 — Jalons (liste dynamique)
+  // Étape 3 - Jalons (liste dynamique)
   jalons: [{ label: 'Démarrage du projet', date: '', description: '' }],
-  // Étape 4 — Pages visibles
+  // Étape 4 - Pages visibles
   pages_visibles: DEFAULT_PAGES_INTERNE,
 }
 
@@ -262,7 +262,7 @@ export default function ProjectWizard({ onClose, onCreated }) {
           </div>
         </div>
 
-        {/* Body — défilant */}
+        {/* Body - défilant */}
         <div className="flex-1 overflow-y-auto scrollbar-hidden px-6 py-5">
           {error && (
             <div className="mb-4 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 px-3 py-2 rounded-xl">
@@ -372,7 +372,7 @@ export default function ProjectWizard({ onClose, onCreated }) {
                   onChange={setField('perimetre')}
                   placeholder="Decrivez le perimetre"
                 />
-                <p className={help}>Optionnel — vous pourrez le compléter plus tard.</p>
+                <p className={help}>Optionnel - vous pourrez le compléter plus tard.</p>
               </div>
             </div>
           )}
@@ -436,7 +436,7 @@ export default function ProjectWizard({ onClose, onCreated }) {
                 + Ajouter un jalon
               </button>
               <p className="text-xs text-gray-400 dark:text-slate-500 italic text-center mt-2">
-                Étape optionnelle — vous pouvez passer directement au récapitulatif.
+                Étape optionnelle - vous pouvez passer directement au récapitulatif.
               </p>
             </div>
           )}
@@ -504,7 +504,7 @@ export default function ProjectWizard({ onClose, onCreated }) {
                       <li key={i} className="flex items-center gap-2 text-gray-700 dark:text-slate-300">
                         <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
                         <span className="font-medium">{j.label || '(sans nom)'}</span>
-                        {j.date && <span className="text-gray-400 text-xs">— {j.date}</span>}
+                        {j.date && <span className="text-gray-400 text-xs">- {j.date}</span>}
                       </li>
                     ))}
                   </ul>
@@ -527,7 +527,7 @@ export default function ProjectWizard({ onClose, onCreated }) {
           )}
         </div>
 
-        {/* Footer — boutons navigation */}
+        {/* Footer - boutons navigation */}
         <div className="px-6 py-4 border-t border-gray-100 dark:border-slate-700 flex items-center justify-between bg-gray-50 dark:bg-slate-800/50">
           <button
             type="button"
@@ -591,7 +591,7 @@ function RecapRow({ k, v, multi = false }) {
     <div className={multi ? '' : 'flex items-baseline gap-3 text-sm'}>
       <span className={`text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 ${multi ? 'block mb-0.5' : 'min-w-[110px]'}`}>{k}</span>
       <span className={`text-gray-700 dark:text-slate-300 ${multi ? 'block whitespace-pre-wrap text-sm' : ''} ${!display ? 'italic text-gray-300 dark:text-slate-600' : ''}`}>
-        {display || '— non renseigné'}
+        {display || '- non renseigné'}
       </span>
     </div>
   )

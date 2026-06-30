@@ -1,5 +1,5 @@
 """
-Protection CSRF — pattern « double-submit cookie ».
+Protection CSRF - pattern « double-submit cookie ».
 
 Pourquoi : nos cookies de session utilisent SameSite=None en prod (cross-site
 Vercel ↔ Render). SameSite=None désactive la protection CSRF native du
@@ -91,7 +91,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             # quand un client a un cookie csrf_token périmé). Aucun détail
             # n'est renvoyé au client.
             _logger.warning(
-                "CSRF rejected on %s %s — cookie=%s header=%s",
+                "CSRF rejected on %s %s - cookie=%s header=%s",
                 request.method, path,
                 "present" if cookie_token else "missing",
                 "present" if header_token else "missing",

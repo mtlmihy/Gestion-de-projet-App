@@ -114,7 +114,7 @@ export default function NavBar() {
           )}
         </div>
 
-        {/* Nav links — desktop uniquement */}
+        {/* Nav links - desktop uniquement */}
         <nav className="hidden md:flex items-center gap-0.5 flex-1">
           {visibleLinks.map(({ to, label, page }) => (
             <div
@@ -152,7 +152,7 @@ export default function NavBar() {
         {/* Spacer mobile */}
         <div className="flex-1 md:hidden" />
 
-        {/* Utilisateur + actions — desktop */}
+        {/* Utilisateur + actions - desktop */}
         <div className="hidden md:flex shrink-0 items-center gap-2">
           {isAdmin && (
             <NavLink

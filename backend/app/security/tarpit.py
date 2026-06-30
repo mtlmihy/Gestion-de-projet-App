@@ -1,11 +1,11 @@
 """
-Tarpit middleware — anti-fuzzing / anti-scan.
+Tarpit middleware - anti-fuzzing / anti-scan.
 
 Principe :
   - On suit le nombre de réponses 401 / 403 / 404 émises par IP sur une
     fenêtre glissante (TARPIT_WINDOW_SECONDS).
   - Au-delà de TARPIT_THRESHOLD échecs, on ralentit les *prochaines* requêtes
-    de cette IP (délai exponentiel borné). On ne bannit JAMAIS — on ralentit
+    de cette IP (délai exponentiel borné). On ne bannit JAMAIS - on ralentit
     seulement, ce qui rend les outils de fuzzing / scan inefficaces sans
     risque d'auto-bloquer un utilisateur légitime.
   - Une réponse 2xx / 3xx réinitialise le compteur (utilisateur légitime).
@@ -49,7 +49,7 @@ class _IpState:
 
 
 class TarpitMiddleware(BaseHTTPMiddleware):
-    """Ralentit les IPs qui accumulent des 401/403/404 — anti-scan."""
+    """Ralentit les IPs qui accumulent des 401/403/404 - anti-scan."""
 
     def __init__(self, app):
         super().__init__(app)

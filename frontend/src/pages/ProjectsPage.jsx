@@ -215,7 +215,7 @@ export default function ProjectsPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Mes projets</h1>
             <p className="text-sm text-gray-400 dark:text-slate-500 mt-1">
-              {isAdmin ? 'Vous êtes administrateur — tous les projets sont visibles.' : 'Projets auxquels vous participez.'}
+              {isAdmin ? 'Vous êtes administrateur - tous les projets sont visibles.' : 'Projets auxquels vous participez.'}
             </p>
           </div>
           {peutCreerProjet && (
