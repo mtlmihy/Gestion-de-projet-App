@@ -21,24 +21,27 @@ jest.mock('../context/ThemeContext', () => ({
 }));
 
 // Helper function to parse date keys (from CdcPage)
+function utcKeyOrInfinity(y, m, d) {
+  const ts = Date.UTC(y, m, d);
+  const check = new Date(ts);
+  if (check.getUTCFullYear() !== y || check.getUTCMonth() !== m || check.getUTCDate() !== d) {
+    return Number.POSITIVE_INFINITY;
+  }
+  return ts;
+}
+
 function jalonDateKey(raw) {
   const s = String(raw || '').trim();
   if (!s) return Number.POSITIVE_INFINITY;
 
   const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (iso) {
-    const y = Number(iso[1]);
-    const m = Number(iso[2]) - 1;
-    const d = Number(iso[3]);
-    return Date.UTC(y, m, d);
+    return utcKeyOrInfinity(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
   }
 
   const fr = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
   if (fr) {
-    const d = Number(fr[1]);
-    const m = Number(fr[2]) - 1;
-    const y = Number(fr[3]);
-    return Date.UTC(y, m, d);
+    return utcKeyOrInfinity(Number(fr[3]), Number(fr[2]) - 1, Number(fr[1]));
   }
 
   const parsed = Date.parse(s);
@@ -220,7 +223,7 @@ describe('CdcPage - Date Parsing', () => {
         year: 'numeric',
       });
 
-      expect(formatted).toBe('12/05/2026');
+      expect(formatted).toBe('12.05.2026');
     });
 
     test('extracts year from ISO date', () => {

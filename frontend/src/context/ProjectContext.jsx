@@ -28,6 +28,8 @@ export function ProjectProvider({ children }) {
   const estLecteur     = !isAdmin && (projet?.est_cloture || ROLES_LECTURE_SEULE.includes(projet?.mon_role))
   // Peut gérer les membres et le contenu : admin ou Propriétaire du projet
   const estProprietaire = isAdmin || projet?.mon_role === 'Proprietaire'
+  // Peut éditer le contenu métier (risques, taches, budget, CDC, RACI, liens...) : admin, Propriétaire ou Editeur
+  const estEditeur = isAdmin || projet?.mon_role === 'Proprietaire' || projet?.mon_role === 'Editeur'
 
   // Vérifie l'accès à une page pour l'utilisateur courant dans ce projet.
   // 1) Filtre global du projet (pages_visibles)
@@ -43,7 +45,7 @@ export function ProjectProvider({ children }) {
   }
 
   return (
-    <ProjectContext.Provider value={{ projet, setProjet, clearProjet, estLecteur, estProprietaire, canAccessPage }}>
+    <ProjectContext.Provider value={{ projet, setProjet, clearProjet, estLecteur, estProprietaire, estEditeur, canAccessPage }}>
       {children}
     </ProjectContext.Provider>
   )

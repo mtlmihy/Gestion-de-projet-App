@@ -29,7 +29,7 @@ const EMPTY_FORM = { libelle: '', url: '', type: 'autre', visible: true, ordre: 
 
 
 export default function AidePage() {
-  const { projet, estProprietaire } = useProject()
+  const { projet, estEditeur } = useProject()
   const projetId = projet?.id
 
   const [liens, setLiens]     = useState([])
@@ -110,7 +110,7 @@ export default function AidePage() {
   // VisibilitÃ© section : toujours visible pour ceux qui peuvent Ã©diter.
   // Pour les autres : seulement s'il y a au moins un lien visible.
   const visibleLiens  = liens.filter((l) => l.visible)
-  const liensAffiches = estProprietaire ? liens : visibleLiens
+  const liensAffiches = estEditeur ? liens : visibleLiens
 
   return (
     <div>
@@ -126,7 +126,7 @@ export default function AidePage() {
               Liens externes du projet
             </h2>
           </div>
-          {estProprietaire && (
+          {estEditeur && (
             <button
               onClick={openCreate}
               className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium flex items-center gap-1"
@@ -144,7 +144,7 @@ export default function AidePage() {
 
         {!loading && !error && liensAffiches.length === 0 && (
           <p className="text-xs text-gray-500 dark:text-slate-400 italic">
-            {estProprietaire
+            {estEditeur
               ? 'Aucun lien pour ce projet. Ajoutez ceux qui sont utiles Ã  l\'Ã©quipe (Jira, Miro, Teams, â€¦).'
               : 'Aucun lien partagÃ© pour ce projet.'}
           </p>
@@ -179,7 +179,7 @@ export default function AidePage() {
                       <p className="text-[11px] text-red-600 dark:text-red-400">Copier et modifier en local !!!!!!!!.</p>
                     )}
                   </div>
-                  {estProprietaire && (
+                  {estEditeur && (
                     <div className="flex items-center gap-1 shrink-0">
                       <button
                         onClick={() => toggleVisible(lien)}

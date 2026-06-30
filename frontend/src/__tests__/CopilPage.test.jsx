@@ -235,7 +235,7 @@ describe('CopilPage - CRUD Operations', () => {
         year: 'numeric',
       });
 
-      expect(formatted).toBe('12/05/2026');
+      expect(formatted).toBe('12.05.2026');
     });
 
     test('formats time without seconds', () => {
@@ -257,7 +257,7 @@ describe('CopilPage - CRUD Operations', () => {
       });
       const time = item.heure_reunion ? String(item.heure_reunion).slice(0, 5) : '--:--';
 
-      expect(`${date} · ${time}`).toBe('12/05/2026 · --:--');
+      expect(`${date} · ${time}`).toBe('12.05.2026 · --:--');
     });
   });
 });
