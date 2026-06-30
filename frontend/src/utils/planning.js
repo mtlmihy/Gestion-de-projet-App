@@ -12,7 +12,7 @@ export function fmtShort(d) {
 }
 
 export function fmtCurrency(n, devise = 'CHF') {
-  return new Intl.NumberFormat('fr-CH', { style: 'currency', currency: devise, maximumFractionDigits: 0 }).format(n)
+  return new Intl.NumberFormat('fr-CH', { style: 'currency', currency: devise }).format(n)
 }
 
 export const TASK_WEIGHT = (imp) => {
