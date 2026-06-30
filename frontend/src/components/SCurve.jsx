@@ -99,26 +99,26 @@ export default function SCurve({ points = [], startDate, endDate, projectName = 
 
         {/* today line */}
         <line x1={todayX} x2={todayX} y1={PT} y2={H-PB} stroke="#ef4444" strokeDasharray="4,3" />
-
-        {/* small legend */}
-        <rect x={W-PR-180} y={PT} width="160" height="44" rx="6" fill="#fff" opacity="0.9" />
-        <g transform={`translate(${W-PR-170}, ${PT+8})`}>
-          <rect x={0} y={0} width={10} height={6} fill="#2563eb" />
-          <text x={16} y={6} fontSize="11" fill="#111827">Prévu</text>
-          <rect x={84} y={0} width={10} height={6} fill="#16a34a" />
-          <text x={100} y={6} fontSize="11" fill="#111827">Réalisé</text>
-        </g>
       </svg>
 
-      <div className="mt-3 flex flex-wrap gap-4 text-sm text-gray-600 dark:text-slate-400">
-        <div><strong>Total prévu :</strong> {totalPlanned}</div>
-        <div><strong>Réalisé :</strong> {Math.round(latestCompleted)}</div>
-        <div><strong>Restant :</strong> {Math.round(Math.max(0, totalPlanned - latestCompleted))}</div>
-        <div className={ecart >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
-          <strong>Écart :</strong> {ecart >= 0 ? '+' : ''}{Math.round(ecart)}
+      <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2">
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-sm bg-blue-600 flex-shrink-0" />
+          <span className="text-sm text-gray-600 dark:text-slate-400">Charge prévue (cumulée) — {totalPlanned}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-sm bg-green-600 flex-shrink-0" />
+          <span className="text-sm text-gray-600 dark:text-slate-400">Charge réalisée (cumulée) — {Math.round(latestCompleted)}</span>
+        </div>
+        <div className="hidden sm:block h-4 w-px bg-gray-200 dark:bg-slate-600" />
+        <div className="text-sm text-gray-600 dark:text-slate-400">
+          <strong>Restant :</strong> {Math.round(Math.max(0, totalPlanned - latestCompleted))}
+        </div>
+        <div className={`text-sm ${ecart >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+          <strong>Écart :</strong> {ecart >= 0 ? '+' : ''}{Math.round(ecart)} {ecart >= 0 ? '(avance)' : '(retard)'}
         </div>
         {rendement !== null && (
-          <div className={rendement >= 100 ? 'text-green-600 dark:text-green-400' : rendement >= 80 ? 'text-orange-500 dark:text-orange-400' : 'text-red-600 dark:text-red-400'}>
+          <div className={`text-sm ${rendement >= 100 ? 'text-green-600 dark:text-green-400' : rendement >= 80 ? 'text-orange-500 dark:text-orange-400' : 'text-red-600 dark:text-red-400'}`}>
             <strong>Rendement :</strong> {rendement.toFixed(1)} %
           </div>
         )}
