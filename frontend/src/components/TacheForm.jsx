@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from 'react'
 
 const IMPORTANCES = ['Faible', 'Moyenne', 'Élevée', 'Critique']
+const STATUTS     = ['A faire', 'En cours', 'Terminée', 'Bloquée']
 const HEURES_PAR_JOUR = 8
 
 const EMPTY = {
   nom: '', description: '', importance: 'Moyenne',
-  avancement: 0, assigne: '', jalon: '', charge_jours: '',
+  avancement: 0, assigne: '', jalon: '', charge_jours: '', statut: 'A faire',
 }
 
 /** Convertit une saisie en heures vers des jours (1J = 8h). Ex : 4 → 0.5, 8.4 → 1.05 */
@@ -21,7 +22,7 @@ const cls = {
   textarea: 'w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-base sm:text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none',
 }
 
-export default function TacheForm({ initial, onSubmit, onCancel, loading, jalonsOptions = [] }) {
+export default function TacheForm({ initial, onSubmit, onCancel, loading, jalonsOptions = [], membresOptions = [] }) {
   const toFormState = (data) => data
     ? { ...data, charge_jours: data.charge_jours != null ? String(data.charge_jours * HEURES_PAR_JOUR) : '' }
     : { ...EMPTY }
@@ -32,6 +33,12 @@ export default function TacheForm({ initial, onSubmit, onCancel, loading, jalons
     if (form.jalon) values.add(form.jalon)
     return Array.from(values)
   }, [jalonsOptions, form.jalon])
+
+  const assigneSelectOptions = useMemo(() => {
+    const values = new Set(membresOptions.filter(Boolean))
+    if (form.assigne) values.add(form.assigne)
+    return Array.from(values)
+  }, [membresOptions, form.assigne])
 
   useEffect(() => { setForm(toFormState(initial)) }, [initial])
 
@@ -67,10 +74,25 @@ export default function TacheForm({ initial, onSubmit, onCancel, loading, jalons
           </select>
         </div>
 
+        {/* Statut */}
+        <div>
+          <label className={cls.label}>Statut</label>
+          <select className={cls.select} value={form.statut ?? 'A faire'} onChange={set('statut')}>
+            {STATUTS.map((s) => <option key={s}>{s}</option>)}
+          </select>
+        </div>
+
         {/* Assigné */}
         <div>
           <label className={cls.label}>Assigné à <span className="text-red-500">*</span></label>
-          <input className={cls.input} value={form.assigne} onChange={set('assigne')} required />
+          {assigneSelectOptions.length > 0 ? (
+            <select className={cls.select} value={form.assigne} onChange={set('assigne')} required>
+              <option value="">— Choisir un membre —</option>
+              {assigneSelectOptions.map((m) => <option key={m} value={m}>{m}</option>)}
+            </select>
+          ) : (
+            <input className={cls.input} value={form.assigne} onChange={set('assigne')} required placeholder="Nom du responsable" />
+          )}
         </div>
 
         {/* Jalon */}
